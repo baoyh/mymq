@@ -1,0 +1,10 @@
+*dependency-reduced-pom.xml
+.classpath
+.project
+.settings/
+target/
+*.log*
+*.iml
+.idea/
+*.versionsBackup
+nohup.out
