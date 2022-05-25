@@ -6,9 +6,27 @@ package bao.study.mymq.remoting.code;
  */
 public abstract class RequestCode {
 
-    public static final int SEND_MESSAGE = 10;
+    /**
+     * message
+     */
+    public static final int SEND_MESSAGE = 100;
 
-    public static final int PULL_MESSAGE = 11;
+    public static final int PULL_MESSAGE = 101;
 
-    public static final int QUERY_MESSAGE = 12;
+    public static final int QUERY_MESSAGE = 102;
+
+
+    /**
+     * store
+     */
+    public static final int REGISTER_STORE = 200;
+
+    public static final int UNREGISTER_STORE = 201;
+
+
+    /**
+     * client
+     */
+    public static final int GET_ROUTE_BY_TOPIC = 300;
+
 }

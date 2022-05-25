@@ -1,10 +1,14 @@
 package bao.study.mymq.remoting.common;
 
+import java.io.Serializable;
+
 /**
  * @author baoyh
  * @since 2022/5/13 15:05
  */
-public class RemotingCommand {
+public class RemotingCommand implements Serializable {
+
+    private static final long serialVersionUID = -5734509523963527363L;
 
     private int code;
 

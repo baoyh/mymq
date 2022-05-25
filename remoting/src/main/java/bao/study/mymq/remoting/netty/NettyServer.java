@@ -12,7 +12,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
  * @author baoyh
  * @since 2022/5/13 15:09
  */
-public class NettyServer implements RemotingServer {
+public class NettyServer extends NettyAbstract implements RemotingServer {
 
     private final NioEventLoopGroup bossGroup = new NioEventLoopGroup();
     private final NioEventLoopGroup workerGroup = new NioEventLoopGroup();
@@ -32,7 +32,7 @@ public class NettyServer implements RemotingServer {
 
             @Override
             protected void initChannel(SocketChannel ch) throws Exception {
-                ch.pipeline().addLast(serverHandler);
+                objectCodec(ch, this.getClass().getClassLoader()).addLast(serverHandler);
             }
         });
 
@@ -44,6 +44,8 @@ public class NettyServer implements RemotingServer {
         if (sync != null) {
             sync.channel().closeFuture().sync();
         }
+        bossGroup.shutdownGracefully();
+        workerGroup.shutdownGracefully();
     }
 
     @ChannelHandler.Sharable
@@ -53,10 +55,11 @@ public class NettyServer implements RemotingServer {
         protected void channelRead0(ChannelHandlerContext ctx, RemotingCommand msg) throws Exception {
             processRequest(ctx, msg);
         }
-    }
 
-    private void processRequest(ChannelHandlerContext ctx, RemotingCommand msg) {
-
+        @Override
+        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+            System.out.println("connect from " + ctx.channel().remoteAddress());
+        }
     }
 
 }
