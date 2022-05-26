@@ -35,18 +35,18 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
     private final static int LOCK_TIME = 3000;
 
     @Override
-    public void start() throws InterruptedException {
+    public void start() {
         this.bootstrap.group(this.eventLoopGroupWorker).channel(NioSocketChannel.class).handler(new ChannelInitializer<SocketChannel>() {
 
             @Override
-            protected void initChannel(SocketChannel ch) throws Exception {
-                objectCodec(ch, this.getClass().getClassLoader()).addLast(new ClientHandler());
+            protected void initChannel(SocketChannel ch) {
+                ch.pipeline().addLast(kryoNettyEncode).addLast(kryoNettyDecode).addLast(new ClientHandler());
             }
         });
     }
 
     @Override
-    public void shutdown() throws InterruptedException {
+    public void shutdown() {
         this.channelTables.clear();
         this.eventLoopGroupWorker.shutdownGracefully();
     }
@@ -115,7 +115,7 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
     class ClientHandler extends SimpleChannelInboundHandler<RemotingCommand> {
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, RemotingCommand msg) throws Exception {
+        protected void channelRead0(ChannelHandlerContext ctx, RemotingCommand msg) {
             processRequest(ctx, msg);
         }
     }

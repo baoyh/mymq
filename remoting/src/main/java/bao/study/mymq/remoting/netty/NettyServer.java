@@ -31,8 +31,8 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
         serverBootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).childHandler(new ChannelInitializer<SocketChannel>() {
 
             @Override
-            protected void initChannel(SocketChannel ch) throws Exception {
-                objectCodec(ch, this.getClass().getClassLoader()).addLast(serverHandler);
+            protected void initChannel(SocketChannel ch) {
+                ch.pipeline().addLast(kryoNettyEncode).addLast(kryoNettyDecode).addLast(serverHandler);
             }
         });
 
@@ -52,12 +52,12 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
     class ServerHandler extends SimpleChannelInboundHandler<RemotingCommand> {
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, RemotingCommand msg) throws Exception {
+        protected void channelRead0(ChannelHandlerContext ctx, RemotingCommand msg) {
             processRequest(ctx, msg);
         }
 
         @Override
-        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        public void channelActive(ChannelHandlerContext ctx) {
             System.out.println("connect from " + ctx.channel().remoteAddress());
         }
     }
