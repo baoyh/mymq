@@ -21,5 +21,9 @@
             <groupId>bao.study</groupId>
             <artifactId>remoting</artifactId>
         </dependency>
+        <dependency>
+            <groupId>bao.study</groupId>
+            <artifactId>common</artifactId>
+        </dependency>
     </dependencies>
 </project>
