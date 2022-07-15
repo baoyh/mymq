@@ -1,4 +1,4 @@
-package bao.study.mymq.store;
+package bao.study.mymq.broker;
 
 import bao.study.mymq.remoting.RemotingClient;
 import bao.study.mymq.remoting.RemotingServer;
@@ -11,7 +11,7 @@ import bao.study.mymq.remoting.netty.NettyServer;
  * @author baoyh
  * @since 2022/5/24 11:24
  */
-public class StoreStartup {
+public class BrokerStartup {
 
     public static void main(String[] args) {
 

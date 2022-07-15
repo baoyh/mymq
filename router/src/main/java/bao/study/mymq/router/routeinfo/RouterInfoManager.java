@@ -1,6 +1,10 @@
 package bao.study.mymq.router.routeinfo;
 
-import bao.study.mymq.common.route.StoreHeader;
+import bao.study.mymq.common.transport.MessageQueue;
+import bao.study.mymq.common.transport.BrokerHeader;
+import bao.study.mymq.common.transport.TopicPublishInfo;
+import bao.study.mymq.common.utils.DataParseHelper;
+import bao.study.mymq.remoting.common.RemotingCommand;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -13,13 +17,21 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class RouterInfoManager {
 
-    private final Map<String/* storeName */, StoreHeader> storeTable = new ConcurrentHashMap<>();
+    private final Map<String /* broker name */, BrokerHeader> storeTable = new ConcurrentHashMap<>();
 
-    private final Map<String/* clusterName */, Set<String/* storeName */>> clusterTable = new ConcurrentHashMap<>();
+    private final Map<String /* cluster name */, Set<String /* broker name */>> clusterTable = new ConcurrentHashMap<>();
 
-    public void registerStore(StoreHeader storeHeader) {
-        storeTable.putIfAbsent(storeHeader.getStoreName(), storeHeader);
-        Set<String> storeNameSet = clusterTable.getOrDefault(storeHeader.getClusterName(), new HashSet<>());
-        storeNameSet.add(storeHeader.getStoreName());
+    private final Map<String /* topic */, TopicPublishInfo> topicTable = new ConcurrentHashMap<>();
+
+    public void registerStore(RemotingCommand msg) {
+
+        BrokerHeader brokerHeader = DataParseHelper.byte2Object(msg.getHeader(), BrokerHeader.class);
+        storeTable.putIfAbsent(brokerHeader.getStoreName(), brokerHeader);
+        Set<String> storeNameSet = clusterTable.getOrDefault(brokerHeader.getClusterName(), new HashSet<>());
+        storeNameSet.add(brokerHeader.getStoreName());
+
+        MessageQueue messageQueue = DataParseHelper.byte2Object(msg.getBody(), MessageQueue.class);
+
+
     }
 }

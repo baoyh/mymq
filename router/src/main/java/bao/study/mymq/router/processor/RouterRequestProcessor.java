@@ -1,11 +1,9 @@
 package bao.study.mymq.router.processor;
 
-import bao.study.mymq.common.route.StoreHeader;
 import bao.study.mymq.remoting.code.RequestCode;
 import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.netty.NettyRequestProcessor;
 import bao.study.mymq.router.routeinfo.RouterInfoManager;
-import com.alibaba.fastjson.JSON;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
@@ -33,7 +31,7 @@ public class RouterRequestProcessor implements NettyRequestProcessor {
     }
 
     private void registerStore(ChannelHandlerContext ctx, RemotingCommand msg) {
-        routerInfoManager.registerStore(JSON.parseObject(msg.getHeader(), StoreHeader.class));
+        routerInfoManager.registerStore(msg);
     }
 
     private void getRouteByTopic(ChannelHandlerContext ctx, RemotingCommand msg) {

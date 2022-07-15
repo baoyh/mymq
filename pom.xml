@@ -11,9 +11,9 @@
     <modules>
         <module>router</module>
         <module>client</module>
-        <module>store</module>
         <module>remoting</module>
         <module>common</module>
+        <module>broker</module>
     </modules>
 
     <properties>

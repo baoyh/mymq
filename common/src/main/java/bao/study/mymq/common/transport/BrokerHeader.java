@@ -1,10 +1,10 @@
-package bao.study.mymq.common.route;
+package bao.study.mymq.common.transport;
 
 /**
  * @author baoyh
  * @since 2022/6/17 16:57
  */
-public class StoreHeader {
+public class BrokerHeader {
 
     private String clusterName;
 

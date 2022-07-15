@@ -12,7 +12,7 @@ public class RemotingCommand implements Serializable {
 
     private int code;
 
-    private String header;
+    private byte[] header;
 
     private byte[] body;
 
@@ -32,11 +32,11 @@ public class RemotingCommand implements Serializable {
         this.body = body;
     }
 
-    public String getHeader() {
+    public byte[] getHeader() {
         return header;
     }
 
-    public void setHeader(String header) {
+    public void setHeader(byte[] header) {
         this.header = header;
     }
 }
