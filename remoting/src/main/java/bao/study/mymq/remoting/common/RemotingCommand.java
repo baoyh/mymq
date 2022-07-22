@@ -12,8 +12,6 @@ public class RemotingCommand implements Serializable {
 
     private int code;
 
-    private byte[] header;
-
     private byte[] body;
 
     public int getCode() {
@@ -30,13 +28,5 @@ public class RemotingCommand implements Serializable {
 
     public void setBody(byte[] body) {
         this.body = body;
-    }
-
-    public byte[] getHeader() {
-        return header;
-    }
-
-    public void setHeader(byte[] header) {
-        this.header = header;
     }
 }

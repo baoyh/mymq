@@ -1,4 +1,4 @@
-package bao.study.mymq.common.transport;
+package bao.study.mymq.common.transport.broker;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,9 +11,14 @@ public class BrokerData {
 
     private String clusterName;
 
-    private String storeName;
+    private String brokerName;
 
     private Map<Long /* broker id */, String /* broker address */> addressMap = new HashMap<>();
+
+    public BrokerData(String clusterName, String brokerName) {
+        this.clusterName = clusterName;
+        this.brokerName = brokerName;
+    }
 
     public String getClusterName() {
         return clusterName;
@@ -23,12 +28,12 @@ public class BrokerData {
         this.clusterName = clusterName;
     }
 
-    public String getStoreName() {
-        return storeName;
+    public String getBrokerName() {
+        return brokerName;
     }
 
-    public void setStoreName(String storeName) {
-        this.storeName = storeName;
+    public void setBrokerName(String brokerName) {
+        this.brokerName = brokerName;
     }
 
     public Map<Long, String> getAddressMap() {
@@ -38,4 +43,6 @@ public class BrokerData {
     public void setAddressMap(Map<Long, String> addressMap) {
         this.addressMap = addressMap;
     }
+
+
 }

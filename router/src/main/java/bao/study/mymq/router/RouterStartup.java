@@ -4,6 +4,8 @@ import bao.study.mymq.remoting.RemotingServer;
 import bao.study.mymq.remoting.code.RequestCode;
 import bao.study.mymq.remoting.netty.NettyServer;
 import bao.study.mymq.router.processor.RouterRequestProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author baoyh
@@ -11,11 +13,14 @@ import bao.study.mymq.router.processor.RouterRequestProcessor;
  */
 public class RouterStartup {
 
+    private static final Logger log = LoggerFactory.getLogger(RouterStartup.class);
+
     public static void main(String[] args) {
         RemotingServer remotingServer = new NettyServer(9875);
         try {
             registerRequestProcessor(remotingServer);
             remotingServer.start();
+            log.info("router started");
         } catch (Throwable e) {
             e.printStackTrace();
             System.exit(-1);
@@ -24,6 +29,6 @@ public class RouterStartup {
 
     private static void registerRequestProcessor(RemotingServer remotingServer) {
         RouterRequestProcessor routerRequestProcessor = new RouterRequestProcessor();
-        remotingServer.registerRequestProcessor(RequestCode.REGISTER_STORE, routerRequestProcessor);
+        remotingServer.registerRequestProcessor(RequestCode.REGISTER_BROKER, routerRequestProcessor);
     }
 }

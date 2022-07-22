@@ -1,7 +1,6 @@
 package bao.study.mymq.broker.store;
 
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 
 /**
  * @author baoyh
@@ -99,18 +98,4 @@ public class Message {
         this.body = body;
     }
 
-    @Override
-    public String toString() {
-        return "Message{" +
-                "size=" + size +
-                ", brokerName='" + brokerName + '\'' +
-                ", topic='" + topic + '\'' +
-                ", queueId=" + queueId +
-                ", commitLogOffset=" + commitLogOffset +
-                ", bornHost=" + bornHost +
-                ", bornTimeStamp=" + bornTimeStamp +
-                ", storeTimeStamp=" + storeTimeStamp +
-                ", body=" + Arrays.toString(body) +
-                '}';
-    }
 }

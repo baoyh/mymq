@@ -7,4 +7,8 @@ package bao.study.mymq.common.transport;
 public class QueueData {
 
     private String topic;
+
+    private int id;
+
+
 }

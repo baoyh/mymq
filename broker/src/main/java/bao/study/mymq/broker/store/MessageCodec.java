@@ -5,13 +5,12 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
 
 /**
  * @author baoyh
  * @since 2022/7/15 16:13
  */
-public abstract class MessageCoder {
+public abstract class MessageCodec {
 
     private static final Charset charset = StandardCharsets.UTF_8;
 
@@ -90,25 +89,5 @@ public abstract class MessageCoder {
         }
 
         return null;
-    }
-
-    public static void main(String[] args) {
-
-        Message message = new Message();
-        message.setStoreTimeStamp(new Date().getTime());
-        message.setBornTimeStamp(new Date().getTime() - 10000);
-        message.setTopic("topic");
-        message.setBrokerName("brokerName");
-        message.setBornHost(new InetSocketAddress(12345));
-        message.setSize(0);
-        message.setQueueId(1);
-        message.setCommitLogOffset(1000);
-        message.setBody(new byte[] {50, 51, 52});
-
-        ByteBuffer buffer = MessageCoder.encode(message);
-
-        buffer.flip();
-
-        System.out.println(MessageCoder.decode(buffer));
     }
 }

@@ -1,5 +1,8 @@
 package bao.study.mymq.common.transport;
 
+import bao.study.mymq.common.transport.broker.BrokerData;
+import bao.study.mymq.common.transport.message.MessageQueue;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,23 +12,23 @@ import java.util.List;
  */
 public class TopicPublishInfo {
 
+    private List<MessageQueue> messageQueueList = new ArrayList<>();
+
     private List<BrokerData> brokerDataList = new ArrayList<>();
 
-    private List<QueueData> queueDataList = new ArrayList<>();
+    public List<MessageQueue> getMessageQueueList() {
+        return messageQueueList;
+    }
 
-    public List<BrokerData> getStoreDataList() {
+    public void setMessageQueueList(List<MessageQueue> messageQueueList) {
+        this.messageQueueList = messageQueueList;
+    }
+
+    public List<BrokerData> getBrokerDataList() {
         return brokerDataList;
     }
 
-    public void setStoreDataList(List<BrokerData> brokerDataList) {
+    public void setBrokerDataList(List<BrokerData> brokerDataList) {
         this.brokerDataList = brokerDataList;
-    }
-
-    public List<QueueData> getQueueDataList() {
-        return queueDataList;
-    }
-
-    public void setQueueDataList(List<QueueData> queueDataList) {
-        this.queueDataList = queueDataList;
     }
 }

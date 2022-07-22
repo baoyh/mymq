@@ -2,6 +2,8 @@ package bao.study.mymq.remoting.netty;
 
 import bao.study.mymq.remoting.RemotingServer;
 import bao.study.mymq.remoting.common.RemotingCommand;
+import bao.study.mymq.remoting.netty.codec.KryoNettyDecode;
+import bao.study.mymq.remoting.netty.codec.KryoNettyEncode;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -32,7 +34,7 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
 
             @Override
             protected void initChannel(SocketChannel ch) {
-                ch.pipeline().addLast(kryoNettyEncode).addLast(kryoNettyDecode).addLast(serverHandler);
+                ch.pipeline().addLast(new KryoNettyEncode()).addLast(new KryoNettyDecode()).addLast(serverHandler);
             }
         });
 
@@ -53,12 +55,8 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, RemotingCommand msg) {
+            System.out.println(msg);
             processRequest(ctx, msg);
-        }
-
-        @Override
-        public void channelActive(ChannelHandlerContext ctx) {
-            System.out.println("connect from " + ctx.channel().remoteAddress());
         }
     }
 

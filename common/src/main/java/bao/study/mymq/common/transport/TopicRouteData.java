@@ -2,7 +2,7 @@ package bao.study.mymq.common.transport;
 
 /**
  * @author baoyh
- * @since 2022/6/30 16:44
+ * @since 2022/7/18 17:08
  */
-public class MessageQueue {
+public class TopicRouteData {
 }

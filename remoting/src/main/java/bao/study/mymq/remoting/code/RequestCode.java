@@ -19,7 +19,7 @@ public abstract class RequestCode {
     /**
      * store
      */
-    public static final int REGISTER_STORE = 200;
+    public static final int REGISTER_BROKER = 200;
 
     public static final int UNREGISTER_STORE = 201;
 

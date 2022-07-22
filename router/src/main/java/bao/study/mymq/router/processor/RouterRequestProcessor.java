@@ -19,8 +19,8 @@ public class RouterRequestProcessor implements NettyRequestProcessor {
         int code = msg.getCode();
 
         switch (code) {
-            case RequestCode.REGISTER_STORE:
-                registerStore(ctx, msg);
+            case RequestCode.REGISTER_BROKER:
+                registerBroker(ctx, msg);
                 break;
             case RequestCode.GET_ROUTE_BY_TOPIC:
                 getRouteByTopic(ctx, msg);
@@ -30,8 +30,8 @@ public class RouterRequestProcessor implements NettyRequestProcessor {
         }
     }
 
-    private void registerStore(ChannelHandlerContext ctx, RemotingCommand msg) {
-        routerInfoManager.registerStore(msg);
+    private void registerBroker(ChannelHandlerContext ctx, RemotingCommand msg) {
+        routerInfoManager.registerBroker(msg);
     }
 
     private void getRouteByTopic(ChannelHandlerContext ctx, RemotingCommand msg) {
