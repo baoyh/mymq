@@ -1,4 +1,4 @@
-package bao.study.mymq.common.transport;
+package bao.study.mymq.common.protocol;
 
 /**
  * @author baoyh

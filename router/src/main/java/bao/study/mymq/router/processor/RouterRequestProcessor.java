@@ -4,7 +4,6 @@ import bao.study.mymq.remoting.code.RequestCode;
 import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.netty.NettyRequestProcessor;
 import bao.study.mymq.router.routeinfo.RouterInfoManager;
-import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @author baoyh
@@ -15,27 +14,25 @@ public class RouterRequestProcessor implements NettyRequestProcessor {
     RouterInfoManager routerInfoManager = new RouterInfoManager();
 
     @Override
-    public void processRequest(ChannelHandlerContext ctx, RemotingCommand msg) {
+    public RemotingCommand processRequest(RemotingCommand msg) {
         int code = msg.getCode();
 
         switch (code) {
             case RequestCode.REGISTER_BROKER:
-                registerBroker(ctx, msg);
-                break;
+                return registerBroker(msg);
             case RequestCode.GET_ROUTE_BY_TOPIC:
-                getRouteByTopic(ctx, msg);
-                break;
+                return getRouteByTopic(msg);
             default:
-                break;
+                return null;
         }
     }
 
-    private void registerBroker(ChannelHandlerContext ctx, RemotingCommand msg) {
-        routerInfoManager.registerBroker(msg);
+    private RemotingCommand registerBroker(RemotingCommand msg) {
+        return routerInfoManager.registerBroker(msg);
     }
 
-    private void getRouteByTopic(ChannelHandlerContext ctx, RemotingCommand msg) {
-
+    private RemotingCommand getRouteByTopic(RemotingCommand msg) {
+        return routerInfoManager.getRouteByTopic(msg);
     }
 
 }

@@ -1,9 +1,11 @@
 package bao.study.mymq.remoting.netty;
 
+import bao.study.mymq.common.protocol.body.RegisterBrokerBody;
+import bao.study.mymq.common.utils.CommonCodec;
 import bao.study.mymq.remoting.RemotingServer;
 import bao.study.mymq.remoting.common.RemotingCommand;
-import bao.study.mymq.remoting.netty.codec.KryoNettyDecode;
-import bao.study.mymq.remoting.netty.codec.KryoNettyEncode;
+import bao.study.mymq.remoting.netty.codec.kryo.KryoNettyDecode;
+import bao.study.mymq.remoting.netty.codec.kryo.KryoNettyEncode;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -34,11 +36,11 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
 
             @Override
             protected void initChannel(SocketChannel ch) {
-                ch.pipeline().addLast(new KryoNettyEncode()).addLast(new KryoNettyDecode()).addLast(serverHandler);
+                ch.pipeline().addLast(new KryoNettyDecode()).addLast(new KryoNettyEncode()).addLast(serverHandler);
             }
         });
 
-        sync = this.serverBootstrap.bind(port).sync();
+        sync = serverBootstrap.bind(port).sync();
     }
 
     @Override
@@ -55,7 +57,7 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, RemotingCommand msg) {
-            System.out.println(msg);
+            System.out.println(CommonCodec.decode(msg.getBody(), RegisterBrokerBody.class));
             processRequest(ctx, msg);
         }
     }

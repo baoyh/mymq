@@ -1,4 +1,4 @@
-package bao.study.mymq.common.transport.body;
+package bao.study.mymq.common.protocol.body;
 
 import java.util.Set;
 
@@ -56,5 +56,16 @@ public class RegisterBrokerBody {
 
     public void setTopics(Set<String> topics) {
         this.topics = topics;
+    }
+
+    @Override
+    public String toString() {
+        return "RegisterBrokerBody{" +
+                "brokerName='" + brokerName + '\'' +
+                ", brokerId=" + brokerId +
+                ", clusterName='" + clusterName + '\'' +
+                ", brokerAddress='" + brokerAddress + '\'' +
+                ", topics=" + topics +
+                '}';
     }
 }

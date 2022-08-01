@@ -4,8 +4,8 @@ import bao.study.mymq.remoting.InvokeCallback;
 import bao.study.mymq.remoting.RemotingClient;
 import bao.study.mymq.remoting.RemotingHelper;
 import bao.study.mymq.remoting.common.RemotingCommand;
-import bao.study.mymq.remoting.netty.codec.KryoNettyDecode;
-import bao.study.mymq.remoting.netty.codec.KryoNettyEncode;
+import bao.study.mymq.remoting.netty.codec.kryo.KryoNettyDecode;
+import bao.study.mymq.remoting.netty.codec.kryo.KryoNettyEncode;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -42,7 +42,7 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
 
             @Override
             protected void initChannel(SocketChannel ch) {
-                ch.pipeline().addLast(new KryoNettyEncode()).addLast(new KryoNettyDecode()).addLast(new ClientHandler());
+                ch.pipeline().addLast(new KryoNettyDecode()).addLast(new KryoNettyEncode()).addLast(new ClientHandler());
             }
         });
     }
@@ -85,7 +85,7 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
 
     }
 
-    private Channel getOrCreateChannel(String address) {
+    public Channel getOrCreateChannel(String address) {
         Channel channel = channelTables.get(address);
         if (channel != null) {
             return channel;

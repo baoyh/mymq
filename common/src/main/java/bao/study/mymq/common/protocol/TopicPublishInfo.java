@@ -1,7 +1,7 @@
-package bao.study.mymq.common.transport;
+package bao.study.mymq.common.protocol;
 
-import bao.study.mymq.common.transport.broker.BrokerData;
-import bao.study.mymq.common.transport.message.MessageQueue;
+import bao.study.mymq.common.protocol.broker.BrokerData;
+import bao.study.mymq.common.protocol.message.MessageQueue;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -9,5 +9,5 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public interface NettyRequestProcessor {
 
-    void processRequest(ChannelHandlerContext ctx, RemotingCommand msg);
+    RemotingCommand processRequest(RemotingCommand msg);
 }

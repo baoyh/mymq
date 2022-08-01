@@ -1,4 +1,4 @@
-package bao.study.mymq.common.transport.broker;
+package bao.study.mymq.common.protocol.broker;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -17,11 +17,11 @@ public abstract class RequestCode {
 
 
     /**
-     * store
+     * broker
      */
     public static final int REGISTER_BROKER = 200;
 
-    public static final int UNREGISTER_STORE = 201;
+    public static final int UNREGISTER_BROKER = 201;
 
 
     /**

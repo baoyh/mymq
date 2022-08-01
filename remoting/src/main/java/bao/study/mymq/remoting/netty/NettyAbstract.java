@@ -21,7 +21,8 @@ public abstract class NettyAbstract {
     public void processRequest(ChannelHandlerContext ctx, RemotingCommand msg) {
         NettyRequestProcessor requestProcessor = requestProcessorMap.get(msg.getCode());
         if (requestProcessor != null) {
-            requestProcessor.processRequest(ctx, msg);
+            RemotingCommand response = requestProcessor.processRequest(msg);
+            ctx.writeAndFlush(response);
         }
     }
 }

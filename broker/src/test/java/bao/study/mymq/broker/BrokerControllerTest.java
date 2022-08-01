@@ -1,7 +1,7 @@
 package bao.study.mymq.broker;
 
 import bao.study.mymq.common.Constant;
-import bao.study.mymq.common.transport.body.RegisterBrokerBody;
+import bao.study.mymq.common.protocol.body.RegisterBrokerBody;
 import bao.study.mymq.common.utils.CommonCodec;
 import bao.study.mymq.remoting.RemotingClient;
 import bao.study.mymq.remoting.RemotingServer;
