@@ -9,7 +9,6 @@ import bao.study.mymq.common.utils.CommonCodec;
 import bao.study.mymq.remoting.code.ResponseCode;
 import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.common.RemotingCommandFactory;
-import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,0 +1,189 @@
+package bao.study.mymq.client.producer;
+
+import bao.study.mymq.client.ClientConfig;
+import bao.study.mymq.client.ClientException;
+import bao.study.mymq.common.Constant;
+import bao.study.mymq.common.ServiceState;
+import bao.study.mymq.common.protocol.Message;
+import bao.study.mymq.common.protocol.TopicPublishInfo;
+import bao.study.mymq.common.protocol.broker.BrokerData;
+import bao.study.mymq.common.protocol.message.MessageQueue;
+import bao.study.mymq.common.utils.CommonCodec;
+import bao.study.mymq.remoting.RemotingClient;
+import bao.study.mymq.remoting.code.RequestCode;
+import bao.study.mymq.remoting.code.ResponseCode;
+import bao.study.mymq.remoting.common.RemotingCommand;
+import bao.study.mymq.remoting.netty.NettyClient;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
+
+/**
+ * @author baoyh
+ * @since 2022/8/2 14:05
+ */
+public class DefaultProducer extends ClientConfig implements Producer {
+
+    private final RemotingClient remotingClient = new NettyClient();
+
+    private final Set<DefaultProducer> producerSet = new CopyOnWriteArraySet<>();
+
+    private final Map<String /* topic */, TopicPublishInfo> topicPublishInfoTable = new ConcurrentHashMap<>();
+
+    private final Map<String /* brokerName */, String /* address */> brokerAddressTable = new ConcurrentHashMap<>();
+
+    private final ThreadLocal<Map<String /* topic */, Integer /* count */>> sendWhichQueue = ThreadLocal.withInitial(HashMap::new);
+
+    private ServiceState serviceState = ServiceState.JUST_START;
+
+    private long sendMessageTimeOut = 3 * 1000;
+
+    private int sendMessageRetryTimes = 3;
+
+    @Override
+    public void start() {
+        switch (serviceState) {
+            case JUST_START:
+                doStart();
+                break;
+            case RUNNING:
+            case SHUTDOWN:
+                break;
+            case START_FAIL:
+                throw new ClientException("client start fail");
+
+        }
+
+    }
+
+    private void doStart() {
+        try {
+            remotingClient.start();
+            producerSet.add(this);
+            serviceState = ServiceState.RUNNING;
+
+        } catch (Exception e) {
+            serviceState = ServiceState.START_FAIL;
+            throw new ClientException("client start fail", e);
+        }
+
+    }
+
+    @Override
+    public void shutdown() {
+        serviceState = ServiceState.SHUTDOWN;
+        remotingClient.shutdown();
+        producerSet.remove(this);
+    }
+
+    @Override
+    public SendResult send(Message message) {
+
+        SendResult sendResult = new SendResult();
+
+        String topic = message.getTopic();
+        TopicPublishInfo topicPublishInfo = findTopicPublishInfo(topic);
+        List<MessageQueue> messageQueueList = topicPublishInfo.getMessageQueueList();
+
+        String lastFailedBrokerName = null;
+        for (int i = 0; i < sendMessageRetryTimes; i++) {
+            MessageQueue messageQueue = this.selectOneMessageQueue(topic, messageQueueList, lastFailedBrokerName);
+
+            try {
+                RemotingCommand request = new RemotingCommand();
+                request.setCode(RequestCode.SEND_MESSAGE);
+                request.setBody(CommonCodec.encode(message));
+                RemotingCommand remotingCommand = remotingClient.invokeSync(findBrokerAddress(messageQueue.getBrokerName(), topicPublishInfo), request, sendMessageTimeOut);
+
+                if (remotingCommand.getCode() == ResponseCode.SUCCESS) {
+                    sendResult.setSendStatus(SendStatus.SEND_OK);
+                    sendResult.setMessageQueue(messageQueue);
+                    break;
+                }
+            } catch (Exception e) {
+                lastFailedBrokerName = messageQueue.getBrokerName();
+            }
+
+        }
+
+        return sendResult;
+    }
+
+    private TopicPublishInfo findTopicPublishInfo(String topic) {
+
+        if (topicPublishInfoTable.containsKey(topic)) {
+            return topicPublishInfoTable.get(topic);
+        }
+
+        RemotingCommand request = new RemotingCommand();
+        request.setCode(RequestCode.GET_ROUTE_BY_TOPIC);
+        request.setBody(CommonCodec.encode(topic));
+        RemotingCommand remotingResult = remotingClient.invokeSync(this.getRouterAddress(), request, sendMessageTimeOut);
+
+        TopicPublishInfo topicPublishInfo = CommonCodec.decode(remotingResult.getBody(), TopicPublishInfo.class);
+        topicPublishInfoTable.put(topic, topicPublishInfo);
+        return topicPublishInfo;
+    }
+
+    private MessageQueue selectOneMessageQueue(String topic, List<MessageQueue> messageQueueList, String lastFailedBrokerName) {
+
+        Map<String, Integer> topicMap = sendWhichQueue.get();
+        if (!topicMap.containsKey(topic)) {
+            topicMap.put(topic, 0);
+        }
+
+        if (lastFailedBrokerName == null) {
+            return selectOneMessageQueue(topic, messageQueueList);
+        }
+
+        List<MessageQueue> copyMessageQueueList = new ArrayList<>();
+        for (MessageQueue messageQueue : messageQueueList) {
+            if (!messageQueue.getBrokerName().equals(lastFailedBrokerName)) {
+                copyMessageQueueList.add(messageQueue);
+            }
+        }
+        return selectOneMessageQueue(topic, copyMessageQueueList);
+    }
+
+    private MessageQueue selectOneMessageQueue(String topic, List<MessageQueue> messageQueueList) {
+        Integer index = sendWhichQueue.get().get(topic);
+        MessageQueue messageQueue = messageQueueList.get(index % messageQueueList.size());
+        sendWhichQueue.get().put(topic, ++index);
+        return messageQueue;
+    }
+
+    private String findBrokerAddress(String brokerName, TopicPublishInfo topicPublishInfo) {
+        if (brokerAddressTable.containsKey(brokerName)) {
+            return brokerAddressTable.get(brokerName);
+        }
+
+        List<BrokerData> brokerDataList = topicPublishInfo.getBrokerDataList();
+        for (BrokerData brokerData : brokerDataList) {
+            if (brokerData.getBrokerName().equals(brokerName)) {
+                return brokerData.getAddressMap().get(Constant.MASTER_ID);
+            }
+        }
+
+        throw new ClientException("can not find the address with broker [" + brokerName + "]");
+    }
+
+    @Override
+    public void send(Message message, SendCallback sendCallback) {
+
+    }
+
+    @Override
+    public void sendOneway(Message message) {
+
+    }
+
+    public void setSendMessageTimeOut(long sendMessageTimeOut) {
+        this.sendMessageTimeOut = sendMessageTimeOut;
+    }
+
+    public void setSendMessageRetryTimes(int sendMessageRetryTimes) {
+        sendMessageRetryTimes = sendMessageRetryTimes < 1 ? 3 : sendMessageRetryTimes;
+        this.sendMessageRetryTimes = sendMessageRetryTimes;
+    }
+}

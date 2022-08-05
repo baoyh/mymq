@@ -6,7 +6,7 @@ package bao.study.mymq.remoting;
  */
 public interface Remoting {
 
-    void start() throws InterruptedException;
+    void start();
 
-    void shutdown() throws InterruptedException;
+    void shutdown();
 }

@@ -2,6 +2,7 @@ package bao.study.mymq.remoting.netty;
 
 import bao.study.mymq.remoting.InvokeCallback;
 import bao.study.mymq.remoting.RemotingClient;
+import bao.study.mymq.remoting.RemotingException;
 import bao.study.mymq.remoting.RemotingHelper;
 import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.netty.codec.kryo.KryoNettyDecode;
@@ -56,17 +57,17 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
     @Override
     public void invokeOneway(String address, RemotingCommand request, long timeoutMillis) {
         Channel channel = getOrCreateChannel(address);
-        if (channel != null) {
-            channel.writeAndFlush(request).addListener((ChannelFutureListener) future -> {
-                if (!future.isSuccess()) {
-                    log.warn("send message fail to " + address);
-                }
-            });
-        }
+        channel.writeAndFlush(request).addListener((ChannelFutureListener) future -> {
+            if (!future.isSuccess()) {
+                log.warn("send message fail to " + address);
+            }
+        });
     }
 
     @Override
     public RemotingCommand invokeSync(String address, RemotingCommand request, long timeoutMillis) {
+        long remainTime = System.currentTimeMillis();
+        Channel channel = getOrCreateChannel(address);
         return null;
     }
 
@@ -85,7 +86,7 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
 
     }
 
-    public Channel getOrCreateChannel(String address) {
+    private Channel getOrCreateChannel(String address) {
         Channel channel = channelTables.get(address);
         if (channel != null) {
             return channel;
@@ -105,11 +106,10 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
                 }
             }
         } catch (Exception e) {
-            log.error("create channel fail ", e);
+            throw new RemotingException("create channel fail", e);
         } finally {
             lockChannelTables.unlock();
         }
-        return null;
     }
 
     @ChannelHandler.Sharable

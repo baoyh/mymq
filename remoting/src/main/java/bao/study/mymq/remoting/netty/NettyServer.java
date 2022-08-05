@@ -31,25 +31,35 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
     }
 
     @Override
-    public void start() throws InterruptedException {
-        serverBootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).childHandler(new ChannelInitializer<SocketChannel>() {
+    public void start() {
+        try {
+            serverBootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).childHandler(new ChannelInitializer<SocketChannel>() {
 
-            @Override
-            protected void initChannel(SocketChannel ch) {
-                ch.pipeline().addLast(new KryoNettyDecode()).addLast(new KryoNettyEncode()).addLast(serverHandler);
-            }
-        });
+                @Override
+                protected void initChannel(SocketChannel ch) {
+                    ch.pipeline().addLast(new KryoNettyDecode()).addLast(new KryoNettyEncode()).addLast(serverHandler);
+                }
+            });
+            sync = serverBootstrap.bind(port).sync();
 
-        sync = serverBootstrap.bind(port).sync();
+        }  catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public void shutdown() throws InterruptedException {
-        if (sync != null) {
-            sync.channel().closeFuture().sync();
+    public void shutdown() {
+        try {
+            if (sync != null) {
+                sync.channel().closeFuture().sync();
+            }
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
-        bossGroup.shutdownGracefully();
-        workerGroup.shutdownGracefully();
+
     }
 
     @ChannelHandler.Sharable
