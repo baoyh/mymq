@@ -10,9 +10,11 @@ import bao.study.mymq.common.protocol.broker.BrokerData;
 import bao.study.mymq.common.protocol.message.MessageQueue;
 import bao.study.mymq.common.utils.CommonCodec;
 import bao.study.mymq.remoting.RemotingClient;
+import bao.study.mymq.remoting.RemotingMode;
 import bao.study.mymq.remoting.code.RequestCode;
 import bao.study.mymq.remoting.code.ResponseCode;
 import bao.study.mymq.remoting.common.RemotingCommand;
+import bao.study.mymq.remoting.common.RemotingCommandFactory;
 import bao.study.mymq.remoting.netty.NettyClient;
 
 import java.util.*;
@@ -37,7 +39,7 @@ public class DefaultProducer extends ClientConfig implements Producer {
 
     private ServiceState serviceState = ServiceState.JUST_START;
 
-    private long sendMessageTimeOut = 3 * 1000;
+    private long sendMessageTimeOut = 300 * 1000;
 
     private int sendMessageRetryTimes = 3;
 
@@ -47,12 +49,10 @@ public class DefaultProducer extends ClientConfig implements Producer {
             case JUST_START:
                 doStart();
                 break;
-            case RUNNING:
-            case SHUTDOWN:
-                break;
             case START_FAIL:
                 throw new ClientException("client start fail");
-
+            default:
+                break;
         }
 
     }
@@ -73,12 +73,26 @@ public class DefaultProducer extends ClientConfig implements Producer {
     @Override
     public void shutdown() {
         serviceState = ServiceState.SHUTDOWN;
-        remotingClient.shutdown();
         producerSet.remove(this);
+        remotingClient.shutdown();
     }
 
     @Override
     public SendResult send(Message message) {
+        return doSend(message, RemotingMode.SYNC, null);
+    }
+
+    @Override
+    public void send(Message message, SendCallback sendCallback) {
+        doSend(message, RemotingMode.ASYNC, sendCallback);
+    }
+
+    @Override
+    public void sendOneway(Message message) {
+
+    }
+
+    private SendResult doSend(Message message, RemotingMode remotingMode, SendCallback sendCallback) {
 
         SendResult sendResult = new SendResult();
 
@@ -87,20 +101,43 @@ public class DefaultProducer extends ClientConfig implements Producer {
         List<MessageQueue> messageQueueList = topicPublishInfo.getMessageQueueList();
 
         String lastFailedBrokerName = null;
+
         for (int i = 0; i < sendMessageRetryTimes; i++) {
             MessageQueue messageQueue = this.selectOneMessageQueue(topic, messageQueueList, lastFailedBrokerName);
 
             try {
-                RemotingCommand request = new RemotingCommand();
-                request.setCode(RequestCode.SEND_MESSAGE);
-                request.setBody(CommonCodec.encode(message));
-                RemotingCommand remotingCommand = remotingClient.invokeSync(findBrokerAddress(messageQueue.getBrokerName(), topicPublishInfo), request, sendMessageTimeOut);
 
-                if (remotingCommand.getCode() == ResponseCode.SUCCESS) {
-                    sendResult.setSendStatus(SendStatus.SEND_OK);
-                    sendResult.setMessageQueue(messageQueue);
-                    break;
+                RemotingCommand request = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.SEND_MESSAGE, CommonCodec.encode(message));
+
+                String brokerAddress = findBrokerAddress(messageQueue.getBrokerName(), topicPublishInfo);
+
+                switch (remotingMode) {
+                    case SYNC:
+                        RemotingCommand remotingCommand = remotingClient.invokeSync(brokerAddress, request, sendMessageTimeOut);
+                        if (remotingCommand.getCode() == ResponseCode.SUCCESS) {
+                            sendResult.setSendStatus(SendStatus.SEND_OK);
+                            sendResult.setMessageQueue(messageQueue);
+                        }
+                        break;
+                    case ASYNC:
+                        remotingClient.invokeAsync(brokerAddress, request, sendMessageTimeOut, (responseFuture) -> {
+
+                            if (responseFuture.getException() == null) {
+                                sendResult.setSendStatus(SendStatus.SEND_OK);
+                                sendResult.setMessageQueue(messageQueue);
+                                sendCallback.onSuccess(sendResult);
+                            } else {
+                                sendCallback.onException(responseFuture.getException());
+                            }
+                        });
+                        break;
+                    case ONEWAY:
+                        remotingClient.invokeOneway(brokerAddress, request, sendMessageTimeOut);
+                        break;
                 }
+
+                break;
+
             } catch (Exception e) {
                 lastFailedBrokerName = messageQueue.getBrokerName();
             }
@@ -116,12 +153,10 @@ public class DefaultProducer extends ClientConfig implements Producer {
             return topicPublishInfoTable.get(topic);
         }
 
-        RemotingCommand request = new RemotingCommand();
-        request.setCode(RequestCode.GET_ROUTE_BY_TOPIC);
-        request.setBody(CommonCodec.encode(topic));
-        RemotingCommand remotingResult = remotingClient.invokeSync(this.getRouterAddress(), request, sendMessageTimeOut);
+        RemotingCommand request = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.GET_ROUTE_BY_TOPIC, CommonCodec.encode(topic));
+        RemotingCommand response = remotingClient.invokeSync(this.getRouterAddress(), request, sendMessageTimeOut);
 
-        TopicPublishInfo topicPublishInfo = CommonCodec.decode(remotingResult.getBody(), TopicPublishInfo.class);
+        TopicPublishInfo topicPublishInfo = CommonCodec.decode(response.getBody(), TopicPublishInfo.class);
         topicPublishInfoTable.put(topic, topicPublishInfo);
         return topicPublishInfo;
     }
@@ -168,22 +203,11 @@ public class DefaultProducer extends ClientConfig implements Producer {
         throw new ClientException("can not find the address with broker [" + brokerName + "]");
     }
 
-    @Override
-    public void send(Message message, SendCallback sendCallback) {
-
-    }
-
-    @Override
-    public void sendOneway(Message message) {
-
-    }
-
     public void setSendMessageTimeOut(long sendMessageTimeOut) {
         this.sendMessageTimeOut = sendMessageTimeOut;
     }
 
     public void setSendMessageRetryTimes(int sendMessageRetryTimes) {
-        sendMessageRetryTimes = sendMessageRetryTimes < 1 ? 3 : sendMessageRetryTimes;
-        this.sendMessageRetryTimes = sendMessageRetryTimes;
+        this.sendMessageRetryTimes = sendMessageRetryTimes < 1 ? 3 : sendMessageRetryTimes;
     }
 }

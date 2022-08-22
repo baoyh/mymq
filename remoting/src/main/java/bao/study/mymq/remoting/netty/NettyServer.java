@@ -1,7 +1,5 @@
 package bao.study.mymq.remoting.netty;
 
-import bao.study.mymq.common.protocol.body.RegisterBrokerBody;
-import bao.study.mymq.common.utils.CommonCodec;
 import bao.study.mymq.remoting.RemotingServer;
 import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.netty.codec.kryo.KryoNettyDecode;
@@ -11,12 +9,16 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author baoyh
  * @since 2022/5/13 15:09
  */
 public class NettyServer extends NettyAbstract implements RemotingServer {
+
+    private static final Logger log = LoggerFactory.getLogger(NettyServer.class);
 
     private final NioEventLoopGroup bossGroup = new NioEventLoopGroup();
     private final NioEventLoopGroup workerGroup = new NioEventLoopGroup();
@@ -42,7 +44,7 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
             });
             sync = serverBootstrap.bind(port).sync();
 
-        }  catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
@@ -67,8 +69,8 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, RemotingCommand msg) {
-            System.out.println(CommonCodec.decode(msg.getBody(), RegisterBrokerBody.class));
-            processRequest(ctx, msg);
+            log.info("[Remote] : " + ctx.channel().remoteAddress() + ", [RemotingCommand] : " + msg);
+            processRemotingCommand(ctx, msg);
         }
     }
 

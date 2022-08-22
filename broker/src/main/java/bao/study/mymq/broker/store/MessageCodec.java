@@ -14,15 +14,15 @@ public abstract class MessageCodec {
 
     private static final Charset charset = StandardCharsets.UTF_8;
 
-    public static ByteBuffer encode(Message message) {
+    public static ByteBuffer encode(MessageStore messageStore) {
 
         int size = 4 + 4 + 8 + 8 + 8;
 
-        byte[] brokerName = message.getBrokerName().getBytes(charset);
-        byte[] topic = message.getTopic().getBytes(charset);
-        byte[] bornHost = message.getBornHost().getAddress().getAddress();
+        byte[] brokerName = messageStore.getBrokerName().getBytes(charset);
+        byte[] topic = messageStore.getTopic().getBytes(charset);
+        byte[] bornHost = messageStore.getBornHost().getAddress().getAddress();
 
-        size = size + 4 + brokerName.length + 4 + topic.length + 4 + 4 + bornHost.length + 4 + message.getBody().length;
+        size = size + 4 + brokerName.length + 4 + topic.length + 4 + 4 + bornHost.length + 4 + messageStore.getBody().length;
 
         ByteBuffer buffer = ByteBuffer.allocate(size);
 
@@ -31,58 +31,58 @@ public abstract class MessageCodec {
         buffer.put(brokerName);
         buffer.putInt(topic.length);
         buffer.put(topic);
-        buffer.putInt(message.getQueueId());
-        buffer.putLong(message.getCommitLogOffset());
-        buffer.putInt(message.getBody().length);
-        buffer.put(message.getBody());
+        buffer.putInt(messageStore.getQueueId());
+        buffer.putLong(messageStore.getCommitLogOffset());
+        buffer.putInt(messageStore.getBody().length);
+        buffer.put(messageStore.getBody());
         buffer.putInt(bornHost.length);
-        buffer.putInt(message.getBornHost().getPort());
+        buffer.putInt(messageStore.getBornHost().getPort());
         buffer.put(bornHost);
-        buffer.putLong(message.getBornTimeStamp());
-        buffer.putLong(message.getStoreTimeStamp());
+        buffer.putLong(messageStore.getBornTimeStamp());
+        buffer.putLong(messageStore.getStoreTimeStamp());
 
         return buffer;
     }
 
-    public static Message decode(ByteBuffer buffer) {
+    public static MessageStore decode(ByteBuffer buffer) {
 
         try {
             if (buffer.position() != 0) {
                 buffer.position(0);
             }
 
-            Message message = new Message();
+            MessageStore messageStore = new MessageStore();
 
-            message.setSize(buffer.getInt());
+            messageStore.setSize(buffer.getInt());
 
             int brokerNameLen = buffer.getInt();
             byte[] brokerName = new byte[brokerNameLen];
             buffer.get(brokerName, 0, brokerNameLen);
-            message.setBrokerName(new String(brokerName, charset));
+            messageStore.setBrokerName(new String(brokerName, charset));
 
             int topicLen = buffer.getInt();
             byte[] topic = new byte[topicLen];
             buffer.get(topic, 0, topicLen);
-            message.setTopic(new String(topic, charset));
+            messageStore.setTopic(new String(topic, charset));
 
-            message.setQueueId(buffer.getInt());
-            message.setCommitLogOffset(buffer.getLong());
+            messageStore.setQueueId(buffer.getInt());
+            messageStore.setCommitLogOffset(buffer.getLong());
 
             int bodyLen = buffer.getInt();
             byte[] body = new byte[bodyLen];
             buffer.get(body, 0, bodyLen);
-            message.setBody(body);
+            messageStore.setBody(body);
 
             int hostLen = buffer.getInt();
             int port = buffer.getInt();
             byte[] bornHost = new byte[hostLen];
             buffer.get(bornHost, 0, hostLen);
-            message.setBornHost(new InetSocketAddress(InetAddress.getByAddress(bornHost), port));
+            messageStore.setBornHost(new InetSocketAddress(InetAddress.getByAddress(bornHost), port));
 
-            message.setBornTimeStamp(buffer.getLong());
-            message.setStoreTimeStamp(buffer.getLong());
+            messageStore.setBornTimeStamp(buffer.getLong());
+            messageStore.setStoreTimeStamp(buffer.getLong());
 
-            return message;
+            return messageStore;
 
         } catch (Exception e) {
             buffer.position(buffer.limit());

@@ -66,14 +66,20 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
 
     @Override
     public RemotingCommand invokeSync(String address, RemotingCommand request, long timeoutMillis) {
-        long remainTime = System.currentTimeMillis();
         Channel channel = getOrCreateChannel(address);
-        return null;
+        ResponseFuture responseFuture = new ResponseFuture();
+        responseFutureTable.put(request.getRequestId(), responseFuture);
+        channel.writeAndFlush(request);
+        return responseFuture.awaitResponse(timeoutMillis);
     }
 
     @Override
     public void invokeAsync(String address, RemotingCommand request, long timeoutMillis, InvokeCallback invokeCallback) {
-
+        Channel channel = getOrCreateChannel(address);
+        ResponseFuture responseFuture = new ResponseFuture();
+        responseFuture.setInvokeCallback(invokeCallback);
+        responseFutureTable.put(request.getRequestId(), responseFuture);
+        channel.writeAndFlush(request);
     }
 
     @Override
@@ -117,7 +123,8 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, RemotingCommand msg) {
-            processRequest(ctx, msg);
+            log.info("[Remote] : " + ctx.channel().remoteAddress() + ", [RemotingCommand] : " + msg);
+            processRemotingCommand(ctx, msg);
         }
     }
 }

@@ -27,4 +27,12 @@ public class SendResult {
     public void setMessageQueue(MessageQueue messageQueue) {
         this.messageQueue = messageQueue;
     }
+
+    @Override
+    public String toString() {
+        return "SendResult{" +
+                "sendStatus=" + sendStatus +
+                ", messageQueue=" + messageQueue +
+                '}';
+    }
 }

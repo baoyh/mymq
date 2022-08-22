@@ -6,7 +6,19 @@ package bao.study.mymq.remoting.common;
  */
 public abstract class RemotingCommandFactory {
 
-    public static RemotingCommand createRemotingCommand(int code, byte[] body) {
+    public static RemotingCommand createRequestRemotingCommand(int code, byte[] body) {
+        RemotingCommand remotingCommand = createRemotingCommand(code, body);
+        remotingCommand.setRemotingCommandType(RemotingCommandType.REQUEST);
+        return remotingCommand;
+    }
+
+    public static RemotingCommand createResponseRemotingCommand(int code, byte[] body) {
+        RemotingCommand remotingCommand = createRemotingCommand(code, body);
+        remotingCommand.setRemotingCommandType(RemotingCommandType.RESPONSE);
+        return remotingCommand;
+    }
+
+    private static RemotingCommand createRemotingCommand(int code, byte[] body) {
         RemotingCommand remotingCommand = new RemotingCommand();
         remotingCommand.setBody(body);
         remotingCommand.setCode(code);

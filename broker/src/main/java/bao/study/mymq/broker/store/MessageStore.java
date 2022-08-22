@@ -6,7 +6,7 @@ import java.net.InetSocketAddress;
  * @author baoyh
  * @since 2022/7/15 14:25
  */
-public class Message {
+public class MessageStore {
 
     private int size;
 

@@ -1,6 +1,8 @@
 package bao.study.mymq.remoting.netty.codec.kryo;
 
+import bao.study.mymq.common.protocol.TopicPublishInfo;
 import bao.study.mymq.remoting.common.RemotingCommand;
+import bao.study.mymq.remoting.common.RemotingCommandType;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.serializers.DefaultSerializers;
 
@@ -9,6 +11,7 @@ import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author baoyh
@@ -26,6 +29,8 @@ public class ThreadLocalKryoFactory {
         Kryo kryo = new Kryo();
         kryo.setRegistrationRequired(false);
         kryo.register(RemotingCommand.class);
+        kryo.register(RemotingCommandType.class);
+        kryo.register(AtomicInteger.class);
         kryo.register(BigDecimal.class, new DefaultSerializers.BigDecimalSerializer());
         kryo.register(BigInteger.class, new DefaultSerializers.BigIntegerSerializer());
         kryo.register(HashMap.class);

@@ -35,7 +35,7 @@ public class RouterInfoManager {
 
         registerTopic(body);
 
-        return RemotingCommandFactory.createRemotingCommand(ResponseCode.SUCCESS, null);
+        return RemotingCommandFactory.createResponseRemotingCommand(ResponseCode.SUCCESS, null);
     }
 
     private void registerTopic(RegisterBrokerBody body) {
@@ -94,7 +94,7 @@ public class RouterInfoManager {
     public RemotingCommand getRouteByTopic(RemotingCommand msg) {
         String topic = CommonCodec.decode(msg.getBody(), String.class);
         TopicPublishInfo topicPublishInfo = topicTable.get(topic);
-        return RemotingCommandFactory.createRemotingCommand(ResponseCode.SUCCESS, CommonCodec.encode(topicPublishInfo));
+        return RemotingCommandFactory.createResponseRemotingCommand(ResponseCode.SUCCESS, CommonCodec.encode(topicPublishInfo));
     }
 
     private static class BrokerDataIndex {

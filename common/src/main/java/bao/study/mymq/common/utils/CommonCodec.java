@@ -1,7 +1,9 @@
 package bao.study.mymq.common.utils;
 
-import com.alibaba.fastjson.JSON;
 
+import com.google.gson.Gson;
+
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -10,11 +12,15 @@ import java.nio.charset.StandardCharsets;
  */
 public abstract class CommonCodec {
 
+    private static final Gson gson = new Gson();
+
+    private static final Charset charset = StandardCharsets.UTF_8;
+
     public static <T> T decode(byte[] bytes, Class<T> clazz) {
-        return JSON.parseObject(new String(bytes, StandardCharsets.UTF_8), clazz);
+        return gson.fromJson(new String(bytes, charset), clazz);
     }
 
     public static byte[] encode(Object obj) {
-        return JSON.toJSONString(obj).getBytes(StandardCharsets.UTF_8);
+        return gson.toJson(obj).getBytes(charset);
     }
 }
