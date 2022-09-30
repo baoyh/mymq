@@ -22,16 +22,15 @@ public class MessageStoreCodecTest {
         messageStore.setTopic("topic");
         messageStore.setBrokerName("中文名");
         messageStore.setBornHost(new InetSocketAddress(12345));
-        messageStore.setSize(0);
         messageStore.setQueueId(1);
         messageStore.setCommitLogOffset(1000);
         messageStore.setBody(new byte[]{50, 51, 52});
 
-        ByteBuffer buffer = MessageCodec.encode(messageStore);
+        ByteBuffer buffer = MessageStoreCodec.encode(messageStore);
 
         buffer.flip();
 
-        print(Objects.requireNonNull(MessageCodec.decode(buffer)));
+        print(Objects.requireNonNull(MessageStoreCodec.decode(buffer)));
 
     }
 

@@ -1,7 +1,6 @@
 package bao.study.mymq.remoting.common;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**

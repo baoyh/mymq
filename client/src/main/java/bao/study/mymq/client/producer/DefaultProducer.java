@@ -5,6 +5,7 @@ import bao.study.mymq.client.ClientException;
 import bao.study.mymq.common.Constant;
 import bao.study.mymq.common.ServiceState;
 import bao.study.mymq.common.protocol.Message;
+import bao.study.mymq.common.protocol.MessageExt;
 import bao.study.mymq.common.protocol.TopicPublishInfo;
 import bao.study.mymq.common.protocol.broker.BrokerData;
 import bao.study.mymq.common.protocol.message.MessageQueue;
@@ -17,6 +18,7 @@ import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.common.RemotingCommandFactory;
 import bao.study.mymq.remoting.netty.NettyClient;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -106,8 +108,8 @@ public class DefaultProducer extends ClientConfig implements Producer {
             MessageQueue messageQueue = this.selectOneMessageQueue(topic, messageQueueList, lastFailedBrokerName);
 
             try {
-
-                RemotingCommand request = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.SEND_MESSAGE, CommonCodec.encode(message));
+                MessageExt messageExt = createMessageExt(message, messageQueue);
+                RemotingCommand request = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.SEND_MESSAGE, CommonCodec.encode(messageExt));
 
                 String brokerAddress = findBrokerAddress(messageQueue.getBrokerName(), topicPublishInfo);
 
@@ -145,6 +147,15 @@ public class DefaultProducer extends ClientConfig implements Producer {
         }
 
         return sendResult;
+    }
+
+    private MessageExt createMessageExt(Message message, MessageQueue messageQueue) {
+        MessageExt messageExt = new MessageExt();
+        messageExt.setBody(message.getBody());
+        messageExt.setTopic(message.getTopic());
+        messageExt.setBrokerName(messageQueue.getBrokerName());
+        messageExt.setBornTimeStamp(System.currentTimeMillis());
+        return messageExt;
     }
 
     private TopicPublishInfo findTopicPublishInfo(String topic) {

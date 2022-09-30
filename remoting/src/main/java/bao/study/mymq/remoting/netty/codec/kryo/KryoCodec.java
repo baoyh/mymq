@@ -32,6 +32,8 @@ public abstract class KryoCodec {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        // 在头部放入对象大小, 方便在解码时处理粘包问题
         out.writeInt(b.length);
         out.writeBytes(b);
     }
@@ -50,7 +52,7 @@ public abstract class KryoCodec {
                 return null;
             }
 
-            if (in.readableBytes() < dataLength) {
+            if (in.readableBytes() < dataLength) { // 数据还未完全到达
                 in.resetReaderIndex();
                 return null;
             }

@@ -6,6 +6,10 @@ package bao.study.mymq.common;
  */
 public abstract class Constant {
 
+    public static final String MYMQ_HOME_ENV = "MYMQ_HOME";
+
+    public static final String MYMQ_HOME_PROPERTY = "mymq.home";
+
     public static final String ROUTER_ADDRESS_ENV = "ROUTER_ADDRESS";
 
     public static final String ROUTER_ADDRESS_PROPERTY = "mymq.router.address";

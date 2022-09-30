@@ -4,6 +4,7 @@ import bao.study.mymq.remoting.code.RequestCode;
 import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.netty.NettyRequestProcessor;
 import bao.study.mymq.router.routeinfo.RouterInfoManager;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @author baoyh
@@ -14,7 +15,7 @@ public class RouterRequestProcessor implements NettyRequestProcessor {
     RouterInfoManager routerInfoManager = new RouterInfoManager();
 
     @Override
-    public RemotingCommand processRequest(RemotingCommand msg) {
+    public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand msg) {
         int code = msg.getCode();
 
         switch (code) {

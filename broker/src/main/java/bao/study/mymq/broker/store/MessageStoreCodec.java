@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
  * @author baoyh
  * @since 2022/7/15 16:13
  */
-public abstract class MessageCodec {
+public abstract class MessageStoreCodec {
 
     private static final Charset charset = StandardCharsets.UTF_8;
 

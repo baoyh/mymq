@@ -41,7 +41,7 @@ public abstract class NettyAbstract {
         NettyRequestProcessor requestProcessor = requestProcessorTable.get(msg.getCode());
         if (requestProcessor == null) return;
 
-        RemotingCommand response = requestProcessor.processRequest(msg);
+        RemotingCommand response = requestProcessor.processRequest(ctx, msg);
         response.setRequestId(msg.getRequestId());
         response.setRemotingCommandType(RemotingCommandType.RESPONSE);
         ctx.writeAndFlush(response);
