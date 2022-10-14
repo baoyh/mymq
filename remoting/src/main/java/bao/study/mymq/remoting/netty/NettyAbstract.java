@@ -20,8 +20,10 @@ public abstract class NettyAbstract {
 
     protected final Map<Integer, ResponseFuture> responseFutureTable = new ConcurrentHashMap<>();
 
-    public void registerRequestProcessor(int code, NettyRequestProcessor requestProcessor) {
-        requestProcessorTable.putIfAbsent(code, requestProcessor);
+    public void registerRequestProcessor(NettyRequestProcessor requestProcessor, int... codes) {
+        for (int code : codes) {
+            requestProcessorTable.putIfAbsent(code, requestProcessor);
+        }
     }
 
     public void processRemotingCommand(ChannelHandlerContext ctx, RemotingCommand msg) {

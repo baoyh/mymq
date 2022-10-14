@@ -8,5 +8,5 @@ import bao.study.mymq.remoting.netty.NettyRequestProcessor;
  */
 public interface RemotingServer extends Remoting {
 
-    void registerRequestProcessor(int code, NettyRequestProcessor requestProcessor);
+    void registerRequestProcessor(NettyRequestProcessor requestProcessor, int... codes);
 }

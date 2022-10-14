@@ -1,5 +1,6 @@
 package bao.study.mymq.broker;
 
+import bao.study.mymq.broker.processor.ConsumerManageProcessor;
 import bao.study.mymq.broker.processor.SendMessageProcessor;
 import bao.study.mymq.common.Constant;
 import bao.study.mymq.common.protocol.body.RegisterBrokerBody;
@@ -52,7 +53,7 @@ public class BrokerStartup {
     }
 
     private static void registerRequestProcessor(RemotingServer remotingServer) {
-        SendMessageProcessor sendMessageProcessor = new SendMessageProcessor();
-        remotingServer.registerRequestProcessor(RequestCode.SEND_MESSAGE, sendMessageProcessor);
+        remotingServer.registerRequestProcessor(new SendMessageProcessor(), RequestCode.SEND_MESSAGE);
+        remotingServer.registerRequestProcessor(new ConsumerManageProcessor(), RequestCode.QUERY_CONSUMER_OFFSET);
     }
 }

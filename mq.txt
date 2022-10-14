@@ -1,0 +1,53 @@
+1. 消费者如何知道自己的消费进度，也就是从哪里开始消费
+
+Consumer 类中存在一个 offset 字段，记录此 Consumer 消费的位置，定时去 pull 消息。当本地的 offset 小于 brokerOffset 时表示有新消息进来
+
+2. 如何防止消费者重启从而导致本地 offset 丢失
+
+改进 1 的解决方案，将 offset 保存到 broker 中，以 Map<consumer-group-name，offset> 的格式，集群中的每个 broker 都需要保存，且消费之后需要同步更新
+
+3. 同一个 group 中的消费如何保证不重复消费，也就是一条消息同时被同组的多个消费者消费的情况
+
+在计算更新 offset 的时候加锁，一个 group 一个锁，为了细化锁的粒度，引入 queue，group + queue 提供并发度
+
+4. 消费锁如何设计
+
+引入 consumequeue，用于保存 group 中每个 queue 在 CommitLog 中的位置，可以理解为是 queueIndex，里面的每条信息都是等大小的，比如设计为 {group,queue,offsetincommitlog}
+
+在 broker 中保存 Map<group+queue，num> 用于作为 consumequeue 文件的索引，同时保存 Map<group+queue，offset> 表示当前已消费的偏移，当 offset < num 时表示还可以继续消费
+
+num 数在消息进入后需要实时更新
+
+5. 同组下多个消费者和一个消费者的消费方式有何区别
+
+本质没区别，消费者会定时的不断的从每一个 queue 中取消息，也就是会从 broker 信息那得知总共有多少个 queue，然后循环取数据
+
+
+
+rocketmq 中如何解决上面的问题
+
+1. 关于 offset
+
+在 Consumer 端 BrokerRemoteOffsetStore{groupName,mQClientFactory,ConcurrentMap<MessageQueue, AtomicLong>} offsetStore, AtomicLong 中存放了 offset
+
+Consumer 端的 fetchConsumeOffsetFromBroker(MessageQueue mq) 方法会远程调用 Broker, Header 类型为 QUERY_CONSUMER_OFFSET
+
+Broker 端 ConcurrentMap<String/* topic@group */, ConcurrentMap<Integer, Long>> offsetTable, 其中 ConcurrentMap 为 queueId -> offset
+
+可以认为 offsetTable 存放了当前消费进度的 offset, 当 offset 小于 ConsumeQueue(之后会提到) 中的 offset 时表示有新的消息
+
+2. 关于消费过程设计
+
+在 Consumer 端 MQClientAPIImpl.pullMessage 拉取消息, 在 Broker 端通过 DefaultMessageStore.getMessage 获取消息
+
+Broker 端的 ConcurrentMap<String/* topic */, ConcurrentMap<Integer/* queueId */, ConsumeQueue>> consumeQueueTable 对象存放了每个 Queue 在 CommitLog 文件中的索引
+
+因为同一个 Topic 在 CommitLog 中不一定是连续的, ConsumeQueue 通过记录消息在 CommitLog 中的位置来避免全文件扫描
+
+这些索引会被存放到 {ROCKET_HOME}/store/consumequeue/{TOPIC}/{QUEUEID} 中
+
+PullMessageProcessor.readGetMessageResult 方法获取需要被消费的消息列表
+
+3. 关于同 group 重复消费
+
+从 1 中可以得知 offsetTable 是线程安全的, 所以只需要在
