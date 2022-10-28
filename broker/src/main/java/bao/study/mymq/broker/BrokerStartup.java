@@ -1,5 +1,6 @@
 package bao.study.mymq.broker;
 
+import bao.study.mymq.broker.manager.ConsumerOffsetManager;
 import bao.study.mymq.broker.processor.ConsumerManageProcessor;
 import bao.study.mymq.broker.processor.SendMessageProcessor;
 import bao.study.mymq.common.Constant;
@@ -21,16 +22,26 @@ import java.util.HashSet;
  */
 public class BrokerStartup {
 
+    private static RemotingServer remotingServer;
+
+    private static RemotingClient remotingClient;
+
+    private static BrokerController brokerController;
+
     public static void main(String[] args) {
 
         try {
+
             int port = 10910;
-            RemotingServer remotingServer = new NettyServer(port);
-            registerRequestProcessor(remotingServer);
+            remotingServer = new NettyServer(port);
             remotingServer.start();
 
-            RemotingClient remotingClient = new NettyClient();
+            remotingClient = new NettyClient();
             remotingClient.start();
+
+            initialize();
+
+            registerRequestProcessor();
 
             HashSet<String> set = new HashSet<>();
             set.add("topic1");
@@ -52,8 +63,28 @@ public class BrokerStartup {
         }
     }
 
-    private static void registerRequestProcessor(RemotingServer remotingServer) {
-        remotingServer.registerRequestProcessor(new SendMessageProcessor(), RequestCode.SEND_MESSAGE);
-        remotingServer.registerRequestProcessor(new ConsumerManageProcessor(), RequestCode.QUERY_CONSUMER_OFFSET);
+    private static void initialize() {
+        ConsumerOffsetManager consumerOffsetManager = new ConsumerOffsetManager();
+        brokerController = new BrokerController(consumerOffsetManager);
+
+        boolean initialize = brokerController.initialize();
+        if (!initialize) {
+            shutdown();
+            System.exit(1);
+        }
+
+        registerRequestProcessor();
     }
+
+    private static void shutdown() {
+        remotingServer.shutdown();
+        remotingClient.shutdown();
+    }
+
+    private static void registerRequestProcessor() {
+        remotingServer.registerRequestProcessor(new SendMessageProcessor(), RequestCode.SEND_MESSAGE);
+        remotingServer.registerRequestProcessor(new ConsumerManageProcessor(brokerController), RequestCode.QUERY_CONSUMER_OFFSET);
+    }
+
+
 }

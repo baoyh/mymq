@@ -4,22 +4,14 @@ package bao.study.mymq.common.protocol;
  * @author baoyh
  * @since 2022/8/30 16:27
  */
-public class MessageExt {
-
-    private String topic;
+public class MessageExt extends Message {
 
     private String brokerName;
 
     private long bornTimeStamp;
 
-    private byte[] body;
-
-    public String getTopic() {
-        return topic;
-    }
-
-    public void setTopic(String topic) {
-        this.topic = topic;
+    public MessageExt() {
+        super();
     }
 
     public String getBrokerName() {
@@ -36,13 +28,5 @@ public class MessageExt {
 
     public void setBornTimeStamp(long bornTimeStamp) {
         this.bornTimeStamp = bornTimeStamp;
-    }
-
-    public byte[] getBody() {
-        return body;
-    }
-
-    public void setBody(byte[] body) {
-        this.body = body;
     }
 }

@@ -15,6 +15,9 @@ public class Message {
         this.body = body;
     }
 
+    public Message() {
+    }
+
     public String getTopic() {
         return topic;
     }

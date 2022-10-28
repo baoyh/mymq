@@ -28,13 +28,15 @@ rocketmq 中如何解决上面的问题
 
 1. 关于 offset
 
-在 Consumer 端 BrokerRemoteOffsetStore{groupName,mQClientFactory,ConcurrentMap<MessageQueue, AtomicLong>} offsetStore, AtomicLong 中存放了 offset
+在 Consumer 端 RemoteBrokerOffsetStore{groupName,mQClientFactory,ConcurrentMap<MessageQueue, AtomicLong>} offsetStore, AtomicLong 中存放了 offset
 
 Consumer 端的 fetchConsumeOffsetFromBroker(MessageQueue mq) 方法会远程调用 Broker, Header 类型为 QUERY_CONSUMER_OFFSET
 
 Broker 端 ConcurrentMap<String/* topic@group */, ConcurrentMap<Integer, Long>> offsetTable, 其中 ConcurrentMap 为 queueId -> offset
 
 可以认为 offsetTable 存放了当前消费进度的 offset, 当 offset 小于 ConsumeQueue(之后会提到) 中的 offset 时表示有新的消息
+
+offsetTable 从 {ROCKET_HOME}/store/config/consumerOffset.json 中初始化
 
 2. 关于消费过程设计
 
@@ -50,4 +52,12 @@ PullMessageProcessor.readGetMessageResult 方法获取需要被消费的消息�
 
 3. 关于同 group 重复消费
 
-从 1 中可以得知 offsetTable 是线程安全的, 所以只需要在
+当消费者模式为 CLUSTERING 时才会去处理此问题, rocketmq 并没有在 broker 端进行加锁, 而是在 Consumer 端做负载均衡
+
+RebalanceImpl.rebalanceByTopic 层层往下会进到 MQClientAPIImpl.getConsumerIdListByGroup(groupName), 然后远程调用 Broker 获取到同 groupName 下的所有 consumerIdList
+
+AbstractAllocateMessageQueueStrategy.allocate 会去做分配, 比如 AllocateMessageQueueAveragely 会将 queueId 均分给每个 consumer, queueId 不同就不会导致消费冲突
+
+顺带一提, consumerIdList 就是消费者的 clientIdList, clientId 默认为 IP@PID#Time, 会在 Consumer 启动时发送心跳给 Broker, Broker 则会将信息存放到 consumerTable 中
+
+

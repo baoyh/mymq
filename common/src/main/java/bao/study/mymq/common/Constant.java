@@ -17,4 +17,8 @@ public abstract class Constant {
     public static final String CLIENT_NAME_PROPERTY = "mymq.client.name";
 
     public static final long MASTER_ID = 0L;
+
+    /* broker */
+
+    public static final String TOPIC_GROUP_SEPARATOR = "@";
 }

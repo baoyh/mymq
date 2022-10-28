@@ -20,7 +20,15 @@ public abstract class CommonCodec {
         return gson.fromJson(new String(bytes, charset), clazz);
     }
 
+    public static <T> T decode(String json, Class<T> clazz) {
+        return gson.fromJson(json, clazz);
+    }
+
     public static byte[] encode(Object obj) {
         return gson.toJson(obj).getBytes(charset);
+    }
+
+    public static String encode2String(Object obj) {
+        return gson.toJson(obj);
     }
 }

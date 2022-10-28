@@ -1,24 +1,20 @@
 package bao.study.mymq.client.producer;
 
-import bao.study.mymq.client.ClientConfig;
+import bao.study.mymq.client.Client;
 import bao.study.mymq.client.ClientException;
 import bao.study.mymq.common.Constant;
-import bao.study.mymq.common.ServiceState;
 import bao.study.mymq.common.protocol.Message;
 import bao.study.mymq.common.protocol.MessageExt;
 import bao.study.mymq.common.protocol.TopicPublishInfo;
 import bao.study.mymq.common.protocol.broker.BrokerData;
 import bao.study.mymq.common.protocol.message.MessageQueue;
 import bao.study.mymq.common.utils.CommonCodec;
-import bao.study.mymq.remoting.RemotingClient;
 import bao.study.mymq.remoting.RemotingMode;
 import bao.study.mymq.remoting.code.RequestCode;
 import bao.study.mymq.remoting.code.ResponseCode;
 import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.common.RemotingCommandFactory;
-import bao.study.mymq.remoting.netty.NettyClient;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -27,9 +23,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * @author baoyh
  * @since 2022/8/2 14:05
  */
-public class DefaultProducer extends ClientConfig implements Producer {
-
-    private final RemotingClient remotingClient = new NettyClient();
+public class DefaultProducer extends Client implements Producer {
 
     private final Set<DefaultProducer> producerSet = new CopyOnWriteArraySet<>();
 
@@ -39,54 +33,28 @@ public class DefaultProducer extends ClientConfig implements Producer {
 
     private final ThreadLocal<Map<String /* topic */, Integer /* count */>> sendWhichQueue = ThreadLocal.withInitial(HashMap::new);
 
-    private ServiceState serviceState = ServiceState.JUST_START;
-
     private long sendMessageTimeOut = 300 * 1000;
 
     private int sendMessageRetryTimes = 3;
 
     @Override
-    public void start() {
-        switch (serviceState) {
-            case JUST_START:
-                doStart();
-                break;
-            case START_FAIL:
-                throw new ClientException("client start fail");
-            default:
-                break;
-        }
-
-    }
-
-    private void doStart() {
-        try {
-            remotingClient.start();
-            producerSet.add(this);
-            serviceState = ServiceState.RUNNING;
-
-        } catch (Exception e) {
-            serviceState = ServiceState.START_FAIL;
-            throw new ClientException("client start fail", e);
-        }
-
+    protected void doStart() {
+        producerSet.add(this);
     }
 
     @Override
-    public void shutdown() {
-        serviceState = ServiceState.SHUTDOWN;
+    public void doShutdown() {
         producerSet.remove(this);
-        remotingClient.shutdown();
     }
 
     @Override
     public SendResult send(Message message) {
-        return doSend(message, RemotingMode.SYNC, null);
+        return sendImpl(message, RemotingMode.SYNC, null);
     }
 
     @Override
     public void send(Message message, SendCallback sendCallback) {
-        doSend(message, RemotingMode.ASYNC, sendCallback);
+        sendImpl(message, RemotingMode.ASYNC, sendCallback);
     }
 
     @Override
@@ -94,7 +62,7 @@ public class DefaultProducer extends ClientConfig implements Producer {
 
     }
 
-    private SendResult doSend(Message message, RemotingMode remotingMode, SendCallback sendCallback) {
+    private SendResult sendImpl(Message message, RemotingMode remotingMode, SendCallback sendCallback) {
 
         SendResult sendResult = new SendResult();
 

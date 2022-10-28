@@ -8,10 +8,6 @@ import bao.study.mymq.common.protocol.Message;
  */
 public interface Producer {
 
-    void start() throws InterruptedException;
-
-    void shutdown();
-
     SendResult send(final Message message);
 
     void send(final Message message, final SendCallback sendCallback);
