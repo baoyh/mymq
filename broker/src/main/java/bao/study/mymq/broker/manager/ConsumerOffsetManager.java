@@ -13,15 +13,15 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class ConsumerOffsetManager extends ConfigManager {
 
-    private ConcurrentMap<String/* topic@group */, ConcurrentMap<Integer/* queueId */, Long/* offset */>> offsetTable = new ConcurrentHashMap<>();
+    private ConcurrentMap<String/* topic@group */, ConcurrentMap<Integer/* queueId */, Long/* offset */>> consumedOffset = new ConcurrentHashMap<>();
 
-    public ConcurrentMap<String, ConcurrentMap<Integer, Long>> getOffsetTable() {
-        return offsetTable;
+    public ConcurrentMap<String, ConcurrentMap<Integer, Long>> getConsumedOffset() {
+        return consumedOffset;
     }
 
     public void updateOffsetTable(String topic, String group, Integer queueId, Long offset) {
         String key = topic + Constant.TOPIC_GROUP_SEPARATOR + group;
-        offsetTable.getOrDefault(key, new ConcurrentHashMap<>()).put(queueId, offset);
+        consumedOffset.getOrDefault(key, new ConcurrentHashMap<>()).put(queueId, offset);
     }
 
     @Override
@@ -32,7 +32,7 @@ public class ConsumerOffsetManager extends ConfigManager {
     @Override
     public void decode(String json) {
         ConsumerOffsetManager decode = CommonCodec.decode(json, ConsumerOffsetManager.class);
-        this.offsetTable = decode.offsetTable;
+        this.consumedOffset = decode.consumedOffset;
     }
 
     @Override
