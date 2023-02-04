@@ -1,6 +1,6 @@
 package bao.study.mymq.common.protocol.body;
 
-import java.util.Set;
+import java.util.Map;
 
 /**
  * @author baoyh
@@ -16,7 +16,7 @@ public class RegisterBrokerBody {
 
     private String brokerAddress;
 
-    private Set<String> topics;
+    private Map<String /* topic */, Integer /* queueNums */> topics;
 
     public String getBrokerName() {
         return brokerName;
@@ -50,11 +50,11 @@ public class RegisterBrokerBody {
         this.brokerAddress = brokerAddress;
     }
 
-    public Set<String> getTopics() {
+    public Map<String, Integer> getTopics() {
         return topics;
     }
 
-    public void setTopics(Set<String> topics) {
+    public void setTopics(Map<String, Integer> topics) {
         this.topics = topics;
     }
 

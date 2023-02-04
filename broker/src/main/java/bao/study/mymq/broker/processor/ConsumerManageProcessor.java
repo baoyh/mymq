@@ -36,7 +36,7 @@ public class ConsumerManageProcessor implements NettyRequestProcessor {
 
     private RemotingCommand queryBrokerOffset(RemotingCommand msg) {
         QueryConsumerOffsetBody body = CommonCodec.decode(msg.getBody(), QueryConsumerOffsetBody.class);
-        Long offset = brokerController.getConsumerOffsetManager().getConsumedOffset().get(body.getTopic() + Constant.TOPIC_GROUP_SEPARATOR + body.getGroup()).get(body.getQueueId());
+        Long offset = brokerController.getConsumerOffsetManager().getConsumedOffset().get(body.getTopic() + Constant.TOPIC_SEPARATOR + body.getGroup()).get(body.getQueueId());
         return RemotingCommandFactory.createResponseRemotingCommand(SUCCESS, String.valueOf(offset).getBytes());
     }
 }

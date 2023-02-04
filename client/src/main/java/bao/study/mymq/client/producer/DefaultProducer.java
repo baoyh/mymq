@@ -1,5 +1,6 @@
 package bao.study.mymq.client.producer;
 
+import bao.study.mymq.client.BrokerInstance;
 import bao.study.mymq.client.Client;
 import bao.study.mymq.client.ClientException;
 import bao.study.mymq.common.Constant;
@@ -25,9 +26,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 public class DefaultProducer extends Client implements Producer {
 
-    private final Set<DefaultProducer> producerSet = new CopyOnWriteArraySet<>();
+    private final BrokerInstance brokerInstance = new BrokerInstance();
 
-    private final Map<String /* topic */, TopicPublishInfo> topicPublishInfoTable = new ConcurrentHashMap<>();
+    private final Set<DefaultProducer> producerSet = new CopyOnWriteArraySet<>();
 
     private final Map<String /* brokerName */, String /* address */> brokerAddressTable = new ConcurrentHashMap<>();
 
@@ -67,7 +68,7 @@ public class DefaultProducer extends Client implements Producer {
         SendResult sendResult = new SendResult();
 
         String topic = message.getTopic();
-        TopicPublishInfo topicPublishInfo = findTopicPublishInfo(topic);
+        TopicPublishInfo topicPublishInfo = brokerInstance.findTopicPublishInfo(topic, this);
         List<MessageQueue> messageQueueList = topicPublishInfo.getMessageQueueList();
 
         String lastFailedBrokerName = null;
@@ -124,20 +125,6 @@ public class DefaultProducer extends Client implements Producer {
         messageExt.setBrokerName(messageQueue.getBrokerName());
         messageExt.setBornTimeStamp(System.currentTimeMillis());
         return messageExt;
-    }
-
-    private TopicPublishInfo findTopicPublishInfo(String topic) {
-
-        if (topicPublishInfoTable.containsKey(topic)) {
-            return topicPublishInfoTable.get(topic);
-        }
-
-        RemotingCommand request = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.GET_ROUTE_BY_TOPIC, CommonCodec.encode(topic));
-        RemotingCommand response = remotingClient.invokeSync(this.getRouterAddress(), request, sendMessageTimeOut);
-
-        TopicPublishInfo topicPublishInfo = CommonCodec.decode(response.getBody(), TopicPublishInfo.class);
-        topicPublishInfoTable.put(topic, topicPublishInfo);
-        return topicPublishInfo;
     }
 
     private MessageQueue selectOneMessageQueue(String topic, List<MessageQueue> messageQueueList, String lastFailedBrokerName) {

@@ -14,7 +14,8 @@ import bao.study.mymq.remoting.common.RemotingCommandFactory;
 import bao.study.mymq.remoting.netty.NettyClient;
 import bao.study.mymq.remoting.netty.NettyServer;
 
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author baoyh
@@ -43,16 +44,16 @@ public class BrokerStartup {
 
             registerRequestProcessor();
 
-            HashSet<String> set = new HashSet<>();
-            set.add("topic1");
-            set.add("topic2");
+            Map<String, Integer> topics = new HashMap<>();
+            topics.put("topic1", 4);
+            topics.put("topic2", 4);
 
             RegisterBrokerBody master = new RegisterBrokerBody();
             master.setBrokerId(Constant.MASTER_ID);
             master.setBrokerName("broker1");
             master.setClusterName("cluster1");
             master.setBrokerAddress("172.18.45.13:" + port);
-            master.setTopics(set);
+            master.setTopics(topics);
             RemotingCommand remotingCommand = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.REGISTER_BROKER, CommonCodec.encode(master));
 
             remotingClient.invokeOneway("localhost:9875", remotingCommand, 3000);

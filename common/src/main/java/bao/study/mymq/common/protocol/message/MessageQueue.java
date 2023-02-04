@@ -10,9 +10,12 @@ public class MessageQueue {
 
     private String topic;
 
-    public MessageQueue(String brokerName, String topic) {
+    private int queueId;
+
+    public MessageQueue(String brokerName, String topic, int queueId) {
         this.brokerName = brokerName;
         this.topic = topic;
+        this.queueId = queueId;
     }
 
     public String getBrokerName() {
@@ -31,4 +34,11 @@ public class MessageQueue {
         this.topic = topic;
     }
 
+    public int getQueueId() {
+        return queueId;
+    }
+
+    public void setQueueId(int queueId) {
+        this.queueId = queueId;
+    }
 }

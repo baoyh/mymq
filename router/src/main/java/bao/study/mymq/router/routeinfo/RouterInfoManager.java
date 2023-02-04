@@ -39,7 +39,7 @@ public class RouterInfoManager {
     }
 
     private void registerTopic(RegisterBrokerBody body) {
-        Set<String> topics = body.getTopics();
+        Set<String> topics = body.getTopics().keySet();
 
         try {
             lock.lock();
@@ -69,8 +69,10 @@ public class RouterInfoManager {
 
                 if (brokerId == Constant.MASTER_ID) {
                     List<MessageQueue> messageQueueList = topicPublishInfo.getMessageQueueList();
-                    MessageQueue messageQueue = new MessageQueue(brokerName, topic);
-                    messageQueueList.add(messageQueue);
+                    for (int i = 0; i < body.getTopics().get(topic); i++) {
+                        MessageQueue messageQueue = new MessageQueue(brokerName, topic, i);
+                        messageQueueList.add(messageQueue);
+                    }
                 }
 
                 registered.put(index, brokerDataList.size() - 1);

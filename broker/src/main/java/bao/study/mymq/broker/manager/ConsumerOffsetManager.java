@@ -20,7 +20,7 @@ public class ConsumerOffsetManager extends ConfigManager {
     }
 
     public void updateOffsetTable(String topic, String group, Integer queueId, Long offset) {
-        String key = topic + Constant.TOPIC_GROUP_SEPARATOR + group;
+        String key = topic + Constant.TOPIC_SEPARATOR + group;
         consumedOffset.getOrDefault(key, new ConcurrentHashMap<>()).put(queueId, offset);
     }
 
