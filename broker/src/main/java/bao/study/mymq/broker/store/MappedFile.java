@@ -54,7 +54,7 @@ public class MappedFile {
     /**
      * 数据会先放入 writeBuffer, 再之后刷盘时放入 mappedByteBuffer
      */
-    private ByteBuffer writeBuffer = null;
+    private ByteBuffer writeBuffer;
 
     /**
      * 文件通道
@@ -78,6 +78,14 @@ public class MappedFile {
         fileFromOffset = Long.parseLong(file.getName());
 
         try {
+            if (!file.exists()) {
+                file.getParentFile().mkdir();
+                try {
+                    file.createNewFile();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
             fileChannel = new RandomAccessFile(file, "rw").getChannel();
             mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, fileSize);
         } catch (IOException e) {

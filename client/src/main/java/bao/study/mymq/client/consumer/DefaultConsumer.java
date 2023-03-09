@@ -2,7 +2,6 @@ package bao.study.mymq.client.consumer;
 
 import bao.study.mymq.client.BrokerInstance;
 import bao.study.mymq.client.Client;
-import bao.study.mymq.common.Constant;
 import bao.study.mymq.common.protocol.MessageExt;
 import bao.study.mymq.common.protocol.TopicPublishInfo;
 import bao.study.mymq.common.protocol.body.PullMessageBody;
@@ -31,11 +30,11 @@ public class DefaultConsumer extends Client implements Consumer {
 
     private final BrokerInstance brokerInstance = new BrokerInstance();
 
-    private final ThreadLocal<Map<String /*brokerName*/, Integer /* brokerIdIndex */>> consumerWhichBroker = ThreadLocal.withInitial(HashMap::new);
+    private final ThreadLocal<Map<String /* brokerName */, Integer /* brokerIdIndex */>> consumerWhichBroker = ThreadLocal.withInitial(HashMap::new);
 
-    private final Map<String /*brokerName*/, Map<Long, String> /* address */> brokerTable = new ConcurrentHashMap<>();
+    private final Map<String /* brokerName */, Map<Long, String> /* address */> brokerTable = new ConcurrentHashMap<>();
 
-    private final Map<String /*brokerName*/, List<Long> /* brokerIds */> brokerIdTable = new ConcurrentHashMap<>();
+    private final Map<String /* brokerName */, List<Long> /* brokerIds */> brokerIdTable = new ConcurrentHashMap<>();
 
     private long consumeTimeout = 3 * 1000L;
 
@@ -56,6 +55,10 @@ public class DefaultConsumer extends Client implements Consumer {
     @Override
     protected void doShutdown() {
 
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
     }
 
     @Override
@@ -95,10 +98,9 @@ public class DefaultConsumer extends Client implements Consumer {
             index = 0;
         }
 
-        Map<Long, String> addressMap = brokerTable.get(brokerName);
         List<Long> slaves = brokerIdTable.get(brokerName);
         Long brokerId = slaves.get(index);
-        String address = addressMap.get(brokerId);
+        String address = brokerTable.get(brokerName).get(brokerId);
 
         index++;
         if (index == slaves.size()) {
@@ -123,7 +125,4 @@ public class DefaultConsumer extends Client implements Consumer {
         }
     }
 
-    public void setGroup(String group) {
-        this.group = group;
-    }
 }

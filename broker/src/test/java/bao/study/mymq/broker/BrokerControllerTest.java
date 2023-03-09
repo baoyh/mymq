@@ -12,8 +12,8 @@ import bao.study.mymq.remoting.netty.NettyServer;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author baoyh
@@ -25,7 +25,7 @@ public class BrokerControllerTest {
     RemotingServer remotingServer = new NettyServer(1234);
 
     @Before
-    public void before() throws InterruptedException {
+    public void before() {
         remotingClient.start();
         remotingServer.start();
     }
@@ -37,7 +37,10 @@ public class BrokerControllerTest {
         master.setBrokerName("broker1");
         master.setClusterName("cluster1");
         master.setBrokerAddress("172.18.1.1:8080");
-        master.setTopics(new HashSet<>(Arrays.asList("topic1", "topic2")));
+        Map<String, Integer> topics = new HashMap<>();
+        topics.put("topic1", 4);
+        topics.put("topic2", 4);
+        master.setTopics(topics);
         RemotingCommand remotingCommand = new RemotingCommand();
         remotingCommand.setCode(RequestCode.REGISTER_BROKER);
         remotingCommand.setBody(CommonCodec.encode(master));
@@ -47,7 +50,7 @@ public class BrokerControllerTest {
         slave.setBrokerName("broker1");
         slave.setClusterName("cluster1");
         slave.setBrokerAddress("172.18.1.1:8081");
-        slave.setTopics(new HashSet<>(Arrays.asList("topic1", "topic2")));
+        slave.setTopics(topics);
         RemotingCommand remotingCommand2 = new RemotingCommand();
         remotingCommand2.setCode(RequestCode.REGISTER_BROKER);
         remotingCommand2.setBody(CommonCodec.encode(slave));
@@ -57,7 +60,7 @@ public class BrokerControllerTest {
         broker2.setBrokerName("broker2");
         broker2.setClusterName("cluster1");
         broker2.setBrokerAddress("172.18.1.1:8090");
-        broker2.setTopics(new HashSet<>(Arrays.asList("topic1", "topic2")));
+        broker2.setTopics(topics);
         RemotingCommand remotingCommand3 = new RemotingCommand();
         remotingCommand3.setCode(RequestCode.REGISTER_BROKER);
         remotingCommand3.setBody(CommonCodec.encode(broker2));

@@ -51,7 +51,7 @@ public class MessageStoreConfig {
     }
 
     public String getCommitLogFirstName() {
-        return "00000000000000000000";
+        return "00000000";
     }
 
     public int getCommitLogFileSize() {

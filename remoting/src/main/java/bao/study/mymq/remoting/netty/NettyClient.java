@@ -123,7 +123,6 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, RemotingCommand msg) {
-            log.info("[Remote] : " + ctx.channel().remoteAddress() + ", [RemotingCommand] : " + msg);
             processRemotingCommand(ctx, msg);
         }
     }

@@ -2,6 +2,7 @@ package bao.study.mymq.broker.processor;
 
 import bao.study.mymq.broker.BrokerController;
 import bao.study.mymq.common.Constant;
+import bao.study.mymq.common.protocol.body.PullMessageBody;
 import bao.study.mymq.common.protocol.body.QueryConsumerOffsetBody;
 import bao.study.mymq.common.utils.CommonCodec;
 import bao.study.mymq.remoting.common.RemotingCommand;
@@ -9,8 +10,8 @@ import bao.study.mymq.remoting.common.RemotingCommandFactory;
 import bao.study.mymq.remoting.netty.NettyRequestProcessor;
 import io.netty.channel.ChannelHandlerContext;
 
-import static bao.study.mymq.remoting.code.RequestCode.QUERY_CONSUMER_OFFSET;
-import static bao.study.mymq.remoting.code.ResponseCode.SUCCESS;
+import static bao.study.mymq.remoting.code.RequestCode.*;
+import static bao.study.mymq.remoting.code.ResponseCode.*;
 
 /**
  * @author baoyh
@@ -29,6 +30,8 @@ public class ConsumerManageProcessor implements NettyRequestProcessor {
         switch (msg.getCode()) {
             case QUERY_CONSUMER_OFFSET:
                 return queryBrokerOffset(msg);
+            case PULL_MESSAGE:
+                return pullMessage(msg);
             default:
                 return null;
         }
@@ -38,5 +41,11 @@ public class ConsumerManageProcessor implements NettyRequestProcessor {
         QueryConsumerOffsetBody body = CommonCodec.decode(msg.getBody(), QueryConsumerOffsetBody.class);
         Long offset = brokerController.getConsumerOffsetManager().getConsumedOffset().get(body.getTopic() + Constant.TOPIC_SEPARATOR + body.getGroup()).get(body.getQueueId());
         return RemotingCommandFactory.createResponseRemotingCommand(SUCCESS, String.valueOf(offset).getBytes());
+    }
+
+    private RemotingCommand pullMessage(RemotingCommand msg) {
+        PullMessageBody body = CommonCodec.decode(msg.getBody(), PullMessageBody.class);
+
+        return null;
     }
 }
