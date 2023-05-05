@@ -15,6 +15,8 @@ import bao.study.mymq.remoting.code.RequestCode;
 import bao.study.mymq.remoting.code.ResponseCode;
 import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.common.RemotingCommandFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +27,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * @since 2022/8/2 14:05
  */
 public class DefaultProducer extends Client implements Producer {
+
+    private static final Logger log = LoggerFactory.getLogger(DefaultProducer.class);
 
     private final BrokerInstance brokerInstance = new BrokerInstance();
 
@@ -110,6 +114,7 @@ public class DefaultProducer extends Client implements Producer {
                 break;
 
             } catch (Exception e) {
+                log.error("Connect to broker " + messageQueue.getBrokerName() + " fail", e);
                 lastFailedBrokerName = messageQueue.getBrokerName();
             }
 
@@ -144,6 +149,11 @@ public class DefaultProducer extends Client implements Producer {
                 copyMessageQueueList.add(messageQueue);
             }
         }
+        // 处理只有一个 broker 的情况
+        if (copyMessageQueueList.isEmpty()) {
+            copyMessageQueueList = messageQueueList;
+        }
+
         return selectOneMessageQueue(topic, copyMessageQueueList);
     }
 

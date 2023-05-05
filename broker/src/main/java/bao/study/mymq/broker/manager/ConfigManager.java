@@ -27,7 +27,7 @@ public abstract class ConfigManager {
                 return true;
             }
         } catch (Exception e) {
-            log.error("load file " + file.getName() + " fail");
+            log.error("Load file " + file.getName() + " fail", e);
         }
         return false;
     }

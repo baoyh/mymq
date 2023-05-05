@@ -10,6 +10,8 @@ import bao.study.mymq.remoting.common.RemotingCommandFactory;
 import bao.study.mymq.remoting.netty.NettyRequestProcessor;
 import io.netty.channel.ChannelHandlerContext;
 
+import java.util.concurrent.ConcurrentMap;
+
 import static bao.study.mymq.remoting.code.RequestCode.*;
 import static bao.study.mymq.remoting.code.ResponseCode.*;
 
@@ -45,7 +47,11 @@ public class ConsumerManageProcessor implements NettyRequestProcessor {
 
     private RemotingCommand pullMessage(RemotingCommand msg) {
         PullMessageBody body = CommonCodec.decode(msg.getBody(), PullMessageBody.class);
-
+        ConcurrentMap<String, ConcurrentMap<Integer, Long>> consumedOffset = brokerController.getConsumerOffsetManager().getConsumedOffset();
+        ConcurrentMap<Integer, Long> offsetTable = consumedOffset.get(body.getTopic() + Constant.TOPIC_SEPARATOR + body.getGroup());
+        if (offsetTable != null) {
+            Long offset = offsetTable.get(body.getQueueId());
+        }
         return null;
     }
 }

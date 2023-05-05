@@ -36,6 +36,6 @@ public class ProducerClient {
             }
         });
 
-//        producer.shutdown();
+        producer.shutdown();
     }
 }

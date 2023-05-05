@@ -3,7 +3,6 @@ package bao.study.mymq.broker;
 import bao.study.mymq.broker.manager.ConsumerOffsetManager;
 import bao.study.mymq.broker.processor.ConsumerManageProcessor;
 import bao.study.mymq.broker.processor.SendMessageProcessor;
-import bao.study.mymq.common.Constant;
 import bao.study.mymq.common.protocol.body.RegisterBrokerBody;
 import bao.study.mymq.common.utils.CommonCodec;
 import bao.study.mymq.remoting.RemotingClient;
@@ -24,9 +23,9 @@ import java.util.Map;
  * @author baoyh
  * @since 2022/5/24 11:24
  */
-public class BrokerStartup {
+public class BrokerSlaveStartup {
 
-    private static final Logger log = LoggerFactory.getLogger(BrokerStartup.class);
+    private static final Logger log = LoggerFactory.getLogger(BrokerSlaveStartup.class);
 
     private static RemotingServer remotingServer;
 
@@ -38,7 +37,7 @@ public class BrokerStartup {
 
         try {
 
-            int port = 10910;
+            int port = 10911;
             remotingServer = new NettyServer(port);
             remotingServer.start();
 
@@ -54,7 +53,7 @@ public class BrokerStartup {
             topics.put("topic2", 4);
 
             RegisterBrokerBody master = new RegisterBrokerBody();
-            master.setBrokerId(Constant.MASTER_ID);
+            master.setBrokerId(1);
             master.setBrokerName("broker1");
             master.setClusterName("cluster1");
             master.setBrokerAddress(RemotingUtil.getLocalAddress() + ":" + port);
