@@ -12,13 +12,13 @@
 
    3.2 将 Topic 、Group、Queue 发送给选出的 Broker 进行消费
 
-   3.3 Broker 端存放了 <topic@group, <queueId, offset >> consumerOffsetTable 用于存放 Consumer 已经消费过的最新偏移和 <topic,<queueId, offset >> offsetTable 用于存放存储端最新消息的偏移
+   3.3 Broker 端存放了 <topic@group, <queueId, offset >> consumerOffsetTable 用于存放 Consumer 已经消费过的最新偏移
 
-   3.4 Broker 端通过 consumerOffsetTable 和 offsetTable 找到需要开始消费的 offset
+   3.4 根据 offset 从  ConsumeQueue 取出 CommitLog Offset
 
-   3.5 根据 offset 从  ConsumerQueue 取出 CommitLog Offset
+   3.5 根据 CommitLog Offset 从 CommitLog 中取出消息然后返回给 Consumer
 
-   3.6 根据 CommitLog Offset 从 CommitLog 中取出消息然后返回给 Consumer
+   3.6 重复 3.4-3.5 直到读取到 ConsumeQueue 文件的末尾, 将所有需要消费的数据都取出
 
    3.7 Consumer 接收到消息后回调 MessageListener 中设置好的方法
 

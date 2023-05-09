@@ -39,4 +39,5 @@ public class ConsumerOffsetManager extends ConfigManager {
     public String configFilePath() {
         return BrokerConfigHelper.consumerOffsetConfigPath();
     }
+
 }

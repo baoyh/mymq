@@ -176,7 +176,7 @@ public class DefaultProducer extends Client implements Producer {
             }
         }
 
-        throw new ClientException("can not find the address with broker [" + brokerName + "]");
+        throw new ClientException("Cannot find the broker [" + brokerName + "] address");
     }
 
     public void setSendMessageTimeOut(long sendMessageTimeOut) {

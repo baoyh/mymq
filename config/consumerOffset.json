@@ -1,8 +1,1 @@
-{
-	"offsetTable":{
-		"TopicTest@please_rename_unique_group_name_1":{0:0,1:0,2:0,3:0
-		},
-		"TopicTest@please_rename_unique_group_name_4":{0:0,1:0,2:0,3:0
-		}
-	}
-}
+{"consumedOffset":{"TopicTest@please_rename_unique_group_name_1":{"0":0,"1":0,"2":0,"3":0},"TopicTest@please_rename_unique_group_name_4":{"0":0,"1":0,"2":0,"3":0}}}

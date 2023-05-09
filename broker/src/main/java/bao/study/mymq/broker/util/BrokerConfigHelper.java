@@ -17,4 +17,8 @@ public abstract class BrokerConfigHelper {
     public static String consumerOffsetConfigPath() {
         return CONFIG_PATH + File.separator + "consumerOffset.json";
     }
+
+    public static String consumerQueueConfigPath() {
+        return CONFIG_PATH + File.separator + "consumeQueue.json";
+    }
 }
