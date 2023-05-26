@@ -36,7 +36,8 @@ public class CommitLog {
 
     public void read() {
         MappedFile mappedFile = latestMappedFile();
-        mappedFile.read();
+        MessageStore messageStore = MessageStoreCodec.decode(mappedFile.read(0, 74));
+        System.out.println(messageStore);
     }
 
 }

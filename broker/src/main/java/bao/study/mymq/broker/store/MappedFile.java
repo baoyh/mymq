@@ -19,7 +19,7 @@ public class MappedFile {
     /**
      * 当前文件的写指针
      */
-    private final AtomicInteger wrotePosition = new AtomicInteger(0);
+    final AtomicInteger wrotePosition = new AtomicInteger(0);
 
     /**
      * 当前文件的提交指针
@@ -34,17 +34,17 @@ public class MappedFile {
     /**
      * 文件名
      */
-    private final String fileName;
+    final String fileName;
 
     /**
      * 文件大小
      */
-    private final int fileSize;
+    final long fileSize;
 
     /**
      * 文件初始偏移量
      */
-    private final long fileFromOffset;
+    long fileFromOffset;
 
     /**
      * 物理文件
@@ -133,12 +133,13 @@ public class MappedFile {
         }
     }
 
-    public void read() {
+    public ByteBuffer read(int position, int limit) {
         ByteBuffer byteBuffer = writeBuffer != null ? writeBuffer.slice() : mappedByteBuffer.slice();
-        byteBuffer.position(0);
-        byteBuffer.limit(74);
-
-        MessageStore messageStore = MessageStoreCodec.decode(byteBuffer);
-        System.out.println(messageStore);
+        byteBuffer.position(position);
+        byteBuffer.limit(limit);
+        return byteBuffer;
     }
+
+
+
 }

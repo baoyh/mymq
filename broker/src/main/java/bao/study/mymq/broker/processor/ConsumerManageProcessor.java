@@ -51,6 +51,7 @@ public class ConsumerManageProcessor implements NettyRequestProcessor {
         ConcurrentMap<Integer, Long> offsetTable = consumedOffset.get(body.getTopic() + Constant.TOPIC_SEPARATOR + body.getGroup());
         if (offsetTable != null) {
             Long offset = offsetTable.get(body.getQueueId());
+
         }
         return null;
     }
