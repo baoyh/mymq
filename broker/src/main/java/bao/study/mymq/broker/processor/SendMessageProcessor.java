@@ -1,7 +1,7 @@
 package bao.study.mymq.broker.processor;
 
-import bao.study.mymq.broker.config.MessageStoreConfig;
-import bao.study.mymq.broker.store.CommitLog;
+import bao.study.mymq.broker.BrokerController;
+import bao.study.mymq.broker.store.ConsumeQueueOffset;
 import bao.study.mymq.broker.store.MessageStore;
 import bao.study.mymq.common.protocol.MessageExt;
 import bao.study.mymq.common.utils.CommonCodec;
@@ -24,14 +24,19 @@ public class SendMessageProcessor implements NettyRequestProcessor {
 
     private static final Logger log = LoggerFactory.getLogger(SendMessageProcessor.class);
 
-    CommitLog commitLog = new CommitLog(new MessageStoreConfig());
+    private final BrokerController brokerController;
+
+    public SendMessageProcessor(BrokerController brokerController) {
+        this.brokerController = brokerController;
+    }
 
     @Override
     public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand msg) {
         MessageExt messageExt = CommonCodec.decode(msg.getBody(), MessageExt.class);
         MessageStore messageStore = createMessageStore(messageExt, ctx);
 
-        commitLog.appendMessage(messageStore);
+        ConsumeQueueOffset offset = brokerController.getCommitLog().appendMessage(messageStore);
+//        brokerController.getConsumeQueueManager().updateConsumeQueueTable(messageExt.getTopic());
 
         msg.setRemotingCommandType(RemotingCommandType.RESPONSE);
         msg.setCode(ResponseCode.SUCCESS);

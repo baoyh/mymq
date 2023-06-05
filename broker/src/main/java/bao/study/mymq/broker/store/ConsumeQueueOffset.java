@@ -9,31 +9,34 @@ public class ConsumeQueueOffset {
     /**
      * commitlog offset
      */
-    private Long offset;
+    private long offset;
 
     /**
      * message size
      */
-    private Integer size;
+    private int size;
 
-    public Long getOffset() {
+    public long getOffset() {
         return offset;
     }
 
-    public void setOffset(Long offset) {
+    public void setOffset(long offset) {
         this.offset = offset;
     }
 
-    public Integer getSize() {
+    public int getSize() {
         return size;
     }
 
-    public void setSize(Integer size) {
+    public void setSize(int size) {
         this.size = size;
     }
 
-    public ConsumeQueueOffset(Long offset, Integer size) {
+    public ConsumeQueueOffset(long offset, int size) {
         this.offset = offset;
         this.size = size;
+    }
+
+    public ConsumeQueueOffset() {
     }
 }

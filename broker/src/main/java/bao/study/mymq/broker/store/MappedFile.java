@@ -44,7 +44,7 @@ public class MappedFile {
     /**
      * 文件初始偏移量
      */
-    long fileFromOffset;
+    public long fileFromOffset;
 
     /**
      * 物理文件
@@ -71,7 +71,7 @@ public class MappedFile {
      */
     private volatile long storeTimestamp = 0;
 
-    public MappedFile(final String fileName, final int fileSize) {
+    public MappedFile(final String fileName, final long fileSize) {
         this.fileName = fileName;
         this.fileSize = fileSize;
         this.file = new File(fileName);
@@ -94,9 +94,12 @@ public class MappedFile {
 
     }
 
-    public void appendMessage(MessageStore messageStore) {
+    public ConsumeQueueOffset appendMessage(MessageStore messageStore) {
         ByteBuffer byteBuffer = writeBuffer != null ? writeBuffer.slice() : mappedByteBuffer.slice();
         byteBuffer.position(wrotePosition.get());
+
+        ConsumeQueueOffset offset = new ConsumeQueueOffset();
+        offset.setOffset(wrotePosition.get());
 
         messageStore.setCommitLogOffset(wrotePosition.get());
         ByteBuffer messageBuffer = MessageStoreCodec.encode(messageStore);
@@ -106,8 +109,9 @@ public class MappedFile {
         messageBuffer.flip();
         int size = messageBuffer.getInt();
         wrotePosition.addAndGet(size);
+        offset.setSize(size);
 
-        commit();
+        return offset;
     }
 
     public void commit() {
@@ -139,7 +143,5 @@ public class MappedFile {
         byteBuffer.limit(limit);
         return byteBuffer;
     }
-
-
 
 }

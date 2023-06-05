@@ -14,7 +14,7 @@ public class MessageStoreConfig {
 
     private String commitLogPath;
 
-    private int commitLogFileSize = 1024 * 1024;
+    private long commitLogFileSize = 1024 * 1024;
 
     private String consumerQueuePath;
 
@@ -54,7 +54,7 @@ public class MessageStoreConfig {
         return "00000000";
     }
 
-    public int getCommitLogFileSize() {
+    public long getCommitLogFileSize() {
         return commitLogFileSize;
     }
 

@@ -1,6 +1,7 @@
 package bao.study.mymq.broker.store;
 
 import bao.study.mymq.broker.config.MessageStoreConfig;
+import bao.study.mymq.broker.util.MappedFileHelper;
 
 import java.io.File;
 import java.util.List;
@@ -29,15 +30,16 @@ public class CommitLog {
         return mappedFileList.get(mappedFileList.size() - 1);
     }
 
-    public void appendMessage(MessageStore messageStore) {
+    public ConsumeQueueOffset appendMessage(MessageStore messageStore) {
         MappedFile mappedFile = latestMappedFile();
-        mappedFile.appendMessage(messageStore);
+        return mappedFile.appendMessage(messageStore);
     }
 
-    public void read() {
-        MappedFile mappedFile = latestMappedFile();
-        MessageStore messageStore = MessageStoreCodec.decode(mappedFile.read(0, 74));
-        System.out.println(messageStore);
+    public MessageStore read(long offset, int size) {
+        MappedFile mappedFile = MappedFileHelper.find(offset, mappedFileList);
+        assert mappedFile != null;
+        return MessageStoreCodec.decode(mappedFile.read((int)(offset - mappedFile.fileFromOffset), size));
     }
+
 
 }

@@ -1,6 +1,6 @@
 package bao.study.mymq.broker.manager;
 
-import bao.study.mymq.broker.util.BrokerConfigHelper;
+import bao.study.mymq.broker.util.BrokerConfig;
 import bao.study.mymq.common.Constant;
 import bao.study.mymq.common.utils.CommonCodec;
 
@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author baoyh
  * @since 2022/10/25 17:15
  */
-public class ConsumerOffsetManager extends ConfigManager {
+public class ConsumeOffsetManager extends ConfigManager {
 
     private ConcurrentMap<String/* topic@group */, ConcurrentMap<Integer/* queueId */, Long/* offset */>> consumedOffset = new ConcurrentHashMap<>();
 
@@ -19,7 +19,7 @@ public class ConsumerOffsetManager extends ConfigManager {
         return consumedOffset;
     }
 
-    public void updateOffsetTable(String topic, String group, Integer queueId, Long offset) {
+    public void updateConsumedOffset(String topic, String group, Integer queueId, Long offset) {
         String key = topic + Constant.TOPIC_SEPARATOR + group;
         consumedOffset.getOrDefault(key, new ConcurrentHashMap<>()).put(queueId, offset);
     }
@@ -31,13 +31,13 @@ public class ConsumerOffsetManager extends ConfigManager {
 
     @Override
     public void decode(String json) {
-        ConsumerOffsetManager decode = CommonCodec.decode(json, ConsumerOffsetManager.class);
+        ConsumeOffsetManager decode = CommonCodec.decode(json, ConsumeOffsetManager.class);
         this.consumedOffset = decode.consumedOffset;
     }
 
     @Override
     public String configFilePath() {
-        return BrokerConfigHelper.consumerOffsetConfigPath();
+        return BrokerConfig.consumerOffsetConfigPath();
     }
 
 }

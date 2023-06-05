@@ -1,10 +1,10 @@
 package bao.study.mymq.broker.store;
 
-import bao.study.mymq.broker.BrokerException;
+import bao.study.mymq.broker.util.MappedFileHelper;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * ConsumeQueue 用于提高消费的速度, 作用是充当消息在 CommitLog 中的索引
@@ -18,28 +18,28 @@ public class ConsumeQueue {
 
     private String topic;
 
-    private Integer queue;
+    private int queue;
 
-    private Integer size = 8 + 4;
+    private final int size = 8 + 4;
 
-    private List<MappedFile> mappedFileList = new CopyOnWriteArrayList<>();
+    private List<MappedFile> mappedFileList;
+
+    public ConsumeQueue(String topic, int queue, List<MappedFile> mappedFileList) {
+        this.topic = topic;
+        this.queue = queue;
+        this.mappedFileList = mappedFileList;
+    }
 
     public List<ConsumeQueueOffset> pullMessage(long consumedOffset) {
+        List<ConsumeQueueOffset> offsets = new ArrayList<>();
         long offset = consumedOffset * size;
-        MappedFile mappedFile = findMappedFile(offset);
+        MappedFile mappedFile = MappedFileHelper.find(offset, mappedFileList);
         while (mappedFile.wrotePosition.get() > offset - mappedFile.fileFromOffset) {
             ByteBuffer read = mappedFile.read((int) offset, size);
-            ConsumeQueueOffset consumeQueueOffset = ConsumeQueueOffsetCodec.decode(read);
+            offsets.add(ConsumeQueueOffsetCodec.decode(read));
         }
-        return null;
+        return offsets;
     }
 
-    private MappedFile findMappedFile(long offset) {
-        for (int i = 0; i < mappedFileList.size(); i++) {
-            if (mappedFileList.get(i).fileFromOffset > offset) {
-                return mappedFileList.get(Math.max((i - 1), 0));
-            }
-        }
-        throw new BrokerException("Cannot find the mapped file by offset [" + offset + "]");
-    }
+
 }
