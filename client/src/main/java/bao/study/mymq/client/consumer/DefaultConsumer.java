@@ -2,6 +2,7 @@ package bao.study.mymq.client.consumer;
 
 import bao.study.mymq.client.BrokerInstance;
 import bao.study.mymq.client.Client;
+import bao.study.mymq.common.Constant;
 import bao.study.mymq.common.protocol.MessageExt;
 import bao.study.mymq.common.protocol.TopicPublishInfo;
 import bao.study.mymq.common.protocol.body.PullMessageBody;
@@ -84,8 +85,10 @@ public class DefaultConsumer extends Client implements Consumer {
         String address = selectOneBroker(messageQueue.getBrokerName());
         remotingClient.invokeAsync(address, remotingCommand, consumeTimeout, responseFuture -> {
             byte[] response = responseFuture.getResponseCommand().getBody();
-            List<MessageExt> messages = CommonCodec.decodeAsList(response, MessageExt.class);
-            messageListener.consumerMessage(messages);
+            if (response != null) {
+                List<MessageExt> messages = CommonCodec.decodeAsList(response, MessageExt.class);
+                messageListener.consumerMessage(messages);
+            }
         });
     }
 
@@ -115,9 +118,13 @@ public class DefaultConsumer extends Client implements Consumer {
             List<Long> brokerIds = new ArrayList<>();
             for (Long brokerId : brokerData.getAddressMap().keySet()) {
                 if (brokerId != 0L) {
-                    // 只有 slave 可以进行消费
+                    // 当存在 slave 时, 只有 slave 可以进行消费
                     brokerIds.add(brokerId);
                 }
+            }
+            if (brokerIds.isEmpty()) {
+                // 当不存在 slave, master 需承担消费
+                brokerIds.add(Constant.MASTER_ID);
             }
             brokerIdTable.put(brokerData.getBrokerName(), brokerIds);
             brokerTable.put(brokerData.getBrokerName(), brokerData.getAddressMap());

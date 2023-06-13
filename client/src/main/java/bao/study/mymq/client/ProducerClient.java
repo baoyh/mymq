@@ -19,7 +19,7 @@ public class ProducerClient {
         producer.setRouterAddress("localhost:9875");
         producer.start();
 
-        SendResult result = producer.send(new Message("topic1", "hello".getBytes(StandardCharsets.UTF_8)));
+        SendResult result = producer.send(new Message("topic1", "hello2".getBytes(StandardCharsets.UTF_8)));
         System.out.println(result);
 
         producer.send(new Message("topic2", "world".getBytes(StandardCharsets.UTF_8)), new SendCallback() {

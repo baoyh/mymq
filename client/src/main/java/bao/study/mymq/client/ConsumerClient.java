@@ -13,7 +13,10 @@ public class ConsumerClient {
         consumer.setRouterAddress("localhost:9875");
         consumer.subscribe("topic1");
         consumer.setGroup("test");
-        consumer.registerMessageListener((messages) -> messages.forEach(System.out::println));
+        consumer.registerMessageListener((messages) -> messages.forEach(it -> {
+            System.out.println(new String(it.getBody()));
+            System.out.println(messages);
+        }));
         consumer.start();
     }
 }

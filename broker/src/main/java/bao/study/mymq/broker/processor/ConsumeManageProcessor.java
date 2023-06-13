@@ -63,7 +63,7 @@ public class ConsumeManageProcessor implements NettyRequestProcessor {
         ConcurrentHashMap<String, ConsumeQueue> consumeQueueTable = brokerController.getConsumeQueueManager().getConsumeQueueTable();
         ConsumeQueue consumeQueue = consumeQueueTable.get(body.getTopic() + Constant.TOPIC_SEPARATOR + body.getQueueId());
         List<MessageExt> messages = new ArrayList<>();
-        if (offsetTable != null) {
+        if (offsetTable != null && consumeQueue != null) {
             List<ConsumeQueueOffset> consumeQueueOffsets = consumeQueue.pullMessage(offsetTable.get(body.getQueueId()));
             if (!consumeQueueOffsets.isEmpty()) {
                 CommitLog commitLog = brokerController.getCommitLog();
@@ -73,7 +73,7 @@ public class ConsumeManageProcessor implements NettyRequestProcessor {
                 }
 
                 consumeOffsetManager.updateConsumedOffset(body.getTopic(), body.getGroup(), body.getQueueId(),
-                        consumeQueueOffsets.get(consumeQueueOffsets.size() - 1).getOffset());
+                        (long) consumeQueueOffsets.size());
             }
         }
 
@@ -90,6 +90,7 @@ public class ConsumeManageProcessor implements NettyRequestProcessor {
         messageExt.setTopic(store.getTopic());
         messageExt.setBody(store.getBody());
         messageExt.setBrokerName(store.getBrokerName());
+        messageExt.setQueueId(store.getQueueId());
         return messageExt;
     }
 }

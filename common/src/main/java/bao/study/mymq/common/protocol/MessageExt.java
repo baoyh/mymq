@@ -8,6 +8,8 @@ public class MessageExt extends Message {
 
     private String brokerName;
 
+    private int queueId;
+
     private long bornTimeStamp;
 
     public MessageExt() {
@@ -28,5 +30,22 @@ public class MessageExt extends Message {
 
     public void setBornTimeStamp(long bornTimeStamp) {
         this.bornTimeStamp = bornTimeStamp;
+    }
+
+    public int getQueueId() {
+        return queueId;
+    }
+
+    public void setQueueId(int queueId) {
+        this.queueId = queueId;
+    }
+
+    @Override
+    public String toString() {
+        return "MessageExt{" +
+                "brokerName='" + brokerName + '\'' +
+                ", queueId=" + queueId +
+                ", bornTimeStamp=" + bornTimeStamp +
+                '}';
     }
 }

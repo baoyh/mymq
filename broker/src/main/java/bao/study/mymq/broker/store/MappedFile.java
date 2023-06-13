@@ -39,12 +39,12 @@ public class MappedFile {
     /**
      * 文件大小
      */
-    final long fileSize;
+    private final long fileSize;
 
     /**
      * 文件初始偏移量
      */
-    public long fileFromOffset;
+    private final long fileFromOffset;
 
     /**
      * 物理文件
@@ -78,8 +78,8 @@ public class MappedFile {
         fileFromOffset = Long.parseLong(file.getName());
 
         try {
-            if (!file.exists()) {
-                file.getParentFile().mkdir();
+            if (!file.getParentFile().exists()) {
+                file.getParentFile().mkdirs();
                 try {
                     file.createNewFile();
                 } catch (IOException e) {
@@ -92,6 +92,12 @@ public class MappedFile {
             e.printStackTrace();
         }
 
+    }
+
+    public MappedFile(final String fileName, final long fileSize, final int committedPosition) {
+        this(fileName, fileSize);
+        this.wrotePosition.set(committedPosition);
+        this.committedPosition.set(committedPosition);
     }
 
     public ConsumeQueueOffset appendMessage(MessageStore messageStore) {
@@ -111,7 +117,24 @@ public class MappedFile {
         wrotePosition.addAndGet(size);
         offset.setSize(size);
 
+        commit();
+
         return offset;
+    }
+
+    public void appendConsumeQueueOffset(ConsumeQueueOffset offset) {
+        ByteBuffer byteBuffer = writeBuffer != null ? writeBuffer.slice() : mappedByteBuffer.slice();
+        byteBuffer.position(wrotePosition.get());
+
+        ByteBuffer messageBuffer = ConsumeQueueOffsetCodec.encode(offset);
+        messageBuffer.flip();
+        byteBuffer.put(messageBuffer);
+
+        messageBuffer.flip();
+        int size = messageBuffer.getInt();
+        wrotePosition.addAndGet(size);
+
+        commit();
     }
 
     public void commit() {
@@ -144,4 +167,19 @@ public class MappedFile {
         return byteBuffer;
     }
 
+    public long getFileSize() {
+        return fileSize;
+    }
+
+    public long getFileFromOffset() {
+        return fileFromOffset;
+    }
+
+    public File getFile() {
+        return file;
+    }
+
+    public AtomicInteger getCommittedPosition() {
+        return committedPosition;
+    }
 }

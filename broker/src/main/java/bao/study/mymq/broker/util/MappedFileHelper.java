@@ -12,9 +12,9 @@ import java.util.List;
 public class MappedFileHelper {
 
     public static MappedFile find(long offset, List<MappedFile> mappedFileList) {
-        for (int i = 0; i < mappedFileList.size(); i++) {
-            if (mappedFileList.get(i).fileFromOffset > offset) {
-                return mappedFileList.get(Math.max((i - 1), 0));
+        for (MappedFile mappedFile : mappedFileList) {
+            if (mappedFile.getFileFromOffset() <= offset && mappedFile.getFileFromOffset() + mappedFile.getFileSize() >= offset) {
+                return mappedFile;
             }
         }
         throw new BrokerException("Cannot find the mapped file by offset [" + offset + "]");

@@ -1,12 +1,10 @@
 package bao.study.mymq.broker.manager;
 
+import bao.study.mymq.broker.BrokerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -18,8 +16,7 @@ public abstract class ConfigManager {
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
     public boolean load() {
-        String filePath = configFilePath();
-        File file = new File(filePath);
+        File file = new File(configFilePath());
         try {
             String fileStr = file2String(file);
             if (fileStr != null) {
@@ -32,9 +29,24 @@ public abstract class ConfigManager {
         return false;
     }
 
-    public abstract String encode();
+    public void commit() {
+        RandomAccessFile file;
+        try {
+            file = new RandomAccessFile(configFilePath(), "rw");
+            file.setLength(0);
+            file.write(encode().getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            log.error("Commit file fail", e);
+        }
+    }
 
-    public abstract void decode(String json);
+    public String encode() {
+        throw new BrokerException("Please rewrite the method");
+    }
+
+    public void decode(String json) {
+        throw new BrokerException("Please rewrite the method");
+    }
 
     public abstract String configFilePath();
 

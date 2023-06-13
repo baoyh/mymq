@@ -1,6 +1,6 @@
 package bao.study.mymq.broker.manager;
 
-import bao.study.mymq.broker.util.BrokerConfig;
+import bao.study.mymq.broker.config.BrokerConfig;
 import bao.study.mymq.common.Constant;
 import bao.study.mymq.common.utils.CommonCodec;
 
@@ -21,7 +21,12 @@ public class ConsumeOffsetManager extends ConfigManager {
 
     public void updateConsumedOffset(String topic, String group, Integer queueId, Long offset) {
         String key = topic + Constant.TOPIC_SEPARATOR + group;
-        consumedOffset.getOrDefault(key, new ConcurrentHashMap<>()).put(queueId, offset);
+        ConcurrentMap<Integer, Long> consumed = consumedOffset.getOrDefault(key, new ConcurrentHashMap<>());
+        offset = offset + consumed.getOrDefault(queueId, 0L);
+        consumed.put(queueId, offset);
+
+        // TODO asynchronous
+        commit();
     }
 
     @Override

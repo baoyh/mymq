@@ -16,13 +16,13 @@ import java.util.List;
  */
 public class ConsumeQueue {
 
-    private String topic;
+    private final String topic;
 
-    private int queue;
+    private final int queue;
 
     private final int size = 8 + 4;
 
-    private List<MappedFile> mappedFileList;
+    private final List<MappedFile> mappedFileList;
 
     public ConsumeQueue(String topic, int queue, List<MappedFile> mappedFileList) {
         this.topic = topic;
@@ -34,12 +34,25 @@ public class ConsumeQueue {
         List<ConsumeQueueOffset> offsets = new ArrayList<>();
         long offset = consumedOffset * size;
         MappedFile mappedFile = MappedFileHelper.find(offset, mappedFileList);
-        while (mappedFile.wrotePosition.get() > offset - mappedFile.fileFromOffset) {
+        long fromOffset = mappedFile.getFileFromOffset();
+        while (offset >= fromOffset && mappedFile.wrotePosition.get() >= offset - fromOffset) {
             ByteBuffer read = mappedFile.read((int) offset, size);
             offsets.add(ConsumeQueueOffsetCodec.decode(read));
+            fromOffset = fromOffset + size;
         }
         return offsets;
     }
 
+    public void append(long offset, int size) {
+        MappedFile mappedFile = MappedFileHelper.find(offset, mappedFileList);
+        mappedFile.appendConsumeQueueOffset(new ConsumeQueueOffset(offset, size));
+    }
 
+    public String getTopic() {
+        return topic;
+    }
+
+    public int getQueue() {
+        return queue;
+    }
 }

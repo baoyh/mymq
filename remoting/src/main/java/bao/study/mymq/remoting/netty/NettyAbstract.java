@@ -55,9 +55,9 @@ public abstract class NettyAbstract {
 
         responseFuture.setResponseCommand(msg);
 
-        if (msg.getCode() != ResponseCode.SUCCESS) {
-            responseFuture.setException(CommonCodec.decode(msg.getBody(), RuntimeException.class));
-        }
+//        if (msg.getCode() != ResponseCode.SUCCESS) {
+//            responseFuture.setException(CommonCodec.decode(msg.getBody(), RuntimeException.class));
+//        }
 
         InvokeCallback invokeCallback = responseFuture.getInvokeCallback();
         if (invokeCallback != null) {
