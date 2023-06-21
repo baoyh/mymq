@@ -50,6 +50,9 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
 
     @Override
     public void shutdown() {
+        channelTables.forEach((k, v) -> v.close().addListener(future ->
+                log.info("CloseChannel: close the connection to remote address[{}] result: {}", RemotingHelper.parseChannelRemoteAddr(v),
+                        future.isSuccess())));
         this.channelTables.clear();
         this.eventLoopGroupWorker.shutdownGracefully();
     }

@@ -22,12 +22,16 @@ public class BrokerConfig {
         return configRootPath;
     }
 
-    public static String consumerOffsetConfigPath() {
-        return CONFIG_PATH + File.separator + "consumerOffset.json";
+    public static String consumeQueueOffsetConfigPath() {
+        return CONFIG_PATH + File.separator + "consumequeueOffset.json";
     }
 
     public static String commitlogConfigPath() {
         return CONFIG_PATH + File.separator + "commitlog.json";
+    }
+
+    public static String consumeQueueConfigPath() {
+        return CONFIG_PATH + File.separator + "consumequeue.json";
     }
 
 }

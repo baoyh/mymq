@@ -21,7 +21,7 @@ public class CommitLog {
     }
 
     public MappedFile latestMappedFile() {
-        return mappedFileList.get(mappedFileList.size() - 1);
+        return MappedFileHelper.latestMappedFile(mappedFileList);
     }
 
     public ConsumeQueueOffset appendMessage(MessageStore messageStore) {

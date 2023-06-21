@@ -8,10 +8,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
+ * 对于 ConsumeQueue 的相关缓存管理
+ *
  * @author baoyh
  * @since 2022/10/25 17:15
  */
-public class ConsumeOffsetManager extends ConfigManager {
+public class ConsumeQueueOffsetManager extends ConfigManager {
 
     private ConcurrentMap<String/* topic@group */, ConcurrentMap<Integer/* queueId */, Long/* offset */>> consumedOffset = new ConcurrentHashMap<>();
 
@@ -36,13 +38,13 @@ public class ConsumeOffsetManager extends ConfigManager {
 
     @Override
     public void decode(String json) {
-        ConsumeOffsetManager decode = CommonCodec.decode(json, ConsumeOffsetManager.class);
+        ConsumeQueueOffsetManager decode = CommonCodec.decode(json, ConsumeQueueOffsetManager.class);
         this.consumedOffset = decode.consumedOffset;
     }
 
     @Override
     public String configFilePath() {
-        return BrokerConfig.consumerOffsetConfigPath();
+        return BrokerConfig.consumeQueueOffsetConfigPath();
     }
 
 }

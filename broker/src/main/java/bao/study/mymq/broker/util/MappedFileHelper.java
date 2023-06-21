@@ -11,6 +11,11 @@ import java.util.List;
  */
 public class MappedFileHelper {
 
+    public static MappedFile latestMappedFile(List<MappedFile> mappedFileList) {
+        if (mappedFileList.isEmpty()) throw new BrokerException("MappedFile cannot empty");
+        return mappedFileList.get(mappedFileList.size() - 1);
+    }
+
     public static MappedFile find(long offset, List<MappedFile> mappedFileList) {
         for (MappedFile mappedFile : mappedFileList) {
             if (mappedFile.getFileFromOffset() <= offset && mappedFile.getFileFromOffset() + mappedFile.getFileSize() >= offset) {

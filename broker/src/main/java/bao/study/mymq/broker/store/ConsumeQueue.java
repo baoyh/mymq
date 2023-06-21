@@ -1,5 +1,6 @@
 package bao.study.mymq.broker.store;
 
+import bao.study.mymq.broker.config.ConsumeQueueConfig;
 import bao.study.mymq.broker.util.MappedFileHelper;
 
 import java.nio.ByteBuffer;
@@ -22,12 +23,13 @@ public class ConsumeQueue {
 
     private final int size = 8 + 4;
 
-    private final List<MappedFile> mappedFileList;
+    private String lastFileName;
 
-    public ConsumeQueue(String topic, int queue, List<MappedFile> mappedFileList) {
+    private List<MappedFile> mappedFileList;
+
+    public ConsumeQueue(String topic, int queue) {
         this.topic = topic;
         this.queue = queue;
-        this.mappedFileList = mappedFileList;
     }
 
     public List<ConsumeQueueOffset> pullMessage(long consumedOffset) {
@@ -48,6 +50,10 @@ public class ConsumeQueue {
         mappedFile.appendConsumeQueueOffset(new ConsumeQueueOffset(offset, size));
     }
 
+    public String getLastFileName() {
+        return String.valueOf(MappedFileHelper.latestMappedFile(mappedFileList).getFileFromOffset());
+    }
+
     public String getTopic() {
         return topic;
     }
@@ -55,4 +61,9 @@ public class ConsumeQueue {
     public int getQueue() {
         return queue;
     }
+
+    public void setMappedFileList(List<MappedFile> mappedFileList) {
+        this.mappedFileList = mappedFileList;
+    }
+
 }

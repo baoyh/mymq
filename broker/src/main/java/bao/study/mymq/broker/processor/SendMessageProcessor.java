@@ -38,7 +38,7 @@ public class SendMessageProcessor implements NettyRequestProcessor {
         ConsumeQueueOffset offset = brokerController.getCommitLog().appendMessage(messageStore);
 
         brokerController.getCommitLogManager().updateCommittedTable();
-        brokerController.getConsumeQueueManager().updateConsumeQueueTable(messageExt.getTopic(), messageExt.getQueueId(), offset.getOffset(), offset.getSize());
+        brokerController.getConsumeQueueManager().updateConsumeQueue(messageExt.getTopic(), messageExt.getQueueId(), offset.getOffset(), offset.getSize());
 
         msg.setRemotingCommandType(RemotingCommandType.RESPONSE);
         msg.setCode(ResponseCode.SUCCESS);

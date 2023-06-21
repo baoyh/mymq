@@ -1,7 +1,7 @@
 package bao.study.mymq.broker.processor;
 
 import bao.study.mymq.broker.BrokerController;
-import bao.study.mymq.broker.manager.ConsumeOffsetManager;
+import bao.study.mymq.broker.manager.ConsumeQueueOffsetManager;
 import bao.study.mymq.broker.store.CommitLog;
 import bao.study.mymq.broker.store.ConsumeQueue;
 import bao.study.mymq.broker.store.ConsumeQueueOffset;
@@ -56,8 +56,8 @@ public class ConsumeManageProcessor implements NettyRequestProcessor {
 
     private RemotingCommand pullMessage(RemotingCommand msg) {
         PullMessageBody body = CommonCodec.decode(msg.getBody(), PullMessageBody.class);
-        ConsumeOffsetManager consumeOffsetManager = brokerController.getConsumeOffsetManager();
-        ConcurrentMap<String, ConcurrentMap<Integer, Long>> consumedOffset = consumeOffsetManager.getConsumedOffset();
+        ConsumeQueueOffsetManager consumeQueueOffsetManager = brokerController.getConsumeOffsetManager();
+        ConcurrentMap<String, ConcurrentMap<Integer, Long>> consumedOffset = consumeQueueOffsetManager.getConsumedOffset();
         ConcurrentMap<Integer, Long> offsetTable = consumedOffset.get(body.getTopic() + Constant.TOPIC_SEPARATOR + body.getGroup());
 
         ConcurrentHashMap<String, ConsumeQueue> consumeQueueTable = brokerController.getConsumeQueueManager().getConsumeQueueTable();
@@ -72,7 +72,7 @@ public class ConsumeManageProcessor implements NettyRequestProcessor {
                     messages.add(messageStore2MessageExt(read));
                 }
 
-                consumeOffsetManager.updateConsumedOffset(body.getTopic(), body.getGroup(), body.getQueueId(),
+                consumeQueueOffsetManager.updateConsumedOffset(body.getTopic(), body.getGroup(), body.getQueueId(),
                         (long) consumeQueueOffsets.size());
             }
         }

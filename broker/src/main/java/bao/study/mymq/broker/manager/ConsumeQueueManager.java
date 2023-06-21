@@ -1,15 +1,20 @@
 package bao.study.mymq.broker.manager;
 
+import bao.study.mymq.broker.config.BrokerConfig;
 import bao.study.mymq.broker.config.ConsumeQueueConfig;
 import bao.study.mymq.broker.store.ConsumeQueue;
 import bao.study.mymq.broker.store.MappedFile;
 import bao.study.mymq.common.Constant;
+import bao.study.mymq.common.utils.CommonCodec;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author baoyh
@@ -17,49 +22,62 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class ConsumeQueueManager extends ConfigManager {
 
-    private ConsumeQueueConfig consumeQueueConfig;
+    private final ConsumeQueueConfig consumeQueueConfig;
 
-    private final ConcurrentHashMap<String /*topic@queue*/, ConsumeQueue> consumeQueueTable = new ConcurrentHashMap<>();
+    private final transient ConcurrentHashMap<String /*topic@queue*/, ConsumeQueue> consumeQueueTable = new ConcurrentHashMap<>();
+
+    private ConcurrentMap<String /*topic@queue*/, ConcurrentMap<String/* mappedFile name */, AtomicInteger/* committedPosition */>> committedTable;
 
     public ConsumeQueueManager(ConsumeQueueConfig consumeQueueConfig) {
         this.consumeQueueConfig = consumeQueueConfig;
     }
 
-    public void updateConsumeQueueTable(String topic, int queueId, long offset, int size) {
-        ConsumeQueue consumeQueue = consumeQueueTable.get(topic + Constant.TOPIC_SEPARATOR + queueId);
+    public void updateConsumeQueue(String topic, int queueId, long offset, int size) {
+        String key = topic + Constant.TOPIC_SEPARATOR + queueId;
+        ConsumeQueue consumeQueue = consumeQueueTable.get(key);
         if (consumeQueue == null) {
             List<MappedFile> mappedFileList = new CopyOnWriteArrayList<>();
             String fileName = configFilePath() + File.separator + topic + File.separator + queueId + File.separator + consumeQueueConfig.firstName();
             mappedFileList.add(new MappedFile(fileName, consumeQueueConfig.getSize()));
-            consumeQueue = new ConsumeQueue(topic, queueId, mappedFileList);
+            consumeQueue = new ConsumeQueue(topic, queueId);
+            consumeQueue.setMappedFileList(mappedFileList);
         }
 
         consumeQueue.append(offset, size);
+
+        String fileName = consumeQueue.getLastFileName();
+        committedTable.get(key).get(fileName).addAndGet(1);
     }
 
     @Override
     public String encode() {
-        return null;
+        return CommonCodec.encode2String(this);
     }
 
     @Override
     public void decode(String json) {
-
+        ConsumeQueueManager consumeQueueManager = CommonCodec.decode(json.getBytes(StandardCharsets.UTF_8), ConsumeQueueManager.class);
+        this.committedTable = consumeQueueManager.getCommittedTable();
     }
 
     @Override
     public boolean load() {
-        File root = new File(configFilePath());
-        for (File topic : Objects.requireNonNull(root.listFiles())) {
+        super.load();
+        File consumeQueueFile = new File(consumeQueueConfig.getConsumeQueuePath());
+        for (File topic : Objects.requireNonNull(consumeQueueFile.listFiles())) {
             String topicName = topic.getName();
             for (File queue : Objects.requireNonNull(topic.listFiles())) {
                 String queueId = queue.getName();
+                String key = topicName + Constant.TOPIC_SEPARATOR + queueId;
+                ConcurrentMap<String, AtomicInteger> table = committedTable.get(key);
+
                 List<MappedFile> mappedFileList = new CopyOnWriteArrayList<>();
-                for (File index : Objects.requireNonNull(queue.listFiles())) {
-                    mappedFileList.add(new MappedFile(configFilePath() + File.separator + topicName + File.separator + queueId + File.separator + index.getName(),
-                            consumeQueueConfig.getSize()));
-                }
-                consumeQueueTable.put(topicName + Constant.TOPIC_SEPARATOR + queueId, new ConsumeQueue(topicName, Integer.parseInt(queueId), mappedFileList));
+                table.forEach((name, position) -> mappedFileList.add(new MappedFile(consumeQueueConfig.getConsumeQueuePath() + File.separator + topicName + File.separator + queueId + File.separator + name,
+                        consumeQueueConfig.getSize(), position.get())));
+
+                ConsumeQueue consumeQueue = new ConsumeQueue(topicName, Integer.parseInt(queueId));
+                consumeQueue.setMappedFileList(mappedFileList);
+                consumeQueueTable.put(key, consumeQueue);
             }
         }
         return true;
@@ -67,10 +85,14 @@ public class ConsumeQueueManager extends ConfigManager {
 
     @Override
     public String configFilePath() {
-        return consumeQueueConfig.getConsumeQueuePath();
+        return BrokerConfig.consumeQueueConfigPath();
     }
 
     public ConcurrentHashMap<String, ConsumeQueue> getConsumeQueueTable() {
         return consumeQueueTable;
+    }
+
+    public ConcurrentMap<String, ConcurrentMap<String, AtomicInteger>> getCommittedTable() {
+        return committedTable;
     }
 }

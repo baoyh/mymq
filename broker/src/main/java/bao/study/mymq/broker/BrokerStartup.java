@@ -4,7 +4,7 @@ import bao.study.mymq.broker.config.ConsumeQueueConfig;
 import bao.study.mymq.broker.config.MessageStoreConfig;
 import bao.study.mymq.broker.manager.CommitLogManager;
 import bao.study.mymq.broker.manager.ConsumeQueueManager;
-import bao.study.mymq.broker.manager.ConsumeOffsetManager;
+import bao.study.mymq.broker.manager.ConsumeQueueOffsetManager;
 import bao.study.mymq.broker.processor.ConsumeManageProcessor;
 import bao.study.mymq.broker.processor.SendMessageProcessor;
 import bao.study.mymq.broker.store.CommitLog;
@@ -78,10 +78,10 @@ public class BrokerStartup {
     }
 
     private static void initialize() {
-        ConsumeOffsetManager consumeOffsetManager = new ConsumeOffsetManager();
+        ConsumeQueueOffsetManager consumeQueueOffsetManager = new ConsumeQueueOffsetManager();
         ConsumeQueueManager consumeQueueManager = new ConsumeQueueManager(new ConsumeQueueConfig());
         CommitLogManager commitLogManager = new CommitLogManager(new CommitLog(new MessageStoreConfig()));
-        brokerController = new BrokerController(consumeOffsetManager, consumeQueueManager, commitLogManager);
+        brokerController = new BrokerController(consumeQueueOffsetManager, consumeQueueManager, commitLogManager);
 
         boolean initialize = brokerController.initialize();
         if (!initialize) {
