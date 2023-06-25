@@ -47,6 +47,7 @@ public class DefaultConsumer extends Client implements Consumer {
             registerBrokerTable(topicPublishInfo.getBrokerDataList());
 
             List<MessageQueue> messageQueueList = topicPublishInfo.getMessageQueueList();
+
             for (MessageQueue messageQueue : messageQueueList) {
                 pullMessage(messageQueue);
             }

@@ -19,7 +19,7 @@ public class MappedFile {
     /**
      * 当前文件的写指针
      */
-    final AtomicInteger wrotePosition = new AtomicInteger(0);
+    private final AtomicInteger wrotePosition = new AtomicInteger(0);
 
     /**
      * 当前文件的提交指针
@@ -34,7 +34,7 @@ public class MappedFile {
     /**
      * 文件名
      */
-    final String fileName;
+    private final String fileName;
 
     /**
      * 文件大小
@@ -130,9 +130,7 @@ public class MappedFile {
         messageBuffer.flip();
         byteBuffer.put(messageBuffer);
 
-        messageBuffer.flip();
-        int size = messageBuffer.getInt();
-        wrotePosition.addAndGet(size);
+        wrotePosition.addAndGet(messageBuffer.limit());
 
         commit();
     }
@@ -181,5 +179,9 @@ public class MappedFile {
 
     public AtomicInteger getCommittedPosition() {
         return committedPosition;
+    }
+
+    public AtomicInteger getWrotePosition() {
+        return wrotePosition;
     }
 }

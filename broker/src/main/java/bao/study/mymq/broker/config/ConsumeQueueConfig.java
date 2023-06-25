@@ -10,7 +10,7 @@ public class ConsumeQueueConfig extends BrokerConfig {
 
     private String consumeQueuePath;
 
-    private final int size = 1024;
+    private final int size = 12 * 1024;
 
     public String getConsumeQueuePath() {
         if (consumeQueuePath == null) {

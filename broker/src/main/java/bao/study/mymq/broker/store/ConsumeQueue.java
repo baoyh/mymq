@@ -1,6 +1,5 @@
 package bao.study.mymq.broker.store;
 
-import bao.study.mymq.broker.config.ConsumeQueueConfig;
 import bao.study.mymq.broker.util.MappedFileHelper;
 
 import java.nio.ByteBuffer;
@@ -23,8 +22,6 @@ public class ConsumeQueue {
 
     private final int size = 8 + 4;
 
-    private String lastFileName;
-
     private List<MappedFile> mappedFileList;
 
     public ConsumeQueue(String topic, int queue) {
@@ -37,21 +34,23 @@ public class ConsumeQueue {
         long offset = consumedOffset * size;
         MappedFile mappedFile = MappedFileHelper.find(offset, mappedFileList);
         long fromOffset = mappedFile.getFileFromOffset();
-        while (offset >= fromOffset && mappedFile.wrotePosition.get() >= offset - fromOffset) {
-            ByteBuffer read = mappedFile.read((int) offset, size);
+        int position = (int) (offset - fromOffset);
+        while (mappedFile.getWrotePosition().get() > position) {
+            ByteBuffer read = mappedFile.read(position, size);
+            read.flip();
             offsets.add(ConsumeQueueOffsetCodec.decode(read));
-            fromOffset = fromOffset + size;
+            position = position + size;
         }
         return offsets;
     }
 
     public void append(long offset, int size) {
-        MappedFile mappedFile = MappedFileHelper.find(offset, mappedFileList);
+        MappedFile mappedFile = MappedFileHelper.latestMappedFile(mappedFileList);
         mappedFile.appendConsumeQueueOffset(new ConsumeQueueOffset(offset, size));
     }
 
     public String getLastFileName() {
-        return String.valueOf(MappedFileHelper.latestMappedFile(mappedFileList).getFileFromOffset());
+        return MappedFileHelper.latestMappedFile(mappedFileList).getFile().getName();
     }
 
     public String getTopic() {
@@ -66,4 +65,7 @@ public class ConsumeQueue {
         this.mappedFileList = mappedFileList;
     }
 
+    public int getSize() {
+        return size;
+    }
 }

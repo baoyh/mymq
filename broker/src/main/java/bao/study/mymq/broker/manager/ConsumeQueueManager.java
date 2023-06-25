@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ConsumeQueueManager extends ConfigManager {
 
-    private final ConsumeQueueConfig consumeQueueConfig;
+    private final transient ConsumeQueueConfig consumeQueueConfig;
 
     private final transient ConcurrentHashMap<String /*topic@queue*/, ConsumeQueue> consumeQueueTable = new ConcurrentHashMap<>();
 
@@ -46,7 +46,9 @@ public class ConsumeQueueManager extends ConfigManager {
         consumeQueue.append(offset, size);
 
         String fileName = consumeQueue.getLastFileName();
-        committedTable.get(key).get(fileName).addAndGet(1);
+        committedTable.get(key).get(fileName).addAndGet(consumeQueue.getSize());
+
+        commit();
     }
 
     @Override
@@ -69,9 +71,9 @@ public class ConsumeQueueManager extends ConfigManager {
             for (File queue : Objects.requireNonNull(topic.listFiles())) {
                 String queueId = queue.getName();
                 String key = topicName + Constant.TOPIC_SEPARATOR + queueId;
-                ConcurrentMap<String, AtomicInteger> table = committedTable.get(key);
 
                 List<MappedFile> mappedFileList = new CopyOnWriteArrayList<>();
+                ConcurrentMap<String, AtomicInteger> table = committedTable.get(key);
                 table.forEach((name, position) -> mappedFileList.add(new MappedFile(consumeQueueConfig.getConsumeQueuePath() + File.separator + topicName + File.separator + queueId + File.separator + name,
                         consumeQueueConfig.getSize(), position.get())));
 

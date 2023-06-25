@@ -35,3 +35,12 @@
 1. 设计 Queue 的目的主要是为了提高消费的速度。当多个 Consumer 并发消费的时候，为了尽可能的避免两个消费者消费到了同一条数据，需要对整个 consumerOffsetTable 加锁，引入 Queue 之后则可以释放 consumerOffsetTable 锁。为什么说释放这和 RockcetMQ 的设计理念有关，尽可能保证速度的前提下去照顾到重复消费问题，也就是说 RocketMQ 无法做到防止重复消费。RocketMQ 引入 Queue 之后，在 Consumer 端完成 Queue 的负载均衡，这样不同的消费者访问不同的 Queue 就可以使得消费不冲突，避免 Broker 端加锁
 2. consumerOffsetTable 中的 offset 并非是 CommitLog 中消息的 offset，如果是 CommitLog 中的 offset ，那么就还得有个额外的数据结构存放该 Queue 下一条数据的 offset。这里的 offset 指的是在 ConsumerQueue 文件中的第几条数据，ConsumerQueue 存放了消息在 CommitLog 中的偏移，且里面的数据被设计成了定长，所以可以通过 offset 直接定位到数据，然后再定位到 CommitLog 中的偏移去取数据
 3. 设计 ConsumeQueue 的目的是为了提高查询的效率。因为所有的消息都被按顺序放到 CommitLog 文件中，如果要查找特定的消息就需要遍历一遍 CommitLog，要解决就需要引入索引，要避免服务宕机导致索引丢失则需要引入持久化
+
+
+### 疑问点
+
+------
+
+## Consumer 消费消息基于 Pull, 如何保证实时性? 
+
+1. 
