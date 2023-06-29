@@ -158,10 +158,10 @@ public class MappedFile {
         }
     }
 
-    public ByteBuffer read(int position, int limit) {
+    public ByteBuffer read(int position, int size) {
         ByteBuffer byteBuffer = writeBuffer != null ? writeBuffer.slice() : mappedByteBuffer.slice();
         byteBuffer.position(position);
-        byteBuffer.limit(limit);
+        byteBuffer.limit(position + size);
         return byteBuffer;
     }
 

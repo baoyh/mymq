@@ -1,6 +1,5 @@
 package bao.study.mymq.remoting.netty.codec.kryo;
 
-import bao.study.mymq.remoting.common.RemotingCommand;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;

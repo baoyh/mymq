@@ -22,6 +22,8 @@ public class BrokerConfig {
 
     private static final String CONFIG_CONSUMEQUEUE = CONFIG_PATH + File.separator + "consumequeue.json";
 
+    private static final int holdTime = 20 * 1000;
+
     public String getConfigRootPath() {
         String homePath = System.getProperty(Constant.MYMQ_HOME_PROPERTY, System.getenv(Constant.MYMQ_HOME_ENV));
         configRootPath = homePath == null ? configRootPath : homePath + File.separator + "store";
@@ -38,6 +40,10 @@ public class BrokerConfig {
 
     public static String consumeQueueConfigPath() {
         return CONFIG_CONSUMEQUEUE;
+    }
+
+    public static int getHoldTime() {
+        return holdTime;
     }
 
 }

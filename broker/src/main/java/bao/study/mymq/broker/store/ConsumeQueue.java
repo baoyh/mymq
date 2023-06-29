@@ -35,9 +35,8 @@ public class ConsumeQueue {
         MappedFile mappedFile = MappedFileHelper.find(offset, mappedFileList);
         long fromOffset = mappedFile.getFileFromOffset();
         int position = (int) (offset - fromOffset);
-        while (mappedFile.getWrotePosition().get() > position) {
+        while (mappedFile.getWrotePosition().get() >= position + size) {
             ByteBuffer read = mappedFile.read(position, size);
-            read.flip();
             offsets.add(ConsumeQueueOffsetCodec.decode(read));
             position = position + size;
         }

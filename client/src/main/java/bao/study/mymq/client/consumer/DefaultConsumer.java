@@ -3,6 +3,7 @@ package bao.study.mymq.client.consumer;
 import bao.study.mymq.client.BrokerInstance;
 import bao.study.mymq.client.Client;
 import bao.study.mymq.common.Constant;
+import bao.study.mymq.common.ServiceThread;
 import bao.study.mymq.common.protocol.MessageExt;
 import bao.study.mymq.common.protocol.TopicPublishInfo;
 import bao.study.mymq.common.protocol.body.PullMessageBody;
@@ -10,12 +11,14 @@ import bao.study.mymq.common.protocol.broker.BrokerData;
 import bao.study.mymq.common.protocol.message.MessageQueue;
 import bao.study.mymq.common.utils.CommonCodec;
 import bao.study.mymq.remoting.code.RequestCode;
+import bao.study.mymq.remoting.code.ResponseCode;
 import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.common.RemotingCommandFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author baoyh
@@ -37,42 +40,31 @@ public class DefaultConsumer extends Client implements Consumer {
 
     private final Map<String /* brokerName */, List<Long> /* brokerIds */> brokerIdTable = new ConcurrentHashMap<>();
 
-    private long consumeTimeout = 3 * 1000L;
+    private final LinkedBlockingQueue<MessageQueue> pullRequestQueue = new LinkedBlockingQueue<>();
+
+    private final long consumeTimeout = 3 * 1000L;
 
     @Override
     protected void doStart() {
-        for (String topic : topics) {
-            TopicPublishInfo topicPublishInfo = brokerInstance.findTopicPublishInfo(topic, this);
+        init();
+        pull();
+    }
 
+    private void init() {
+
+        for (String topic : topics) {
+
+            TopicPublishInfo topicPublishInfo = brokerInstance.findTopicPublishInfo(topic, this);
             registerBrokerTable(topicPublishInfo.getBrokerDataList());
 
             List<MessageQueue> messageQueueList = topicPublishInfo.getMessageQueueList();
-
-            for (MessageQueue messageQueue : messageQueueList) {
-                pullMessage(messageQueue);
-            }
+            pullRequestQueue.addAll(messageQueueList);
         }
     }
 
-    @Override
-    protected void doShutdown() {
-
-    }
-
-    public void setGroup(String group) {
-        this.group = group;
-    }
-
-    @Override
-    public void subscribe(String topic) {
-        assert topic != null;
-        topics.add(topic);
-    }
-
-    @Override
-    public void registerMessageListener(MessageListener messageListener) {
-        assert messageListener != null;
-        this.messageListener = messageListener;
+    private void pull() {
+        PullMessageService pullMessageService = new PullMessageService();
+        pullMessageService.start();
     }
 
     private void pullMessage(MessageQueue messageQueue) {
@@ -85,11 +77,22 @@ public class DefaultConsumer extends Client implements Consumer {
 
         String address = selectOneBroker(messageQueue.getBrokerName());
         remotingClient.invokeAsync(address, remotingCommand, consumeTimeout, responseFuture -> {
-            byte[] response = responseFuture.getResponseCommand().getBody();
-            if (response != null) {
-                List<MessageExt> messages = CommonCodec.decodeAsList(response, MessageExt.class);
-                messageListener.consumerMessage(messages);
+            RemotingCommand responseCommand = responseFuture.getResponseCommand();
+            switch (responseCommand.getCode()) {
+                case ResponseCode.FOUND_MESSAGE:
+                    byte[] response = responseCommand.getBody();
+                    if (response != null) {
+                        List<MessageExt> messages = CommonCodec.decodeAsList(response, MessageExt.class);
+                        messageListener.consumerMessage(messages);
+                    }
+                    pullRequestQueue.add(messageQueue);
+                    break;
+                case ResponseCode.NOT_FOUND_MESSAGE:
+                    pullRequestQueue.add(messageQueue);
+                default:
+                    break;
             }
+
         });
     }
 
@@ -132,4 +135,44 @@ public class DefaultConsumer extends Client implements Consumer {
         }
     }
 
+    @Override
+    protected void doShutdown() {
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
+    }
+
+    @Override
+    public void subscribe(String topic) {
+        assert topic != null;
+        topics.add(topic);
+    }
+
+    @Override
+    public void registerMessageListener(MessageListener messageListener) {
+        assert messageListener != null;
+        this.messageListener = messageListener;
+    }
+
+
+    class PullMessageService extends ServiceThread {
+
+        @Override
+        public String getServiceName() {
+            return PullMessageService.class.getSimpleName();
+        }
+
+        @Override
+        public void run() {
+            while (!stop) {
+                try {
+                    MessageQueue messageQueue = pullRequestQueue.take();
+                    pullMessage(messageQueue);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 }

@@ -1,10 +1,10 @@
 package bao.study.mymq.remoting.netty;
 
-import bao.study.mymq.common.utils.CommonCodec;
 import bao.study.mymq.remoting.InvokeCallback;
-import bao.study.mymq.remoting.code.ResponseCode;
 import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.common.RemotingCommandType;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 
 import java.util.Map;
@@ -44,9 +44,14 @@ public abstract class NettyAbstract {
         if (requestProcessor == null) return;
 
         RemotingCommand response = requestProcessor.processRequest(ctx, msg);
-        response.setRequestId(msg.getRequestId());
-        response.setRemotingCommandType(RemotingCommandType.RESPONSE);
-        ctx.writeAndFlush(response);
+        if (response != null) {
+            response.setRequestId(msg.getRequestId());
+            response.setRemotingCommandType(RemotingCommandType.RESPONSE);
+            ctx.writeAndFlush(response).addListener(
+                    (ChannelFutureListener) requestProcessor::callback
+            );
+        }
+
     }
 
     public void processResponse(ChannelHandlerContext ctx, RemotingCommand msg) {
@@ -54,10 +59,6 @@ public abstract class NettyAbstract {
         if (responseFuture == null) return;
 
         responseFuture.setResponseCommand(msg);
-
-//        if (msg.getCode() != ResponseCode.SUCCESS) {
-//            responseFuture.setException(CommonCodec.decode(msg.getBody(), RuntimeException.class));
-//        }
 
         InvokeCallback invokeCallback = responseFuture.getInvokeCallback();
         if (invokeCallback != null) {

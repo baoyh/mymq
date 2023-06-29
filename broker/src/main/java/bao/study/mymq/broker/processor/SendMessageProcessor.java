@@ -10,8 +10,6 @@ import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.common.RemotingCommandType;
 import bao.study.mymq.remoting.netty.NettyRequestProcessor;
 import io.netty.channel.ChannelHandlerContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 
@@ -21,8 +19,6 @@ import java.net.InetSocketAddress;
  * @since 2022/8/18 13:53
  */
 public class SendMessageProcessor implements NettyRequestProcessor {
-
-    private static final Logger log = LoggerFactory.getLogger(SendMessageProcessor.class);
 
     private final BrokerController brokerController;
 
@@ -39,6 +35,7 @@ public class SendMessageProcessor implements NettyRequestProcessor {
 
         brokerController.getCommitLogManager().updateCommittedTable();
         brokerController.getConsumeQueueManager().updateConsumeQueue(messageExt.getTopic(), messageExt.getQueueId(), offset.getOffset(), offset.getSize());
+        brokerController.getPullRequestHoldService().wakeupWhenArriving(messageExt.getTopic(), messageExt.getQueueId());
 
         msg.setRemotingCommandType(RemotingCommandType.RESPONSE);
         msg.setCode(ResponseCode.SUCCESS);

@@ -47,9 +47,6 @@ public abstract class MessageStoreCodec {
     public static MessageStore decode(ByteBuffer buffer) {
 
         try {
-            if (buffer.position() != 0) {
-                buffer.position(0);
-            }
 
             MessageStore messageStore = new MessageStore();
 
