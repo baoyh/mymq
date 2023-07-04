@@ -56,7 +56,6 @@ public class PullMessageProcessor implements NettyRequestProcessor {
     @Override
     public void callback(ChannelFuture listener) {
         if (listener.isSuccess()) {
-
         }
     }
 
