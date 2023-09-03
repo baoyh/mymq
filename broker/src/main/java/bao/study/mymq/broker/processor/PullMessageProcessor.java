@@ -48,14 +48,10 @@ public class PullMessageProcessor implements NettyRequestProcessor {
                 return queryBrokerOffset(msg);
             case PULL_MESSAGE:
                 return pullMessage(msg, ctx.channel(), true);
+            case CONSUMER_SEND_MSG_BACK:
+                return sendMessageBack(msg);
             default:
                 return null;
-        }
-    }
-
-    @Override
-    public void callback(ChannelFuture listener) {
-        if (listener.isSuccess()) {
         }
     }
 
@@ -102,6 +98,10 @@ public class PullMessageProcessor implements NettyRequestProcessor {
         } else {
             return RemotingCommandFactory.createResponseRemotingCommand(FOUND_MESSAGE, CommonCodec.encode(messages));
         }
+    }
+
+    private RemotingCommand sendMessageBack(RemotingCommand msg) {
+        return null;
     }
 
     private MessageExt messageStore2MessageExt(MessageStore store) {

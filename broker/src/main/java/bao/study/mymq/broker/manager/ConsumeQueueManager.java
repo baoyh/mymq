@@ -4,6 +4,7 @@ import bao.study.mymq.broker.config.BrokerConfig;
 import bao.study.mymq.broker.config.ConsumeQueueConfig;
 import bao.study.mymq.broker.store.ConsumeQueue;
 import bao.study.mymq.broker.store.MappedFile;
+import bao.study.mymq.broker.util.MessageStoreHelper;
 import bao.study.mymq.common.Constant;
 import bao.study.mymq.common.utils.CommonCodec;
 
@@ -33,7 +34,7 @@ public class ConsumeQueueManager extends ConfigManager {
     }
 
     public void updateConsumeQueue(String topic, int queueId, long offset, int size) {
-        String key = topic + Constant.TOPIC_SEPARATOR + queueId;
+        String key = MessageStoreHelper.createKey(topic, queueId);
         ConsumeQueue consumeQueue = consumeQueueTable.get(key);
         if (consumeQueue == null) {
             List<MappedFile> mappedFileList = new CopyOnWriteArrayList<>();

@@ -13,8 +13,6 @@ public abstract class RequestCode {
 
     public static final int PULL_MESSAGE = 101;
 
-    public static final int QUERY_MESSAGE = 102;
-
 
     /**
      * broker
@@ -30,6 +28,8 @@ public abstract class RequestCode {
     public static final int GET_ROUTE_BY_TOPIC = 300;
 
     public static final int QUERY_CONSUMER_OFFSET = 301;
+
+    public static final int CONSUMER_SEND_MSG_BACK = 302;
 
 
 }
