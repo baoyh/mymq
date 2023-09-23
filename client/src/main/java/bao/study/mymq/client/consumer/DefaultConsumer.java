@@ -7,13 +7,17 @@ import bao.study.mymq.common.ServiceThread;
 import bao.study.mymq.common.protocol.MessageExt;
 import bao.study.mymq.common.protocol.TopicPublishInfo;
 import bao.study.mymq.common.protocol.body.PullMessageBody;
+import bao.study.mymq.common.protocol.body.SendMessageBackBody;
 import bao.study.mymq.common.protocol.broker.BrokerData;
 import bao.study.mymq.common.protocol.message.MessageQueue;
 import bao.study.mymq.common.utils.CommonCodec;
+import bao.study.mymq.remoting.RemotingHelper;
 import bao.study.mymq.remoting.code.RequestCode;
 import bao.study.mymq.remoting.code.ResponseCode;
 import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.common.RemotingCommandFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +29,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @since 2022/10/27 10:39
  */
 public class DefaultConsumer extends Client implements Consumer {
+
+    private static final Logger log = LoggerFactory.getLogger(DefaultConsumer.class);
 
     private String group;
 
@@ -81,19 +87,43 @@ public class DefaultConsumer extends Client implements Consumer {
             switch (responseCommand.getCode()) {
                 case ResponseCode.FOUND_MESSAGE:
                     byte[] response = responseCommand.getBody();
-                    if (response != null) {
-                        List<MessageExt> messages = CommonCodec.decodeAsList(response, MessageExt.class);
-                        messageListener.consumerMessage(messages);
+                    try {
+                        if (response != null) {
+                            List<MessageExt> messages = CommonCodec.decodeAsList(response, MessageExt.class);
+                            RemotingCommand command = sendMessageBack(messageListener.consumerMessage(messages), messages);
+                            remotingClient.invokeSync(address, command, consumeTimeout);
+                        }
+                    } finally {
+                        pullRequestQueue.add(messageQueue);
                     }
-                    pullRequestQueue.add(messageQueue);
+
                     break;
                 case ResponseCode.NOT_FOUND_MESSAGE:
                     pullRequestQueue.add(messageQueue);
+                    break;
                 default:
                     break;
             }
 
         });
+    }
+
+    private RemotingCommand sendMessageBack(ConsumeConcurrentlyStatus consumeConcurrentlyStatus, List<MessageExt> messages) {
+        SendMessageBackBody sendMessageBackBody = new SendMessageBackBody();
+        switch (consumeConcurrentlyStatus) {
+            case RECONSUME_LATER:
+                sendMessageBackBody.setStatus(false);
+                break;
+            case CONSUME_SUCCESS:
+                MessageExt messageExt = messages.stream().max(Comparator.comparingLong(MessageExt::getCommitlogOffset)).get();
+                sendMessageBackBody.setStatus(true);
+                sendMessageBackBody.setCommitlogOffset(messageExt.getCommitlogOffset());
+                sendMessageBackBody.setTopic(messageExt.getTopic());
+                sendMessageBackBody.setQueueId(messageExt.getQueueId());
+                sendMessageBackBody.setSize(messageExt.getSize());
+                break;
+        }
+        return RemotingCommandFactory.createRequestRemotingCommand(RequestCode.CONSUMER_SEND_MSG_BACK, CommonCodec.encode(sendMessageBackBody));
     }
 
     private String selectOneBroker(String brokerName) {
@@ -170,7 +200,7 @@ public class DefaultConsumer extends Client implements Consumer {
                     MessageQueue messageQueue = pullRequestQueue.take();
                     pullMessage(messageQueue);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    log.error(e.getMessage(), e);
                 }
             }
         }

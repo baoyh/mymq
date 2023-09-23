@@ -10,5 +10,5 @@ import java.util.List;
  */
 public interface MessageListener {
 
-    void consumerMessage(List<MessageExt> messages);
+    ConsumeConcurrentlyStatus consumerMessage(List<MessageExt> messages);
 }

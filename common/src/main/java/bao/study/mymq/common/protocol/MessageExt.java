@@ -10,7 +10,11 @@ public class MessageExt extends Message {
 
     private int queueId;
 
+    private long commitlogOffset;
+
     private long bornTimeStamp;
+
+    private int size;
 
     public MessageExt() {
         super();
@@ -38,6 +42,22 @@ public class MessageExt extends Message {
 
     public void setQueueId(int queueId) {
         this.queueId = queueId;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
+    }
+
+    public long getCommitlogOffset() {
+        return commitlogOffset;
+    }
+
+    public void setCommitlogOffset(long commitlogOffset) {
+        this.commitlogOffset = commitlogOffset;
     }
 
     @Override

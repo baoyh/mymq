@@ -1,5 +1,6 @@
 package bao.study.mymq.client;
 
+import bao.study.mymq.client.consumer.ConsumeConcurrentlyStatus;
 import bao.study.mymq.client.consumer.DefaultConsumer;
 
 /**
@@ -13,10 +14,13 @@ public class ConsumerClient {
         consumer.setRouterAddress("localhost:9875");
         consumer.subscribe("topic1");
         consumer.setGroup("test");
-        consumer.registerMessageListener((messages) -> messages.forEach(it -> {
-            System.out.println(new String(it.getBody()));
-            System.out.println(messages);
-        }));
+        consumer.registerMessageListener(messages -> {
+            messages.forEach(it -> {
+                System.out.println(new String(it.getBody()));
+                System.out.println(messages);
+            });
+            return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+        });
         consumer.start();
     }
 }

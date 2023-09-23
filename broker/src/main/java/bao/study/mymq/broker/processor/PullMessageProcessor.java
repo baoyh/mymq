@@ -13,6 +13,7 @@ import bao.study.mymq.common.Constant;
 import bao.study.mymq.common.protocol.MessageExt;
 import bao.study.mymq.common.protocol.body.PullMessageBody;
 import bao.study.mymq.common.protocol.body.QueryConsumerOffsetBody;
+import bao.study.mymq.common.protocol.body.SendMessageBackBody;
 import bao.study.mymq.common.utils.CommonCodec;
 import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.common.RemotingCommandFactory;
@@ -101,6 +102,11 @@ public class PullMessageProcessor implements NettyRequestProcessor {
     }
 
     private RemotingCommand sendMessageBack(RemotingCommand msg) {
+        SendMessageBackBody body = CommonCodec.decode(msg.getBody(), SendMessageBackBody.class);
+        if (body.isStatus()) {
+            // consume success
+            brokerController.getConsumeQueueManager().updateConsumeQueue(body.getTopic(), body.getQueueId(), body.getCommitlogOffset(), body.getSize());
+        }
         return null;
     }
 
