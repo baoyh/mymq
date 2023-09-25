@@ -25,15 +25,30 @@ public class ConsumeQueueManager extends ConfigManager {
 
     private final transient ConsumeQueueConfig consumeQueueConfig;
 
+    // 存放每一个 topic/queue 对应的 ConsumeQueue
     private final transient ConcurrentHashMap<String /*topic@queue*/, ConsumeQueue> consumeQueueTable = new ConcurrentHashMap<>();
 
+    // 存放已经被提交的消息的偏移, 其中包括还未被消费过的部分
     private ConcurrentMap<String /*topic@queue*/, ConcurrentMap<String/* mappedFile name */, AtomicInteger/* committedPosition */>> committedTable;
 
     public ConsumeQueueManager(ConsumeQueueConfig consumeQueueConfig) {
         this.consumeQueueConfig = consumeQueueConfig;
     }
 
-    public void updateConsumeQueue(String topic, int queueId, long offset, int size) {
+    /**
+     * 消费提交后将消息消费偏移落盘
+     */
+    public void updateWhenMessageArriving(String topic, int queueId, long offset, int size) {
+        ConsumeQueue consumeQueue = getOrInitConsumeQueue(topic, queueId);
+        consumeQueue.append(offset, size);
+
+        String fileName = consumeQueue.getLastFileName();
+        committedTable.get(MessageStoreHelper.createKey(topic, queueId)).get(fileName).addAndGet(consumeQueue.getSize());
+
+        commit();
+    }
+
+    private ConsumeQueue getOrInitConsumeQueue(String topic, int queueId) {
         String key = MessageStoreHelper.createKey(topic, queueId);
         ConsumeQueue consumeQueue = consumeQueueTable.get(key);
         if (consumeQueue == null) {
@@ -43,13 +58,7 @@ public class ConsumeQueueManager extends ConfigManager {
             consumeQueue = new ConsumeQueue(topic, queueId);
             consumeQueue.setMappedFileList(mappedFileList);
         }
-
-        consumeQueue.append(offset, size);
-
-        String fileName = consumeQueue.getLastFileName();
-        committedTable.get(key).get(fileName).addAndGet(consumeQueue.getSize());
-
-        commit();
+        return consumeQueue;
     }
 
     @Override

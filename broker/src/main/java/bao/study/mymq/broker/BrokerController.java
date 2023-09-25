@@ -3,7 +3,7 @@ package bao.study.mymq.broker;
 
 import bao.study.mymq.broker.longpolling.PullRequestHoldService;
 import bao.study.mymq.broker.manager.CommitLogManager;
-import bao.study.mymq.broker.manager.ConsumeQueueOffsetManager;
+import bao.study.mymq.broker.manager.ConsumeQueueIndexManager;
 import bao.study.mymq.broker.manager.ConsumeQueueManager;
 import bao.study.mymq.broker.processor.PullMessageProcessor;
 import bao.study.mymq.broker.store.CommitLog;
@@ -14,7 +14,7 @@ import bao.study.mymq.broker.store.CommitLog;
  */
 public class BrokerController {
 
-    private final ConsumeQueueOffsetManager consumeQueueOffsetManager;
+    private final ConsumeQueueIndexManager consumeQueueIndexManager;
 
     private final ConsumeQueueManager consumeQueueManager;
 
@@ -24,8 +24,8 @@ public class BrokerController {
 
     private final PullRequestHoldService pullRequestHoldService;
 
-    public BrokerController(ConsumeQueueOffsetManager consumeQueueOffsetManager, ConsumeQueueManager consumeQueueManager, CommitLogManager commitLogManager) {
-        this.consumeQueueOffsetManager = consumeQueueOffsetManager;
+    public BrokerController(ConsumeQueueIndexManager consumeQueueIndexManager, ConsumeQueueManager consumeQueueManager, CommitLogManager commitLogManager) {
+        this.consumeQueueIndexManager = consumeQueueIndexManager;
         this.consumeQueueManager = consumeQueueManager;
         this.commitLogManager = commitLogManager;
 
@@ -34,7 +34,7 @@ public class BrokerController {
     }
 
     protected boolean initialize() {
-        boolean result = consumeQueueOffsetManager.load();
+        boolean result = consumeQueueIndexManager.load();
         result = result && consumeQueueManager.load();
         result = result && commitLogManager.load();
         return result;
@@ -44,8 +44,8 @@ public class BrokerController {
         pullRequestHoldService.start();
     }
 
-    public ConsumeQueueOffsetManager getConsumeOffsetManager() {
-        return consumeQueueOffsetManager;
+    public ConsumeQueueIndexManager getConsumeOffsetManager() {
+        return consumeQueueIndexManager;
     }
 
     public ConsumeQueueManager getConsumeQueueManager() {

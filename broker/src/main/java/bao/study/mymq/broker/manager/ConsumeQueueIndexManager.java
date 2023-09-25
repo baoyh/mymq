@@ -13,8 +13,9 @@ import java.util.concurrent.ConcurrentMap;
  * @author baoyh
  * @since 2022/10/25 17:15
  */
-public class ConsumeQueueOffsetManager extends ConfigManager {
+public class ConsumeQueueIndexManager extends ConfigManager {
 
+    // 存放每个 topic/group/queueId 中消费完的消息的最新偏移
     private ConcurrentMap<String/* topic@group */, ConcurrentMap<Integer/* queueId */, Long/* offset */>> consumedOffset = new ConcurrentHashMap<>();
 
     public ConcurrentMap<String, ConcurrentMap<Integer, Long>> getConsumedOffset() {
@@ -23,8 +24,8 @@ public class ConsumeQueueOffsetManager extends ConfigManager {
 
     public void updateConsumedOffset(String topic, String group, Integer queueId, Long offset) {
         String key = topic + Constant.TOPIC_SEPARATOR + group;
-        ConcurrentMap<Integer, Long> consumed = consumedOffset.getOrDefault(key, new ConcurrentHashMap<>());
-        offset = offset + consumed.getOrDefault(queueId, 0L);
+        ConcurrentMap<Integer, Long> consumed = consumedOffset.get(key);
+        if (consumed == null) consumed = new ConcurrentHashMap<>();
         consumed.put(queueId, offset);
 
         // TODO asynchronous
@@ -38,7 +39,7 @@ public class ConsumeQueueOffsetManager extends ConfigManager {
 
     @Override
     public void decode(String json) {
-        ConsumeQueueOffsetManager decode = CommonCodec.decode(json, ConsumeQueueOffsetManager.class);
+        ConsumeQueueIndexManager decode = CommonCodec.decode(json, ConsumeQueueIndexManager.class);
         this.consumedOffset = decode.consumedOffset;
     }
 

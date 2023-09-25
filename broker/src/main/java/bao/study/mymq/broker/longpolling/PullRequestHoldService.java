@@ -69,7 +69,7 @@ public class PullRequestHoldService extends ServiceThread {
         }
     }
 
-    public void wakeupWhenArriving(String topic, int queueId) {
+    public void wakeupWhenMessageArriving(String topic, int queueId) {
         CopyOnWriteArrayList<PullRequest> pullRequests = pullRequestTable.get(MessageStoreHelper.createKey(topic, queueId));
         wakeupAll(pullRequests, false);
     }

@@ -3,7 +3,7 @@ package bao.study.mymq.broker.processor;
 import bao.study.mymq.broker.BrokerController;
 import bao.study.mymq.broker.config.BrokerConfig;
 import bao.study.mymq.broker.longpolling.PullRequest;
-import bao.study.mymq.broker.manager.ConsumeQueueOffsetManager;
+import bao.study.mymq.broker.manager.ConsumeQueueIndexManager;
 import bao.study.mymq.broker.store.CommitLog;
 import bao.study.mymq.broker.store.ConsumeQueue;
 import bao.study.mymq.broker.store.ConsumeQueueOffset;
@@ -19,7 +19,6 @@ import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.common.RemotingCommandFactory;
 import bao.study.mymq.remoting.netty.NettyRequestProcessor;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 
 import java.util.ArrayList;
@@ -65,8 +64,8 @@ public class PullMessageProcessor implements NettyRequestProcessor {
     public RemotingCommand pullMessage(RemotingCommand msg, Channel channel, boolean hold) {
 
         PullMessageBody body = CommonCodec.decode(msg.getBody(), PullMessageBody.class);
-        ConsumeQueueOffsetManager consumeQueueOffsetManager = brokerController.getConsumeOffsetManager();
-        ConcurrentMap<String, ConcurrentMap<Integer, Long>> consumedOffset = consumeQueueOffsetManager.getConsumedOffset();
+        ConsumeQueueIndexManager consumeQueueIndexManager = brokerController.getConsumeOffsetManager();
+        ConcurrentMap<String, ConcurrentMap<Integer, Long>> consumedOffset = consumeQueueIndexManager.getConsumedOffset();
         ConcurrentMap<Integer, Long> offsetTable = consumedOffset.get(body.getTopic() + Constant.TOPIC_SEPARATOR + body.getGroup());
 
         String key = MessageStoreHelper.createKey(body.getTopic(), body.getQueueId());
@@ -74,16 +73,18 @@ public class PullMessageProcessor implements NettyRequestProcessor {
         ConsumeQueue consumeQueue = consumeQueueTable.get(key);
         List<MessageExt> messages = new ArrayList<>();
         if (offsetTable != null && consumeQueue != null) {
-            List<ConsumeQueueOffset> consumeQueueOffsets = consumeQueue.pullMessage(offsetTable.get(body.getQueueId()));
+            Long consumedQueueIndexOffset = offsetTable.get(body.getQueueId());
+            List<ConsumeQueueOffset> consumeQueueOffsets = consumeQueue.pullMessage(consumedQueueIndexOffset);
             if (!consumeQueueOffsets.isEmpty()) {
                 CommitLog commitLog = brokerController.getCommitLog();
-                for (ConsumeQueueOffset offset : consumeQueueOffsets) {
+                for (int i = 0; i < consumeQueueOffsets.size(); i++) {
+                    ConsumeQueueOffset offset = consumeQueueOffsets.get(i);
                     MessageStore read = commitLog.read(offset.getOffset(), offset.getSize());
-                    messages.add(messageStore2MessageExt(read));
+                    MessageExt messageExt = messageStore2MessageExt(read);
+                    messageExt.setGroup(body.getGroup());
+                    messageExt.setOffset(consumedQueueIndexOffset + i + 1);
+                    messages.add(messageExt);
                 }
-
-                consumeQueueOffsetManager.updateConsumedOffset(body.getTopic(), body.getGroup(), body.getQueueId(),
-                        (long) consumeQueueOffsets.size());
             }
         }
 
@@ -105,7 +106,8 @@ public class PullMessageProcessor implements NettyRequestProcessor {
         SendMessageBackBody body = CommonCodec.decode(msg.getBody(), SendMessageBackBody.class);
         if (body.isStatus()) {
             // consume success
-            brokerController.getConsumeQueueManager().updateConsumeQueue(body.getTopic(), body.getQueueId(), body.getCommitlogOffset(), body.getSize());
+            brokerController.getConsumeOffsetManager().updateConsumedOffset(body.getTopic(), body.getGroup(), body.getQueueId(),
+                    body.getOffset());
         }
         return null;
     }

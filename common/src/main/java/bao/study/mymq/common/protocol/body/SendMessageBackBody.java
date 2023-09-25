@@ -8,13 +8,14 @@ public class SendMessageBackBody {
 
     private boolean status;
 
+    private String group;
+
     private String topic;
 
     private int queueId;
 
-    private long commitlogOffset;
-
-    private int size;
+    // consume queue index offset
+    private long offset;
 
     public boolean isStatus() {
         return status;
@@ -26,6 +27,14 @@ public class SendMessageBackBody {
 
     public String getTopic() {
         return topic;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
     }
 
     public void setTopic(String topic) {
@@ -40,19 +49,11 @@ public class SendMessageBackBody {
         this.queueId = queueId;
     }
 
-    public long getCommitlogOffset() {
-        return commitlogOffset;
+    public long getOffset() {
+        return offset;
     }
 
-    public void setCommitlogOffset(long commitlogOffset) {
-        this.commitlogOffset = commitlogOffset;
-    }
-
-    public int getSize() {
-        return size;
-    }
-
-    public void setSize(int size) {
-        this.size = size;
+    public void setOffset(long offset) {
+        this.offset = offset;
     }
 }

@@ -3,8 +3,7 @@ package bao.study.mymq.broker.store;
 import bao.study.mymq.broker.util.MappedFileHelper;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * ConsumeQueue 用于提高消费的速度, 作用是充当消息在 CommitLog 中的索引
@@ -18,20 +17,20 @@ public class ConsumeQueue {
 
     private final String topic;
 
-    private final int queue;
+    private final int queueId;
 
     private final int size = 8 + 4;
 
     private List<MappedFile> mappedFileList;
 
-    public ConsumeQueue(String topic, int queue) {
+    public ConsumeQueue(String topic, int queueId) {
         this.topic = topic;
-        this.queue = queue;
+        this.queueId = queueId;
     }
 
-    public List<ConsumeQueueOffset> pullMessage(long consumedOffset) {
+    public List<ConsumeQueueOffset> pullMessage(long consumedQueueIndexOffset) {
         List<ConsumeQueueOffset> offsets = new ArrayList<>();
-        long offset = consumedOffset * size;
+        long offset = consumedQueueIndexOffset * size;
         MappedFile mappedFile = MappedFileHelper.find(offset, mappedFileList);
         long fromOffset = mappedFile.getFileFromOffset();
         int position = (int) (offset - fromOffset);
@@ -56,8 +55,8 @@ public class ConsumeQueue {
         return topic;
     }
 
-    public int getQueue() {
-        return queue;
+    public int getQueueId() {
+        return queueId;
     }
 
     public void setMappedFileList(List<MappedFile> mappedFileList) {

@@ -11,7 +11,6 @@ import bao.study.mymq.common.protocol.body.SendMessageBackBody;
 import bao.study.mymq.common.protocol.broker.BrokerData;
 import bao.study.mymq.common.protocol.message.MessageQueue;
 import bao.study.mymq.common.utils.CommonCodec;
-import bao.study.mymq.remoting.RemotingHelper;
 import bao.study.mymq.remoting.code.RequestCode;
 import bao.study.mymq.remoting.code.ResponseCode;
 import bao.study.mymq.remoting.common.RemotingCommand;
@@ -115,12 +114,12 @@ public class DefaultConsumer extends Client implements Consumer {
                 sendMessageBackBody.setStatus(false);
                 break;
             case CONSUME_SUCCESS:
-                MessageExt messageExt = messages.stream().max(Comparator.comparingLong(MessageExt::getCommitlogOffset)).get();
+                MessageExt messageExt = messages.stream().max(Comparator.comparingLong(MessageExt::getOffset)).get();
                 sendMessageBackBody.setStatus(true);
-                sendMessageBackBody.setCommitlogOffset(messageExt.getCommitlogOffset());
+                sendMessageBackBody.setOffset(messageExt.getOffset());
                 sendMessageBackBody.setTopic(messageExt.getTopic());
                 sendMessageBackBody.setQueueId(messageExt.getQueueId());
-                sendMessageBackBody.setSize(messageExt.getSize());
+                sendMessageBackBody.setGroup(messageExt.getGroup());
                 break;
         }
         return RemotingCommandFactory.createRequestRemotingCommand(RequestCode.CONSUMER_SEND_MSG_BACK, CommonCodec.encode(sendMessageBackBody));

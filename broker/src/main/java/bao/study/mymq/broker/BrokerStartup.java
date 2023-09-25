@@ -4,8 +4,7 @@ import bao.study.mymq.broker.config.ConsumeQueueConfig;
 import bao.study.mymq.broker.config.MessageStoreConfig;
 import bao.study.mymq.broker.manager.CommitLogManager;
 import bao.study.mymq.broker.manager.ConsumeQueueManager;
-import bao.study.mymq.broker.manager.ConsumeQueueOffsetManager;
-import bao.study.mymq.broker.processor.PullMessageProcessor;
+import bao.study.mymq.broker.manager.ConsumeQueueIndexManager;
 import bao.study.mymq.broker.processor.SendMessageProcessor;
 import bao.study.mymq.broker.store.CommitLog;
 import bao.study.mymq.common.Constant;
@@ -78,10 +77,10 @@ public class BrokerStartup {
     }
 
     private static void initialize() {
-        ConsumeQueueOffsetManager consumeQueueOffsetManager = new ConsumeQueueOffsetManager();
+        ConsumeQueueIndexManager consumeQueueIndexManager = new ConsumeQueueIndexManager();
         ConsumeQueueManager consumeQueueManager = new ConsumeQueueManager(new ConsumeQueueConfig());
         CommitLogManager commitLogManager = new CommitLogManager(new CommitLog(new MessageStoreConfig()));
-        brokerController = new BrokerController(consumeQueueOffsetManager, consumeQueueManager, commitLogManager);
+        brokerController = new BrokerController(consumeQueueIndexManager, consumeQueueManager, commitLogManager);
 
         boolean initialize = brokerController.initialize();
         if (!initialize) {
@@ -101,7 +100,7 @@ public class BrokerStartup {
 
     private static void registerRequestProcessor() {
         remotingServer.registerRequestProcessor(new SendMessageProcessor(brokerController), SEND_MESSAGE);
-        remotingServer.registerRequestProcessor(brokerController.getPullMessageProcessor(), QUERY_CONSUMER_OFFSET, PULL_MESSAGE);
+        remotingServer.registerRequestProcessor(brokerController.getPullMessageProcessor(), QUERY_CONSUMER_OFFSET, PULL_MESSAGE, CONSUMER_SEND_MSG_BACK);
     }
 
 

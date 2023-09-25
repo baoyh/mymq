@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 /**
  * @author baoyh
@@ -51,7 +52,7 @@ public abstract class ConfigManager {
     public abstract String configFilePath();
 
     private String file2String(File file) throws IOException {
-        try (BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
+        try (BufferedInputStream inputStream = new BufferedInputStream(Files.newInputStream(file.toPath()))) {
             byte[] buffer = new byte[(int) file.length()];
             int read = inputStream.read(buffer);
             if (read == (int) file.length()) {

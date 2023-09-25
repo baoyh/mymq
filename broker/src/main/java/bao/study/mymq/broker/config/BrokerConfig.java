@@ -16,7 +16,7 @@ public class BrokerConfig {
 
     private static final String CONFIG_PATH = HOME_PATH + File.separator + "config";
 
-    private static final String CONFIG_CONSUMEQUEUE_OFFSET = CONFIG_PATH + File.separator + "consumequeueOffset.json";
+    private static final String CONFIG_CONSUMEQUEUE_OFFSET = CONFIG_PATH + File.separator + "consumequeueIndex.json";
 
     private static final String CONFIG_COMMITLOG = CONFIG_PATH + File.separator + "commitlog.json";
 
