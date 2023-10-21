@@ -18,7 +18,7 @@ public class ProducerClient {
         producer.start();
 
         int i = 0;
-        while (i <= 20) {
+        while (i <= 5) {
             try {
                 Thread.sleep(200);
             } catch (InterruptedException e) {

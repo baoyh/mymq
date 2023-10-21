@@ -89,8 +89,9 @@ public class DefaultConsumer extends Client implements Consumer {
                     try {
                         if (response != null) {
                             List<MessageExt> messages = CommonCodec.decodeAsList(response, MessageExt.class);
-                            RemotingCommand command = sendMessageBack(messageListener.consumerMessage(messages), messages);
-                            remotingClient.invokeSync(address, command, consumeTimeout);
+                            ConsumeConcurrentlyStatus consumeConcurrentlyStatus = messageListener.consumerMessage(messages);
+                            RemotingCommand command = sendMessageBack(consumeConcurrentlyStatus, messages);
+                            remotingClient.invokeOneway(address, command, consumeTimeout);
                         }
                     } finally {
                         pullRequestQueue.add(messageQueue);
