@@ -81,6 +81,7 @@ public class DefaultProducer extends Client implements Producer {
             MessageQueue messageQueue = this.selectOneMessageQueue(topic, messageQueueList, lastFailedBrokerName);
 
             try {
+                log.info("selectOneMessageQueue [" + messageQueue.getQueueId() + "]");
                 MessageExt messageExt = createMessageExt(message, messageQueue);
                 RemotingCommand request = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.SEND_MESSAGE, CommonCodec.encode(messageExt));
 
@@ -127,6 +128,7 @@ public class DefaultProducer extends Client implements Producer {
         MessageExt messageExt = new MessageExt();
         messageExt.setBody(message.getBody());
         messageExt.setTopic(message.getTopic());
+        messageExt.setQueueId(messageQueue.getQueueId());
         messageExt.setBrokerName(messageQueue.getBrokerName());
         messageExt.setBornTimeStamp(System.currentTimeMillis());
         return messageExt;

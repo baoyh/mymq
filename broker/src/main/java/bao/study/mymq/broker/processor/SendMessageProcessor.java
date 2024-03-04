@@ -49,7 +49,7 @@ public class SendMessageProcessor implements NettyRequestProcessor {
         messageStore.setBrokerName(messageExt.getBrokerName());
         messageStore.setTopic(messageExt.getTopic());
         messageStore.setBody(messageExt.getBody());
-        messageStore.setQueueId(0);
+        messageStore.setQueueId(messageExt.getQueueId());
         return messageStore;
     }
 }
