@@ -32,4 +32,9 @@ public abstract class RequestCode {
     public static final int CONSUMER_SEND_MSG_BACK = 302;
 
 
+    /**
+     * raft
+     */
+    public static final int SEND_HEARTBEAT = 400;
+
 }
