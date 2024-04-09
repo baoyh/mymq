@@ -2,8 +2,7 @@ package bao.study.mymq.common.protocol.raft;
 
 /**
  * @author baoyh
- * @since 2024/4/7 17:49
+ * @since 2024/4/9 16:16
  */
-public class HeartBeat extends BaseProtocol {
-
+public class VoteRequest extends BaseProtocol {
 }

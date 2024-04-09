@@ -37,4 +37,6 @@ public abstract class RequestCode {
      */
     public static final int SEND_HEARTBEAT = 400;
 
+    public static final int CALL_VOTE = 401;
+
 }

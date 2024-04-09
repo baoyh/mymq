@@ -1,6 +1,8 @@
 package bao.study.mymq.broker.raft.protocol;
 
 import bao.study.mymq.common.protocol.raft.HeartBeat;
+import bao.study.mymq.common.protocol.raft.VoteRequest;
+import bao.study.mymq.common.protocol.raft.VoteResponse;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -11,4 +13,6 @@ import java.util.concurrent.CompletableFuture;
 public interface ClientProtocol {
 
     CompletableFuture<HeartBeat> sendHeartBeat(HeartBeat heartBeat);
+
+    CompletableFuture<VoteResponse> callVote(VoteRequest voteRequest);
 }

@@ -15,7 +15,13 @@ public class MemberState {
 
     private volatile String leaderId;
 
-    private final Map<String /*id*/, String /*address*/> nodes = new HashMap<>();
+    private volatile String selfId;
+
+    private volatile long term;
+
+    private Map<String /*id*/, String /*address*/> nodes = new HashMap<>();
+
+    private Map<String /*id*/, Boolean> liveNodes = new HashMap<>();
 
     public Role getRole() {
         return role;
@@ -43,5 +49,33 @@ public class MemberState {
 
     public void setConfig(Config config) {
         this.config = config;
+    }
+
+    public long getTerm() {
+        return term;
+    }
+
+    public void setTerm(long term) {
+        this.term = term;
+    }
+
+    public String getSelfId() {
+        return selfId;
+    }
+
+    public void setSelfId(String selfId) {
+        this.selfId = selfId;
+    }
+
+    public Map<String, Boolean> getLiveNodes() {
+        return liveNodes;
+    }
+
+    public void setNodes(Map<String, String> nodes) {
+        this.nodes = nodes;
+    }
+
+    public void setLiveNodes(Map<String, Boolean> liveNodes) {
+        this.liveNodes = liveNodes;
     }
 }
