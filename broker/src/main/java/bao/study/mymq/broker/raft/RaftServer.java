@@ -4,6 +4,7 @@ import bao.study.mymq.broker.raft.protocol.NettyClientProtocol;
 import bao.study.mymq.broker.raft.protocol.NettyServerProtocol;
 import bao.study.mymq.remoting.RemotingClient;
 import bao.study.mymq.remoting.RemotingServer;
+import bao.study.mymq.remoting.code.RequestCode;
 
 import java.util.UUID;
 
@@ -40,7 +41,9 @@ public class RaftServer {
         stateMaintainer.setMemberState(memberState);
         stateMaintainer.setConfig(config);
         stateMaintainer.setClientProtocol(new NettyClientProtocol(remotingClient, memberState));
-        stateMaintainer.setServerProtocol(new NettyServerProtocol(remotingServer));
+        NettyServerProtocol serverProtocol = new NettyServerProtocol(memberState);
+        stateMaintainer.setServerProtocol(serverProtocol);
+        remotingServer.registerRequestProcessor(serverProtocol, RequestCode.SEND_HEARTBEAT, RequestCode.CALL_VOTE);
         stateMaintainer.setLeaderElector(new LeaderElector(memberState));
         stateMaintainer.start();
     }

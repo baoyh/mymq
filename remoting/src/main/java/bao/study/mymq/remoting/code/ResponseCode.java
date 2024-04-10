@@ -19,7 +19,7 @@ public abstract class ResponseCode {
 
 
     /**
-     * raft
+     * raft heartbeat
      */
     public static final int EXPIRED_TERM = 200;
 
@@ -27,5 +27,13 @@ public abstract class ResponseCode {
 
     public static final int INCONSISTENT_LEADER = 202;
 
+    /**
+     * raft vote
+     */
+    public static final int REJECT_ALREADY_VOTED = 203;
+
+    public static final int REJECT_ALREADY_HAS_LEADER = 204;
+
+    public static final int REJECT_EXPIRED_TERM = 205;
 
 }

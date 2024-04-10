@@ -3,6 +3,7 @@ package bao.study.mymq.broker;
 import bao.study.mymq.broker.raft.Config;
 import bao.study.mymq.broker.raft.MemberState;
 import bao.study.mymq.broker.raft.RaftServer;
+import bao.study.mymq.broker.raft.Role;
 import bao.study.mymq.remoting.RemotingUtil;
 import bao.study.mymq.remoting.netty.NettyClient;
 import bao.study.mymq.remoting.netty.NettyServer;
@@ -27,7 +28,10 @@ public class RaftTest {
         Map<String, String> nodes = new HashMap<>();
         registerNodes(nodes, a, 11000);
         registerNodes(nodes, b, 11001);
-        registerNodes(nodes, c, 11001);
+        registerNodes(nodes, c, 11002);
+        MemberState memberState = a.getMemberState();
+        memberState.setRole(Role.LEADER);
+        memberState.setLeaderId(memberState.getSelfId());
 
         updateNodes(nodes, a, b, c);
         startServer(a, b, c);
@@ -55,7 +59,7 @@ public class RaftTest {
 
     private void registerNodes(Map<String, String> nodes, RaftServer server, int port) {
         MemberState memberState = server.getMemberState();
-        nodes.putIfAbsent(memberState.getSelfId(), RemotingUtil.getLocalAddress() + "/" + port);
+        nodes.putIfAbsent(memberState.getSelfId(), RemotingUtil.getLocalAddress() + ":" + port);
     }
 
     private void updateNodes(Map<String, String> nodes, RaftServer... servers) {

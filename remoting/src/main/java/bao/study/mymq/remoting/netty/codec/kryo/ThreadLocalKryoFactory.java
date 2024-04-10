@@ -30,7 +30,7 @@ public class ThreadLocalKryoFactory {
         kryo.setRegistrationRequired(false);
         kryo.register(RemotingCommand.class);
         kryo.register(RemotingCommandType.class);
-        kryo.register(AtomicInteger.class);
+//        kryo.register(AtomicInteger.class);
         kryo.register(BigDecimal.class, new DefaultSerializers.BigDecimalSerializer());
         kryo.register(BigInteger.class, new DefaultSerializers.BigIntegerSerializer());
         kryo.register(HashMap.class);

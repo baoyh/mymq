@@ -52,7 +52,6 @@ public class StateMaintainer extends ServiceThread {
     public void run() {
         while (true) {
             try {
-                logger.info("start state maintainer");
                 switch (memberState.getRole()) {
                     case FOLLOWER:
                         maintainAsFollower();
@@ -76,10 +75,10 @@ public class StateMaintainer extends ServiceThread {
      * 1. 超过一定时间未收到心跳则变为 Candidate
      */
     private void maintainAsFollower() {
-        if (System.currentTimeMillis() - lastHeartBeatTime > (long) config.getHeartBeatTimeIntervalMs() * config.getMaxHeartBeatLeak()) {
-            memberState.setRole(Role.CANDIDATE);
-            memberState.setLeaderId(null);
-        }
+//        if (System.currentTimeMillis() - lastHeartBeatTime > (long) config.getHeartBeatTimeIntervalMs() * config.getMaxHeartBeatLeak()) {
+//            memberState.setRole(Role.CANDIDATE);
+//            memberState.setLeaderId(null);
+//        }
     }
 
     /**
@@ -95,20 +94,23 @@ public class StateMaintainer extends ServiceThread {
      * 1. 定期向 follower 发送心跳
      */
     private void maintainAsLeader() throws Exception {
-        sendHeartBeats();
+        if (System.currentTimeMillis() - lastHeartBeatTime >= config.getHeartBeatTimeIntervalMs()) {
+            sendHeartBeats();
+        }
     }
 
     /**
      * 只有 leader 会主动发起 heartbeats
      */
     private void sendHeartBeats() throws InterruptedException {
-        AtomicInteger all = new AtomicInteger();
-        AtomicInteger success = new AtomicInteger();
+        AtomicInteger all = new AtomicInteger(1);
+        AtomicInteger success = new AtomicInteger(1);
         AtomicLong maxTerm = new AtomicLong(memberState.getTerm());
         AtomicBoolean inconsistentLeader = new AtomicBoolean(false);
 
         for (Map.Entry<String, String> entry : memberState.getNodes().entrySet()) {
-            if (entry.getKey().equals(memberState.getLeaderId())) {
+            if (entry.getKey().equals(memberState.getSelfId())) {
+                // 自己不需要发送给自己
                 continue;
             }
 
@@ -142,6 +144,12 @@ public class StateMaintainer extends ServiceThread {
                             // leader 不一致, 可能是之前分区导致的, 或者是之前的 leader 挂了导致集群有了新的 leader
                             inconsistentLeader.compareAndSet(true, false);
                             break;
+                        case ResponseCode.TERM_NOT_READY:
+                            // 远程节点的 term 小于当前 term 的情况
+                            // 导致这种情况的原因一般是远程节点挂了后又重启
+                            // 远程节点会更新 term, 依然作为 follower, 这里看做是成功. 在 dledger 中会变为 candidate
+                            success.incrementAndGet();
+                            break;
                         default:
                             break;
                     }
@@ -162,7 +170,7 @@ public class StateMaintainer extends ServiceThread {
                 }
             });
 
-            countDownLatch.await(config.getHeartBeatTimeIntervalMs(), TimeUnit.MILLISECONDS);
+            countDownLatch.await(config.getHeartBeatTimeIntervalMs(), TimeUnit.SECONDS);
 
             if (inconsistentLeader.get()) {
                 changeRoleToCandidate(memberState.getTerm());
