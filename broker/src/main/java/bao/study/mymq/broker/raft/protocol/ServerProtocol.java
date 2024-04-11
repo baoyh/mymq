@@ -1,6 +1,8 @@
 package bao.study.mymq.broker.raft.protocol;
 
 import bao.study.mymq.common.protocol.raft.HeartBeat;
+import bao.study.mymq.common.protocol.raft.VoteRequest;
+import bao.study.mymq.common.protocol.raft.VoteResponse;
 
 /**
  * @author baoyh
@@ -9,4 +11,6 @@ import bao.study.mymq.common.protocol.raft.HeartBeat;
 public interface ServerProtocol {
 
     HeartBeat handleHeartbeat(HeartBeat heartBeat);
+
+    VoteResponse handleVote(VoteRequest voteRequest);
 }

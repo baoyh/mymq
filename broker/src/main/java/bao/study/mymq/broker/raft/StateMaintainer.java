@@ -17,6 +17,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static bao.study.mymq.broker.raft.LeaderElector.VoteResult.*;
+
 /**
  * 状态机
  *
@@ -30,8 +32,6 @@ public class StateMaintainer extends ServiceThread {
     private LeaderElector leaderElector;
 
     private ClientProtocol clientProtocol;
-
-    private ServerProtocol serverProtocol;
 
     private MemberState memberState;
 
@@ -86,8 +86,22 @@ public class StateMaintainer extends ServiceThread {
      * 2. 成功收到过半票数时变为 Leader
      * 3. 失败时再次发起新一轮投票
      */
-    private void maintainAsCandidate() {
-        leaderElector.callVote();
+    private void maintainAsCandidate() throws Exception {
+        LeaderElector.VoteResult voteResult = WAIT_TO_REVOTE;
+        while (voteResult != PASSED) {
+            voteResult = leaderElector.callVote();
+            if (voteResult == PASSED) {
+                memberState.setRole(Role.LEADER);
+                memberState.setLeaderId(memberState.getSelfId());
+            }
+            if (voteResult == REVOTE_IMMEDIATELY) {
+                continue;
+            }
+            if (voteResult == WAIT_TO_REVOTE) {
+
+            }
+        }
+
     }
 
     /**
@@ -108,6 +122,8 @@ public class StateMaintainer extends ServiceThread {
         AtomicLong maxTerm = new AtomicLong(memberState.getTerm());
         AtomicBoolean inconsistentLeader = new AtomicBoolean(false);
 
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
         for (Map.Entry<String, String> entry : memberState.getNodes().entrySet()) {
             if (entry.getKey().equals(memberState.getSelfId())) {
                 // 自己不需要发送给自己
@@ -121,7 +137,6 @@ public class StateMaintainer extends ServiceThread {
             heartBeat.setLocalId(memberState.getSelfId());
             heartBeat.setTerm(memberState.getTerm());
 
-            CountDownLatch countDownLatch = new CountDownLatch(1);
             CompletableFuture<HeartBeat> future = clientProtocol.sendHeartBeat(heartBeat);
             future.whenComplete((HeartBeat response, Throwable ex) -> {
                 try {
@@ -169,19 +184,19 @@ public class StateMaintainer extends ServiceThread {
                     }
                 }
             });
+        }
 
-            countDownLatch.await(config.getHeartBeatTimeIntervalMs(), TimeUnit.SECONDS);
+        countDownLatch.await(config.getHeartBeatTimeIntervalMs(), TimeUnit.MILLISECONDS);
 
-            if (inconsistentLeader.get()) {
-                changeRoleToCandidate(memberState.getTerm());
-            } else if (maxTerm.get() > memberState.getTerm()) {
-                changeRoleToCandidate(maxTerm.get());
-            } else if (success.get() > memberState.getNodes().size() / 2) {
-                // 如果超过半数, 表示正常
-                lastHeartBeatTime = System.currentTimeMillis();
-            } else {
-                changeRoleToCandidate(memberState.getTerm());
-            }
+        if (inconsistentLeader.get()) {
+            changeRoleToCandidate(memberState.getTerm());
+        } else if (maxTerm.get() > memberState.getTerm()) {
+            changeRoleToCandidate(maxTerm.get());
+        } else if (success.get() > memberState.getNodes().size() / 2) {
+            // 如果超过半数, 表示正常
+            lastHeartBeatTime = System.currentTimeMillis();
+        } else {
+            changeRoleToCandidate(memberState.getTerm());
         }
     }
 
@@ -205,10 +220,6 @@ public class StateMaintainer extends ServiceThread {
 
     public void setConfig(Config config) {
         this.config = config;
-    }
-
-    public void setServerProtocol(ServerProtocol serverProtocol) {
-        this.serverProtocol = serverProtocol;
     }
 
 }

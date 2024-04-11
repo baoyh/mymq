@@ -36,4 +36,6 @@ public abstract class ResponseCode {
 
     public static final int REJECT_EXPIRED_TERM = 205;
 
+    public static final int REJECT_TERM_NOT_READY = 206;
+
 }

@@ -19,6 +19,8 @@ public class MemberState {
 
     private volatile long term;
 
+    private volatile String currVoteFor;
+
     private Map<String /*id*/, String /*address*/> nodes = new HashMap<>();
 
     private Map<String /*id*/, Boolean> liveNodes = new HashMap<>();
@@ -77,5 +79,13 @@ public class MemberState {
 
     public void setLiveNodes(Map<String, Boolean> liveNodes) {
         this.liveNodes = liveNodes;
+    }
+
+    public String getCurrVoteFor() {
+        return currVoteFor;
+    }
+
+    public void setCurrVoteFor(String currVoteFor) {
+        this.currVoteFor = currVoteFor;
     }
 }
