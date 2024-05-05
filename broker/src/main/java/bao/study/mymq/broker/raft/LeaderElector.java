@@ -33,11 +33,13 @@ public class LeaderElector {
     public VoteResult callVote() throws Exception {
         AtomicInteger success = new AtomicInteger(1);
         AtomicLong maxTerm = new AtomicLong(memberState.getTerm());
+        maxTerm.incrementAndGet();
 
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
         // vote for self
-        memberState.setLeaderId(memberState.getSelfId());
+        memberState.setCurrVoteFor(memberState.getSelfId());
+        logger.info(memberState.getSelfId() + ":" + memberState.getTerm());
 
         for (String id : memberState.getNodes().keySet()) {
 
@@ -47,7 +49,7 @@ public class LeaderElector {
             }
 
             VoteRequest voteRequest = new VoteRequest();
-            voteRequest.setTerm(memberState.getTerm());
+            voteRequest.setTerm(maxTerm.get());
             voteRequest.setRemoteId(id);
             voteRequest.setLocalId(memberState.getSelfId());
             CompletableFuture<VoteResponse> voteFeature = clientProtocol.callVote(voteRequest);

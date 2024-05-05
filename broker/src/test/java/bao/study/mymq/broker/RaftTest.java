@@ -7,10 +7,12 @@ import bao.study.mymq.broker.raft.Role;
 import bao.study.mymq.remoting.RemotingUtil;
 import bao.study.mymq.remoting.netty.NettyClient;
 import bao.study.mymq.remoting.netty.NettyServer;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author baoyh
@@ -19,7 +21,7 @@ import java.util.Map;
 public class RaftTest {
 
     @Test
-    public void testThreeServer() {
+    public void testThreeServer() throws InterruptedException {
         RaftServer a = createRaftServer(11000);
         RaftServer b = createRaftServer(11001);
         RaftServer c = createRaftServer(11002);
@@ -29,15 +31,30 @@ public class RaftTest {
         registerNodes(nodes, a, 11000);
         registerNodes(nodes, b, 11001);
         registerNodes(nodes, c, 11002);
-        MemberState memberState = a.getMemberState();
-        memberState.setRole(Role.LEADER);
-        memberState.setLeaderId(memberState.getSelfId());
+//        MemberState memberState = a.getMemberState();
+//        memberState.setRole(Role.LEADER);
+//        memberState.setLeaderId(memberState.getSelfId());
 
         updateNodes(nodes, a, b, c);
         startServer(a, b, c);
 
-        while (true) {
+        Thread.sleep(6000);
 
+        AtomicInteger leaderNum = new AtomicInteger();
+        AtomicInteger followerNum = new AtomicInteger();
+        countNum(leaderNum, followerNum, a, b, c);
+
+        Assertions.assertEquals(1, leaderNum.get());
+        Assertions.assertEquals(2, followerNum.get());
+    }
+
+    private void countNum(AtomicInteger leaderNum, AtomicInteger followerNum, RaftServer... servers) {
+        for (RaftServer server : servers) {
+            if (server.getMemberState().getRole() == Role.FOLLOWER) {
+                followerNum.incrementAndGet();
+            } else if (server.getMemberState().getRole() == Role.LEADER) {
+                leaderNum.incrementAndGet();
+            }
         }
     }
 

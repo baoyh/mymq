@@ -9,8 +9,8 @@ import bao.study.mymq.remoting.code.RequestCode;
 import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.netty.NettyClient;
 import bao.study.mymq.remoting.netty.NettyServer;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +24,7 @@ public class BrokerControllerTest {
     RemotingClient remotingClient = new NettyClient();
     RemotingServer remotingServer = new NettyServer(1234);
 
-    @Before
+    @BeforeEach
     public void before() {
         remotingClient.start();
         remotingServer.start();

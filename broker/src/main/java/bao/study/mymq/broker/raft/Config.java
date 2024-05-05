@@ -19,14 +19,15 @@ public class Config {
     private int maxHeartBeatLeak = 3;
 
     /**
-     * 一轮投票的最大间隔周期
+     * 最大的发送投票的间隔，默认为 1000ms
      */
-    private int maxVoteIntervalMs = 2000;
+    private int maxVoteIntervalMs = 1000;
 
     /**
-     * 一轮投票的最小间隔周期
+     * 最小的发送投票间隔时间，默认为 300ms
      */
-    private int minVoteIntervalMs = 1000;
+    private int minVoteIntervalMs = 300;
+
 
     private long rpcTimeoutMillis = 3000L;
 
@@ -60,5 +61,13 @@ public class Config {
 
     public void setMaxVoteIntervalMs(int maxVoteIntervalMs) {
         this.maxVoteIntervalMs = maxVoteIntervalMs;
+    }
+
+    public int getMinVoteIntervalMs() {
+        return minVoteIntervalMs;
+    }
+
+    public void setMinVoteIntervalMs(int minVoteIntervalMs) {
+        this.minVoteIntervalMs = minVoteIntervalMs;
     }
 }

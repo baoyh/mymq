@@ -42,7 +42,7 @@ public class RaftServer {
         stateMaintainer.setConfig(config);
         NettyClientProtocol clientProtocol = new NettyClientProtocol(remotingClient, memberState);
         stateMaintainer.setClientProtocol(clientProtocol);
-        NettyServerProtocol serverProtocol = new NettyServerProtocol(memberState);
+        NettyServerProtocol serverProtocol = new NettyServerProtocol(stateMaintainer);
         remotingServer.registerRequestProcessor(serverProtocol, RequestCode.SEND_HEARTBEAT, RequestCode.CALL_VOTE);
         stateMaintainer.setLeaderElector(new LeaderElector(memberState, clientProtocol));
         stateMaintainer.start();

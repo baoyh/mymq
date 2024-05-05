@@ -69,7 +69,7 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, RemotingCommand msg) {
-            log.info("[Remote] : " + ctx.channel().remoteAddress() + ", [RemotingCommand] : " + msg);
+//            log.info("[Remote] : " + ctx.channel().remoteAddress() + ", [RemotingCommand] : " + msg);
             processRemotingCommand(ctx, msg);
         }
     }

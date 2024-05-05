@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +43,8 @@ public class StateMaintainer extends ServiceThread {
      */
     private volatile long lastHeartBeatTime = -1L;
 
+    private volatile long nextTimeToRequestVote = -1L;
+
 
     @Override
     public String getServiceName() {
@@ -63,7 +66,7 @@ public class StateMaintainer extends ServiceThread {
                         maintainAsLeader();
                         break;
                 }
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (Exception e) {
                 logger.error("state maintainer error ", e);
             }
@@ -75,10 +78,11 @@ public class StateMaintainer extends ServiceThread {
      * 1. 超过一定时间未收到心跳则变为 Candidate
      */
     private void maintainAsFollower() {
-//        if (System.currentTimeMillis() - lastHeartBeatTime > (long) config.getHeartBeatTimeIntervalMs() * config.getMaxHeartBeatLeak()) {
-//            memberState.setRole(Role.CANDIDATE);
-//            memberState.setLeaderId(null);
-//        }
+        if (System.currentTimeMillis() - lastHeartBeatTime > (long) config.getHeartBeatTimeIntervalMs() * config.getMaxHeartBeatLeak()) {
+            if (memberState.getRole() == Role.FOLLOWER) {
+                changeRoleToCandidate(memberState.getTerm());
+            }
+        }
     }
 
     /**
@@ -87,21 +91,19 @@ public class StateMaintainer extends ServiceThread {
      * 3. 失败时再次发起新一轮投票
      */
     private void maintainAsCandidate() throws Exception {
-        LeaderElector.VoteResult voteResult = WAIT_TO_REVOTE;
-        while (voteResult != PASSED) {
-            voteResult = leaderElector.callVote();
-            if (voteResult == PASSED) {
-                memberState.setRole(Role.LEADER);
-                memberState.setLeaderId(memberState.getSelfId());
-            }
-            if (voteResult == REVOTE_IMMEDIATELY) {
-                continue;
-            }
-            if (voteResult == WAIT_TO_REVOTE) {
+        if (System.currentTimeMillis() < nextTimeToRequestVote) return;
 
-            }
+        LeaderElector.VoteResult voteResult = leaderElector.callVote();
+        if (voteResult == PASSED) {
+            memberState.setRole(Role.LEADER);
+            memberState.setLeaderId(memberState.getSelfId());
         }
-
+//        if (voteResult == REVOTE_IMMEDIATELY) {
+//        }
+//        if (voteResult == WAIT_TO_REVOTE) {
+//
+//        }
+        nextTimeToRequestVote = getNextTimeToRequestVote();
     }
 
     /**
@@ -112,6 +114,7 @@ public class StateMaintainer extends ServiceThread {
             sendHeartBeats();
         }
     }
+
 
     /**
      * 只有 leader 会主动发起 heartbeats
@@ -206,6 +209,10 @@ public class StateMaintainer extends ServiceThread {
         memberState.setRole(Role.CANDIDATE);
     }
 
+    private long getNextTimeToRequestVote() {
+        return System.currentTimeMillis() + config.getMinVoteIntervalMs() + new Random().nextLong(config.getMaxVoteIntervalMs() - config.getMinVoteIntervalMs());
+    }
+
     public void setLeaderElector(LeaderElector leaderElector) {
         this.leaderElector = leaderElector;
     }
@@ -222,4 +229,11 @@ public class StateMaintainer extends ServiceThread {
         this.config = config;
     }
 
+    public MemberState getMemberState() {
+        return memberState;
+    }
+
+    public void setLastHeartBeatTime(long lastHeartBeatTime) {
+        this.lastHeartBeatTime = lastHeartBeatTime;
+    }
 }
