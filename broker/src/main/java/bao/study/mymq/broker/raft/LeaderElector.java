@@ -34,12 +34,13 @@ public class LeaderElector {
         AtomicInteger success = new AtomicInteger(1);
         AtomicLong maxTerm = new AtomicLong(memberState.getTerm());
         maxTerm.incrementAndGet();
+        memberState.setTerm(maxTerm.get());
 
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
         // vote for self
         memberState.setCurrVoteFor(memberState.getSelfId());
-        logger.info(memberState.getSelfId() + ":" + memberState.getTerm());
+        logger.info(memberState.getSelfId() + " voted for self at term " + maxTerm.get());
 
         for (String id : memberState.getNodes().keySet()) {
 
@@ -62,17 +63,22 @@ public class LeaderElector {
                     }
                     switch (voteResponse.getCode()) {
                         case ResponseCode.SUCCESS:
+                            logger.info(voteResponse.getLocalId() + " voted " + memberState.getSelfId());
                             success.incrementAndGet();
                             break;
                         case ResponseCode.REJECT_ALREADY_VOTED:
+                            logger.info(voteResponse.getLocalId() + " reject already voted " + memberState.getSelfId());
                             break;
                         case ResponseCode.REJECT_EXPIRED_TERM:
+                            logger.info(voteResponse.getLocalId() + " reject expired term " + memberState.getSelfId());
                             maxTerm.set(Math.max(maxTerm.get(), voteResponse.getTerm()));
                             break;
                         case ResponseCode.REJECT_ALREADY_HAS_LEADER:
+                            logger.info(voteResponse.getLocalId() + " reject already has leader " + memberState.getSelfId());
                             // term 相同但已经存在 leader, 一般是网络分区导致有过重新选举
                             break;
                         case ResponseCode.REJECT_TERM_NOT_READY:
+                            logger.info(voteResponse.getLocalId() + " reject term not ready " + memberState.getSelfId());
                             // 远程节点 term 更小
                             break;
                     }

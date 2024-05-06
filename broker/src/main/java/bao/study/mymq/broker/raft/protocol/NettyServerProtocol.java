@@ -12,6 +12,8 @@ import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.common.RemotingCommandFactory;
 import bao.study.mymq.remoting.netty.NettyRequestProcessor;
 import io.netty.channel.ChannelHandlerContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static bao.study.mymq.remoting.code.RequestCode.*;
 
@@ -20,6 +22,8 @@ import static bao.study.mymq.remoting.code.RequestCode.*;
  * @since 2024/4/9 13:53
  */
 public class NettyServerProtocol implements ServerProtocol, NettyRequestProcessor {
+
+    private static final Logger logger = LoggerFactory.getLogger(NettyServerProtocol.class);
 
     private final StateMaintainer stateMaintainer;
 
@@ -61,10 +65,8 @@ public class NettyServerProtocol implements ServerProtocol, NettyRequestProcesso
     public VoteResponse handleVote(VoteRequest voteRequest) {
         MemberState memberState = stateMaintainer.getMemberState();
         VoteResponse voteResponse = createVoteResponse(voteRequest);
-        if (memberState.getTerm() < voteRequest.getTerm()) {
-            // 当前轮次小于发起方的轮次, 投票给发起方
-            memberState.setTerm(voteRequest.getTerm());
-            memberState.setCurrVoteFor(voteRequest.getLocalId());
+        if (memberState.getRole() == Role.LEADER) {
+            voteResponse.setCode(ResponseCode.REJECT_ALREADY_HAS_LEADER);
             return voteResponse;
         }
         if (memberState.getLeaderId() != null) {
@@ -77,6 +79,18 @@ public class NettyServerProtocol implements ServerProtocol, NettyRequestProcesso
         }
         if (memberState.getTerm() > voteRequest.getTerm()) {
             voteResponse.setCode(ResponseCode.REJECT_EXPIRED_TERM);
+            return voteResponse;
+        }
+        if (memberState.getTerm() < voteRequest.getTerm()) {
+            if (memberState.getCurrVoteFor() == null || memberState.getCurrVoteFor().equals(memberState.getSelfId())) {
+                logger.info(memberState.getSelfId() + " curr voted for " + memberState.getCurrVoteFor());
+                // 当前轮次小于发起方的轮次, 投票给发起方
+                memberState.setCurrVoteFor(voteRequest.getLocalId());
+                logger.info(memberState.getSelfId() + " will vote for " + voteRequest.getLocalId() + " in local term " + memberState.getTerm() + " and remote term " + voteRequest.getTerm());
+            } else {
+                logger.info(memberState.getSelfId() + " reject already voted " + voteRequest.getLocalId() + " in local term " + memberState.getTerm() + " and remote term " + voteRequest.getTerm());
+                voteResponse.setCode(ResponseCode.REJECT_ALREADY_VOTED);
+            }
             return voteResponse;
         }
         memberState.setCurrVoteFor(voteRequest.getLocalId());

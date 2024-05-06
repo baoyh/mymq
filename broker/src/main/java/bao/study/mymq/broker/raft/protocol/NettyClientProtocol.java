@@ -65,7 +65,7 @@ public class NettyClientProtocol implements ClientProtocol {
 
     private String getAddress(String remoteId) {
         String address = memberState.getNodes().get(remoteId);
-        if (address == null || address.isBlank()) {
+        if (address == null || address.isEmpty()) {
             throw new BrokerException("Can not found remote address by remoteId [" + remoteId + "]");
         }
         return address;

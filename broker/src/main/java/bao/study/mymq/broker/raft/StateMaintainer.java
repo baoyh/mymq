@@ -1,7 +1,6 @@
 package bao.study.mymq.broker.raft;
 
 import bao.study.mymq.broker.raft.protocol.ClientProtocol;
-import bao.study.mymq.broker.raft.protocol.ServerProtocol;
 import bao.study.mymq.common.ServiceThread;
 import bao.study.mymq.common.protocol.raft.HeartBeat;
 import bao.study.mymq.remoting.code.RequestCode;
@@ -57,16 +56,19 @@ public class StateMaintainer extends ServiceThread {
             try {
                 switch (memberState.getRole()) {
                     case FOLLOWER:
+                        logger.info(memberState.getSelfId() + ": become follower");
                         maintainAsFollower();
                         break;
                     case CANDIDATE:
+                        logger.info(memberState.getSelfId() + ": become candidate");
                         maintainAsCandidate();
                         break;
                     case LEADER:
+                        logger.info(memberState.getSelfId() + ": become leader");
                         maintainAsLeader();
                         break;
                 }
-                Thread.sleep(10);
+                Thread.sleep(100);
             } catch (Exception e) {
                 logger.error("state maintainer error ", e);
             }
@@ -97,6 +99,7 @@ public class StateMaintainer extends ServiceThread {
         if (voteResult == PASSED) {
             memberState.setRole(Role.LEADER);
             memberState.setLeaderId(memberState.getSelfId());
+            return;
         }
 //        if (voteResult == REVOTE_IMMEDIATELY) {
 //        }
@@ -207,10 +210,11 @@ public class StateMaintainer extends ServiceThread {
         memberState.setTerm(Math.max(term, memberState.getTerm()));
         memberState.setLeaderId(null);
         memberState.setRole(Role.CANDIDATE);
+        nextTimeToRequestVote = getNextTimeToRequestVote();
     }
 
     private long getNextTimeToRequestVote() {
-        return System.currentTimeMillis() + config.getMinVoteIntervalMs() + new Random().nextLong(config.getMaxVoteIntervalMs() - config.getMinVoteIntervalMs());
+        return System.currentTimeMillis() + config.getMinVoteIntervalMs() + new Random().nextInt(config.getMaxVoteIntervalMs() - config.getMinVoteIntervalMs());
     }
 
     public void setLeaderElector(LeaderElector leaderElector) {

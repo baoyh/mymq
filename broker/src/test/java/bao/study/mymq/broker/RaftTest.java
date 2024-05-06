@@ -31,14 +31,11 @@ public class RaftTest {
         registerNodes(nodes, a, 11000);
         registerNodes(nodes, b, 11001);
         registerNodes(nodes, c, 11002);
-//        MemberState memberState = a.getMemberState();
-//        memberState.setRole(Role.LEADER);
-//        memberState.setLeaderId(memberState.getSelfId());
 
         updateNodes(nodes, a, b, c);
         startServer(a, b, c);
 
-        Thread.sleep(6000);
+        Thread.sleep(3000);
 
         AtomicInteger leaderNum = new AtomicInteger();
         AtomicInteger followerNum = new AtomicInteger();
