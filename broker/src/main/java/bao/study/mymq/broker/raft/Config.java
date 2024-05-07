@@ -16,7 +16,7 @@ public class Config {
      * maxHeartBeatLeak * heartBeatTimeIntervalMs 的时间内未收到主节点的心跳包，
      * 才会重新进入 Candidate 状态，重新下一轮的选举
      */
-    private int maxHeartBeatLeak = 10;
+    private int maxHeartBeatLeak = 3;
 
     /**
      * 最大的发送投票的间隔，默认为 1000ms

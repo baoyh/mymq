@@ -11,8 +11,14 @@ import bao.study.mymq.remoting.code.RequestCode;
 import bao.study.mymq.remoting.code.ResponseCode;
 import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.common.RemotingCommandFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author baoyh
@@ -20,9 +26,22 @@ import java.util.concurrent.CompletableFuture;
  */
 public class NettyClientProtocol implements ClientProtocol {
 
+    private static final Logger logger = LoggerFactory.getLogger(NettyClientProtocol.class);
+
     private final RemotingClient client;
 
     private final MemberState memberState;
+
+    private ExecutorService executor = Executors.newCachedThreadPool(new ThreadFactory() {
+
+        private AtomicInteger threadIndex = new AtomicInteger(0);
+
+        @Override
+        public Thread newThread(Runnable r) {
+            return new Thread(r, "RaftExecutor_" + this.threadIndex.incrementAndGet());
+        }
+    });
+
 
     public NettyClientProtocol(RemotingClient client, MemberState memberState) {
         this.client = client;
@@ -33,16 +52,26 @@ public class NettyClientProtocol implements ClientProtocol {
     public CompletableFuture<HeartBeat> sendHeartBeat(HeartBeat heartBeat) {
         CompletableFuture<HeartBeat> future = new CompletableFuture<>();
         RemotingCommand remotingCommand = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.SEND_HEARTBEAT, CommonCodec.encode(heartBeat));
-        client.invokeAsync(getAddress(heartBeat.getRemoteId()), remotingCommand, memberState.getConfig().getRpcTimeoutMillis(), responseFuture -> {
-            RemotingCommand responseCommand = responseFuture.getResponseCommand();
-            if (responseCommand == null) {
-                HeartBeat heartBeatResponse = new HeartBeat();
-                heartBeatResponse.setCode(ResponseCode.NETWORK_ERROR);
-                future.complete(heartBeatResponse);
-            } else {
-                future.complete(CommonCodec.decode(responseCommand.getBody(), HeartBeat.class));
+
+        HeartBeat errorResponse = new HeartBeat();
+        errorResponse.setCode(ResponseCode.NETWORK_ERROR);
+
+        executor.execute(() -> {
+            try {
+                client.invokeAsync(getAddress(heartBeat.getRemoteId()), remotingCommand, memberState.getConfig().getRpcTimeoutMillis(), responseFuture -> {
+                    RemotingCommand responseCommand = responseFuture.getResponseCommand();
+                    if (responseCommand == null) {
+                        future.complete(errorResponse);
+                    } else {
+                        future.complete(CommonCodec.decode(responseCommand.getBody(), HeartBeat.class));
+                    }
+                });
+            } catch (Throwable e) {
+                logger.error("Send heartBeat request failed, {}", heartBeat.baseInfo());
+                future.complete(errorResponse);
             }
         });
+
         return future;
     }
 
@@ -50,16 +79,26 @@ public class NettyClientProtocol implements ClientProtocol {
     public CompletableFuture<VoteResponse> callVote(VoteRequest voteRequest) {
         CompletableFuture<VoteResponse> future = new CompletableFuture<>();
         RemotingCommand remotingCommand = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.CALL_VOTE, CommonCodec.encode(voteRequest));
-        client.invokeAsync(getAddress(voteRequest.getRemoteId()), remotingCommand, memberState.getConfig().getRpcTimeoutMillis(), responseFuture -> {
-            RemotingCommand responseCommand = responseFuture.getResponseCommand();
-            if (responseCommand == null) {
-                VoteResponse voteResponse = new VoteResponse();
-                voteResponse.setCode(ResponseCode.NETWORK_ERROR);
-                future.complete(voteResponse);
-            } else {
-                future.complete(CommonCodec.decode(responseCommand.getBody(), VoteResponse.class));
+
+        VoteResponse errorResponse = new VoteResponse();
+        errorResponse.setCode(ResponseCode.NETWORK_ERROR);
+
+        executor.execute(() -> {
+            try {
+                client.invokeAsync(getAddress(voteRequest.getRemoteId()), remotingCommand, memberState.getConfig().getRpcTimeoutMillis(), responseFuture -> {
+                    RemotingCommand responseCommand = responseFuture.getResponseCommand();
+                    if (responseCommand == null) {
+                        future.complete(errorResponse);
+                    } else {
+                        future.complete(CommonCodec.decode(responseCommand.getBody(), VoteResponse.class));
+                    }
+                });
+            } catch (Throwable e) {
+                logger.error("Call vote request failed, {}", voteRequest.baseInfo());
+                future.complete(errorResponse);
             }
         });
+
         return future;
     }
 

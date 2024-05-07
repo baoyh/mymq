@@ -55,4 +55,8 @@ public class BaseProtocol {
     public void setTerm(long term) {
         this.term = term;
     }
+
+    public String baseInfo() {
+        return String.format("info[term=%d,code=%d,local=%s,remote=%s,leader=%s]", term, code, localId, remoteId, leaderId);
+    }
 }

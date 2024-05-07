@@ -14,7 +14,7 @@ public abstract class ServiceThread implements Runnable {
 
     private static final Logger log = LoggerFactory.getLogger(ServiceThread.class);
 
-    protected boolean stop = false;
+    protected volatile boolean stop = false;
 
     private final CountDownLatch waitNode = new CountDownLatch(1);
 

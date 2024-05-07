@@ -126,13 +126,9 @@ public class HeartbeatProcessor {
         HeartBeat heartbeatResponse = createHeartbeatResponse(heartBeat);
 
         if (heartBeat.getLeaderId().equals(memberState.getLeaderId())) {
-            if (heartBeat.getTerm() == memberState.getTerm()) {
-                heartbeatResponse.setCode(ResponseCode.SUCCESS);
-                return heartbeatResponse;
-            }
-            if (heartBeat.getTerm() > memberState.getTerm()) {
+            if (heartBeat.getTerm() >= memberState.getTerm()) {
                 memberState.setTerm(heartBeat.getTerm());
-                heartbeatResponse.setCode(ResponseCode.TERM_NOT_READY);
+                heartbeatResponse.setCode(ResponseCode.SUCCESS);
                 return heartbeatResponse;
             }
             heartbeatResponse.setCode(ResponseCode.EXPIRED_TERM);

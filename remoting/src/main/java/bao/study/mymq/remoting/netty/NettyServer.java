@@ -24,7 +24,6 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
     private final NioEventLoopGroup workerGroup = new NioEventLoopGroup();
     private final ServerBootstrap serverBootstrap = new ServerBootstrap();
     private final ServerHandler serverHandler = new ServerHandler();
-    private ChannelFuture sync;
 
     private final int port;
 
@@ -42,7 +41,7 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
                     ch.pipeline().addLast(new KryoNettyDecode()).addLast(new KryoNettyEncode()).addLast(serverHandler);
                 }
             });
-            sync = serverBootstrap.bind(port).sync();
+            serverBootstrap.bind(port).sync();
 
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -51,17 +50,8 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
 
     @Override
     public void shutdown() {
-        try {
-            if (sync != null) {
-                sync.channel().closeFuture().sync();
-            }
-            bossGroup.shutdownGracefully();
-            workerGroup.shutdownGracefully();
-
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
+        bossGroup.shutdownGracefully();
+        workerGroup.shutdownGracefully();
     }
 
     @ChannelHandler.Sharable

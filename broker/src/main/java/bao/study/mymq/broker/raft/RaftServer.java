@@ -16,6 +16,8 @@ import java.util.UUID;
  */
 public class RaftServer {
 
+    private volatile boolean alive;
+
     private final Config config;
 
     private final RemotingClient remotingClient;
@@ -23,6 +25,8 @@ public class RaftServer {
     private final RemotingServer remotingServer;
 
     private final MemberState memberState;
+
+    private StateMaintainer stateMaintainer;
 
     public RaftServer(Config config, RemotingClient remotingClient, RemotingServer remotingServer) {
         this.config = config;
@@ -33,19 +37,24 @@ public class RaftServer {
     }
 
     public void startup() {
-        startStateMaintainer(memberState);
+        startStateMaintainer();
+        alive = true;
     }
 
-    private void startStateMaintainer(MemberState memberState) {
-        StateMaintainer stateMaintainer = new StateMaintainer(memberState);
-        NettyClientProtocol clientProtocol = new NettyClientProtocol(remotingClient, memberState);
-        LeaderElector leaderElector = new LeaderElector(stateMaintainer, clientProtocol);
-        HeartbeatProcessor heartbeatProcessor = new HeartbeatProcessor(stateMaintainer, clientProtocol);
-        NettyServerProtocol serverProtocol = new NettyServerProtocol(heartbeatProcessor, leaderElector);
-        remotingServer.registerRequestProcessor(serverProtocol, RequestCode.SEND_HEARTBEAT, RequestCode.CALL_VOTE);
+    private void startStateMaintainer() {
+        synchronized (memberState) {
+            if (stateMaintainer == null) {
+                stateMaintainer = new StateMaintainer(memberState);
+                NettyClientProtocol clientProtocol = new NettyClientProtocol(remotingClient, memberState);
+                LeaderElector leaderElector = new LeaderElector(stateMaintainer, clientProtocol);
+                HeartbeatProcessor heartbeatProcessor = new HeartbeatProcessor(stateMaintainer, clientProtocol);
+                NettyServerProtocol serverProtocol = new NettyServerProtocol(heartbeatProcessor, leaderElector);
+                remotingServer.registerRequestProcessor(serverProtocol, RequestCode.SEND_HEARTBEAT, RequestCode.CALL_VOTE);
 
-        stateMaintainer.setHeartbeatProcessor(heartbeatProcessor);
-        stateMaintainer.setLeaderElector(leaderElector);
+                stateMaintainer.setHeartbeatProcessor(heartbeatProcessor);
+                stateMaintainer.setLeaderElector(leaderElector);
+            }
+        }
         stateMaintainer.start();
     }
 
@@ -57,6 +66,13 @@ public class RaftServer {
         return memberState;
     }
 
+    public void shutdown() {
+        stateMaintainer.shutdown();
+        remotingServer.shutdown();
+        remotingClient.shutdown();
+        alive = false;
+    }
+
     public Config getConfig() {
         return config;
     }
@@ -64,4 +80,17 @@ public class RaftServer {
     public MemberState getMemberState() {
         return memberState;
     }
+
+    public boolean isAlive() {
+        return alive;
+    }
+
+    public RemotingClient getRemotingClient() {
+        return remotingClient;
+    }
+
+    public RemotingServer getRemotingServer() {
+        return remotingServer;
+    }
 }
+

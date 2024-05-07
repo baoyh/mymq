@@ -57,6 +57,8 @@ public class LeaderElector {
             voteRequest.setTerm(maxTerm.get());
             voteRequest.setRemoteId(id);
             voteRequest.setLocalId(memberState.getSelfId());
+
+            logger.info(memberState.getSelfId() + " start call vote " + voteRequest.getRemoteId());
             CompletableFuture<VoteResponse> voteFeature = clientProtocol.callVote(voteRequest);
 
             voteFeature.whenComplete(((VoteResponse voteResponse, Throwable ex) -> {
@@ -109,6 +111,8 @@ public class LeaderElector {
     }
 
     public VoteResponse handleVote(VoteRequest voteRequest) {
+        logger.info(memberState.getSelfId() + " receive call vote from " + voteRequest.getLocalId());
+
         VoteResponse voteResponse = createVoteResponse(voteRequest);
         if (memberState.getRole() == Role.LEADER) {
             voteResponse.setCode(ResponseCode.REJECT_ALREADY_HAS_LEADER);

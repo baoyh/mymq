@@ -42,7 +42,7 @@ public class StateMaintainer extends ServiceThread {
 
     @Override
     public void run() {
-        while (true) {
+        while (!stop) {
             try {
                 switch (memberState.getRole()) {
                     case FOLLOWER:
@@ -62,7 +62,6 @@ public class StateMaintainer extends ServiceThread {
             } catch (Exception e) {
                 logger.error("state maintainer error ", e);
             }
-
         }
     }
 
@@ -72,7 +71,12 @@ public class StateMaintainer extends ServiceThread {
     private void maintainAsFollower() {
         if (System.currentTimeMillis() - lastHeartBeatTime > (long) memberState.getConfig().getHeartBeatTimeIntervalMs() * memberState.getConfig().getMaxHeartBeatLeak()) {
             if (memberState.getRole() == Role.FOLLOWER) {
-                changeRoleToCandidate(memberState.getTerm());
+                if (lastHeartBeatTime < 0) {
+                    // 立即发起投票请求
+                    changeRoleToCandidate(memberState.getTerm(), System.currentTimeMillis());
+                } else {
+                    changeRoleToCandidate(memberState.getTerm());
+                }
             }
         }
     }
@@ -104,10 +108,15 @@ public class StateMaintainer extends ServiceThread {
     }
 
     public void changeRoleToCandidate(long term) {
+        changeRoleToCandidate(term, getNextTimeToRequestVote());
+    }
+
+    public void changeRoleToCandidate(long term, long nextTimeToRequestVote) {
         memberState.setTerm(Math.max(term, memberState.getTerm()));
         memberState.setLeaderId(null);
         memberState.setRole(Role.CANDIDATE);
-        nextTimeToRequestVote = getNextTimeToRequestVote();
+        memberState.setCurrVoteFor(null);
+        this.nextTimeToRequestVote = nextTimeToRequestVote;
     }
 
     private long getNextTimeToRequestVote() {
@@ -120,14 +129,6 @@ public class StateMaintainer extends ServiceThread {
 
     public void setLastHeartBeatTime(long lastHeartBeatTime) {
         this.lastHeartBeatTime = lastHeartBeatTime;
-    }
-
-    public long getLastHeartBeatTime() {
-        return lastHeartBeatTime;
-    }
-
-    public void setNextTimeToRequestVote(long nextTimeToRequestVote) {
-        this.nextTimeToRequestVote = nextTimeToRequestVote;
     }
 
     public void setHeartbeatProcessor(HeartbeatProcessor heartbeatProcessor) {
