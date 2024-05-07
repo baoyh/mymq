@@ -37,14 +37,15 @@ public class RaftServer {
     }
 
     private void startStateMaintainer(MemberState memberState) {
-        StateMaintainer stateMaintainer = new StateMaintainer();
-        stateMaintainer.setMemberState(memberState);
-        stateMaintainer.setConfig(config);
+        StateMaintainer stateMaintainer = new StateMaintainer(memberState);
         NettyClientProtocol clientProtocol = new NettyClientProtocol(remotingClient, memberState);
-        stateMaintainer.setClientProtocol(clientProtocol);
-        NettyServerProtocol serverProtocol = new NettyServerProtocol(stateMaintainer);
+        LeaderElector leaderElector = new LeaderElector(stateMaintainer, clientProtocol);
+        HeartbeatProcessor heartbeatProcessor = new HeartbeatProcessor(stateMaintainer, clientProtocol);
+        NettyServerProtocol serverProtocol = new NettyServerProtocol(heartbeatProcessor, leaderElector);
         remotingServer.registerRequestProcessor(serverProtocol, RequestCode.SEND_HEARTBEAT, RequestCode.CALL_VOTE);
-        stateMaintainer.setLeaderElector(new LeaderElector(memberState, clientProtocol));
+
+        stateMaintainer.setHeartbeatProcessor(heartbeatProcessor);
+        stateMaintainer.setLeaderElector(leaderElector);
         stateMaintainer.start();
     }
 

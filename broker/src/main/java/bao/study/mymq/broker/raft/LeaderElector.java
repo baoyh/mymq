@@ -1,6 +1,7 @@
 package bao.study.mymq.broker.raft;
 
 import bao.study.mymq.broker.raft.protocol.ClientProtocol;
+import bao.study.mymq.common.protocol.raft.HeartBeat;
 import bao.study.mymq.common.protocol.raft.VoteRequest;
 import bao.study.mymq.common.protocol.raft.VoteResponse;
 import bao.study.mymq.remoting.code.ResponseCode;
@@ -23,10 +24,13 @@ public class LeaderElector {
 
     private final MemberState memberState;
 
+    private final StateMaintainer stateMaintainer;
+
     private final ClientProtocol clientProtocol;
 
-    public LeaderElector(MemberState memberState, ClientProtocol clientProtocol) {
-        this.memberState = memberState;
+    public LeaderElector(StateMaintainer stateMaintainer, ClientProtocol clientProtocol) {
+        this.memberState = stateMaintainer.getMemberState();
+        this.stateMaintainer = stateMaintainer;
         this.clientProtocol = clientProtocol;
     }
 
@@ -102,6 +106,46 @@ public class LeaderElector {
             return VoteResult.WAIT_TO_REVOTE;
         }
         return VoteResult.PASSED;
+    }
+
+    public VoteResponse handleVote(VoteRequest voteRequest) {
+        VoteResponse voteResponse = createVoteResponse(voteRequest);
+        if (memberState.getRole() == Role.LEADER) {
+            voteResponse.setCode(ResponseCode.REJECT_ALREADY_HAS_LEADER);
+            return voteResponse;
+        }
+        if (memberState.getTerm() < voteRequest.getTerm()) {
+            logger.info(memberState.getSelfId() + " curr voted for " + memberState.getCurrVoteFor());
+            // 当前轮次小于发起方的轮次, 投票给发起方
+            memberState.setCurrVoteFor(voteRequest.getLocalId());
+            stateMaintainer.changeRoleToCandidate(voteRequest.getTerm());
+            logger.info(memberState.getSelfId() + " will vote for " + voteRequest.getLocalId() + " in local term " + memberState.getTerm() + " and remote term " + voteRequest.getTerm());
+            return voteResponse;
+        }
+        if (memberState.getTerm() > voteRequest.getTerm()) {
+            voteResponse.setCode(ResponseCode.REJECT_EXPIRED_TERM);
+            return voteResponse;
+        }
+        if (memberState.getLeaderId() != null) {
+            voteResponse.setCode(ResponseCode.REJECT_ALREADY_HAS_LEADER);
+            return voteResponse;
+        }
+        if (memberState.getCurrVoteFor() != null) {
+            voteResponse.setCode(ResponseCode.REJECT_ALREADY_VOTED);
+            return voteResponse;
+        }
+        memberState.setCurrVoteFor(voteRequest.getLocalId());
+        return voteResponse;
+    }
+
+    private VoteResponse createVoteResponse(VoteRequest voteRequest) {
+        VoteResponse response = new VoteResponse();
+        response.setTerm(memberState.getTerm());
+        response.setLocalId(memberState.getSelfId());
+        response.setRemoteId(voteRequest.getLocalId());
+        response.setLeaderId(memberState.getLeaderId());
+        response.setCode(ResponseCode.SUCCESS);
+        return response;
     }
 
     public enum VoteResult {

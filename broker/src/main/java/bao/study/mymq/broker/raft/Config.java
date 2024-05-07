@@ -7,16 +7,16 @@ package bao.study.mymq.broker.raft;
 public class Config {
 
     /**
-     * 一个心跳包的周期，默认为 2s
+     * 一个心跳包的周期，默认为 200ms
      */
-    private int heartBeatTimeIntervalMs = 2000;
+    private int heartBeatTimeIntervalMs = 200;
 
     /**
      * 允许最大的 N 个心跳周期内未收到心跳包，状态为 Follower 的节点只有超过
      * maxHeartBeatLeak * heartBeatTimeIntervalMs 的时间内未收到主节点的心跳包，
      * 才会重新进入 Candidate 状态，重新下一轮的选举
      */
-    private int maxHeartBeatLeak = 3;
+    private int maxHeartBeatLeak = 10;
 
     /**
      * 最大的发送投票的间隔，默认为 1000ms
