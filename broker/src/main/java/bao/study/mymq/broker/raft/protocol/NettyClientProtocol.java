@@ -67,7 +67,7 @@ public class NettyClientProtocol implements ClientProtocol {
                     }
                 });
             } catch (Throwable e) {
-                logger.error("Send heartBeat request failed, {}", heartBeat.baseInfo());
+                logger.error("Send heartBeat request failed, {}, because {}", heartBeat.baseInfo(), e.getMessage());
                 future.complete(errorResponse);
             }
         });
@@ -94,7 +94,7 @@ public class NettyClientProtocol implements ClientProtocol {
                     }
                 });
             } catch (Throwable e) {
-                logger.error("Call vote request failed, {}", voteRequest.baseInfo());
+                logger.error("Call vote request failed, {}, because {}", voteRequest.baseInfo(), e.getMessage());
                 future.complete(errorResponse);
             }
         });

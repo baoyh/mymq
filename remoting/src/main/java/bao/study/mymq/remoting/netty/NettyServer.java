@@ -20,9 +20,8 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
 
     private static final Logger log = LoggerFactory.getLogger(NettyServer.class);
 
-    private final NioEventLoopGroup bossGroup = new NioEventLoopGroup();
-    private final NioEventLoopGroup workerGroup = new NioEventLoopGroup();
-    private final ServerBootstrap serverBootstrap = new ServerBootstrap();
+    private NioEventLoopGroup bossGroup = new NioEventLoopGroup();
+    private NioEventLoopGroup workerGroup = new NioEventLoopGroup();
     private final ServerHandler serverHandler = new ServerHandler();
 
     private final int port;
@@ -34,6 +33,10 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
     @Override
     public void start() {
         try {
+            ServerBootstrap serverBootstrap = new ServerBootstrap();
+            bossGroup = new NioEventLoopGroup();
+            workerGroup = new NioEventLoopGroup();
+
             serverBootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).childHandler(new ChannelInitializer<SocketChannel>() {
 
                 @Override
@@ -42,7 +45,7 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
                 }
             });
             serverBootstrap.bind(port).sync();
-
+            log.info("Success start netty server in port {}", port);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

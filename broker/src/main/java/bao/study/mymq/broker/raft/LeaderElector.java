@@ -1,7 +1,6 @@
 package bao.study.mymq.broker.raft;
 
 import bao.study.mymq.broker.raft.protocol.ClientProtocol;
-import bao.study.mymq.common.protocol.raft.HeartBeat;
 import bao.study.mymq.common.protocol.raft.VoteRequest;
 import bao.study.mymq.common.protocol.raft.VoteResponse;
 import bao.study.mymq.remoting.code.ResponseCode;
@@ -11,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -21,6 +21,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class LeaderElector {
 
     private static final Logger logger = LoggerFactory.getLogger(LeaderElector.class);
+
+    private static final Object lock = new Object();
 
     private final MemberState memberState;
 
@@ -39,6 +41,7 @@ public class LeaderElector {
         AtomicLong maxTerm = new AtomicLong(memberState.getTerm());
         maxTerm.incrementAndGet();
         memberState.setTerm(maxTerm.get());
+        AtomicBoolean hasLeader = new AtomicBoolean(false);
 
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
@@ -81,7 +84,8 @@ public class LeaderElector {
                             break;
                         case ResponseCode.REJECT_ALREADY_HAS_LEADER:
                             logger.info(voteResponse.getLocalId() + " reject already has leader " + memberState.getSelfId());
-                            // term 相同但已经存在 leader, 一般是网络分区导致有过重新选举
+                            // term 相同但已经存在 leader, 一般是网络分区导致有过重新选举, 需将节点设置为 follower 等待接受心跳
+                            hasLeader.compareAndSet(false, true);
                             break;
                         case ResponseCode.REJECT_TERM_NOT_READY:
                             logger.info(voteResponse.getLocalId() + " reject term not ready " + memberState.getSelfId());
@@ -100,9 +104,13 @@ public class LeaderElector {
 
         countDownLatch.await(memberState.getConfig().getMaxVoteIntervalMs(), TimeUnit.MILLISECONDS);
 
+        if (hasLeader.get()) {
+            stateMaintainer.changeRoleToFollower(memberState.getTerm());
+            return VoteResult.CHANGE_TO_FOLLOWER;
+        }
         if (maxTerm.get() > memberState.getTerm()) {
             memberState.setTerm(maxTerm.get());
-            return VoteResult.REVOTE_IMMEDIATELY;
+            return VoteResult.WAIT_TO_REVOTE;
         }
         if (success.get() <= memberState.getNodes().size() / 2) {
             return VoteResult.WAIT_TO_REVOTE;
@@ -118,25 +126,27 @@ public class LeaderElector {
             voteResponse.setCode(ResponseCode.REJECT_ALREADY_HAS_LEADER);
             return voteResponse;
         }
-        if (memberState.getTerm() < voteRequest.getTerm()) {
-            logger.info(memberState.getSelfId() + " curr voted for " + memberState.getCurrVoteFor());
-            // 当前轮次小于发起方的轮次, 投票给发起方
-            memberState.setCurrVoteFor(voteRequest.getLocalId());
-            stateMaintainer.changeRoleToCandidate(voteRequest.getTerm());
-            logger.info(memberState.getSelfId() + " will vote for " + voteRequest.getLocalId() + " in local term " + memberState.getTerm() + " and remote term " + voteRequest.getTerm());
-            return voteResponse;
-        }
-        if (memberState.getTerm() > voteRequest.getTerm()) {
-            voteResponse.setCode(ResponseCode.REJECT_EXPIRED_TERM);
-            return voteResponse;
-        }
-        if (memberState.getLeaderId() != null) {
-            voteResponse.setCode(ResponseCode.REJECT_ALREADY_HAS_LEADER);
-            return voteResponse;
-        }
-        if (memberState.getCurrVoteFor() != null) {
-            voteResponse.setCode(ResponseCode.REJECT_ALREADY_VOTED);
-            return voteResponse;
+        synchronized (lock) {
+            if (memberState.getTerm() < voteRequest.getTerm()) {
+                logger.info(memberState.getSelfId() + " curr voted for " + memberState.getCurrVoteFor());
+                logger.info(memberState.getSelfId() + " will vote for " + voteRequest.getLocalId() + " in local term " + memberState.getTerm() + " and remote term " + voteRequest.getTerm());
+                // 当前轮次小于发起方的轮次, 投票给发起方
+                memberState.setCurrVoteFor(voteRequest.getLocalId());
+                stateMaintainer.changeRoleToCandidate(voteRequest.getTerm());
+                return voteResponse;
+            }
+            if (memberState.getTerm() > voteRequest.getTerm()) {
+                voteResponse.setCode(ResponseCode.REJECT_EXPIRED_TERM);
+                return voteResponse;
+            }
+            if (memberState.getLeaderId() != null) {
+                voteResponse.setCode(ResponseCode.REJECT_ALREADY_HAS_LEADER);
+                return voteResponse;
+            }
+            if (memberState.getCurrVoteFor() != null) {
+                voteResponse.setCode(ResponseCode.REJECT_ALREADY_VOTED);
+                return voteResponse;
+            }
         }
         memberState.setCurrVoteFor(voteRequest.getLocalId());
         return voteResponse;
@@ -153,8 +163,8 @@ public class LeaderElector {
     }
 
     public enum VoteResult {
+        CHANGE_TO_FOLLOWER,
         WAIT_TO_REVOTE,
-        REVOTE_IMMEDIATELY,
         PASSED
     }
 }

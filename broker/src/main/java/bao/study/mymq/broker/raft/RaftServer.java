@@ -16,6 +16,8 @@ import java.util.UUID;
  */
 public class RaftServer {
 
+    private static final Object lock = new Object();
+
     private volatile boolean alive;
 
     private final Config config;
@@ -37,12 +39,18 @@ public class RaftServer {
     }
 
     public void startup() {
+        startRemoting();
         startStateMaintainer();
         alive = true;
     }
 
+    private void startRemoting() {
+        remotingServer.start();
+        remotingClient.start();
+    }
+
     private void startStateMaintainer() {
-        synchronized (memberState) {
+        synchronized (lock) {
             if (stateMaintainer == null) {
                 stateMaintainer = new StateMaintainer(memberState);
                 NettyClientProtocol clientProtocol = new NettyClientProtocol(remotingClient, memberState);
@@ -68,6 +76,7 @@ public class RaftServer {
 
     public void shutdown() {
         stateMaintainer.shutdown();
+        stateMaintainer = null;
         remotingServer.shutdown();
         remotingClient.shutdown();
         alive = false;

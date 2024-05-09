@@ -39,7 +39,8 @@ public class RaftTest {
         System.out.println(b.getRemotingClient());
         System.out.println(c.getRemotingClient());
 
-        Thread.sleep(3000);
+        // 等待选举完成
+        Thread.sleep(2000);
 
         AtomicInteger leaderNum = new AtomicInteger();
         AtomicInteger followerNum = new AtomicInteger();
@@ -51,14 +52,21 @@ public class RaftTest {
         leader.shutdown();
         Thread.sleep(2000);
 
-        leaderNum.set(0);
-        followerNum.set(0);
         countNum(leaderNum, followerNum, a, b, c);
         Assertions.assertEquals(1, leaderNum.get());
         Assertions.assertEquals(1, followerNum.get());
+
+        leader.startup();
+        Thread.sleep(3000);
+
+        countNum(leaderNum, followerNum, a, b, c);
+        Assertions.assertEquals(1, leaderNum.get());
+        Assertions.assertEquals(2, followerNum.get());
     }
 
     private RaftServer countNum(AtomicInteger leaderNum, AtomicInteger followerNum, RaftServer... servers) {
+        leaderNum.set(0);
+        followerNum.set(0);
         RaftServer leader = null;
         for (RaftServer server : servers) {
             if (!server.isAlive()) continue;
@@ -79,13 +87,7 @@ public class RaftTest {
     }
 
     private RaftServer createRaftServer(int port) {
-        NettyServer nettyServer = new NettyServer(port);
-        nettyServer.start();
-
-        NettyClient nettyClient = new NettyClient();
-        nettyClient.start();
-
-        return new RaftServer(new Config(), nettyClient, nettyServer);
+        return new RaftServer(new Config(), new NettyClient(), new NettyServer(port));
     }
 
     private void registerNodes(Map<String, String> nodes, RaftServer server, int port) {

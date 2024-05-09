@@ -56,7 +56,9 @@ public class HeartbeatProcessor {
             heartBeat.setLocalId(memberState.getSelfId());
             heartBeat.setTerm(memberState.getTerm());
 
+            logger.info("{} start send heartbeat to {} at local term {}", memberState.getSelfId(), heartBeat.getRemoteId(), memberState.getTerm());
             CompletableFuture<HeartBeat> future = clientProtocol.sendHeartBeat(heartBeat);
+
             future.whenComplete((HeartBeat response, Throwable ex) -> {
                 try {
                     all.incrementAndGet();
@@ -71,11 +73,12 @@ public class HeartbeatProcessor {
                             success.incrementAndGet();
                             break;
                         case ResponseCode.EXPIRED_TERM:
-                            // 可能出现多个 term 更大的情况, 取其中最大的一个用作 Candidate 的 term
+                            // 可能出现多个 term 更大的情况, 取其中最大的一个用作 candidate 的 term
                             maxTerm.set(Math.max(maxTerm.get(), response.getTerm()));
                             break;
                         case ResponseCode.INCONSISTENT_LEADER:
                             // leader 不一致, 可能是之前分区导致的, 或者是之前的 leader 挂了导致集群有了新的 leader
+                            // 此时需要重新选举
                             inconsistentLeader.compareAndSet(true, false);
                             break;
                         case ResponseCode.TERM_NOT_READY:
@@ -120,17 +123,18 @@ public class HeartbeatProcessor {
     }
 
     public HeartBeat handleHeartbeat(HeartBeat heartBeat) {
+        logger.info("{} receive heartbeat from {} at local term {} and remote term {}", memberState.getSelfId(), heartBeat.getLocalId(), memberState.getTerm(), heartBeat.getTerm());
         MemberState memberState = stateMaintainer.getMemberState();
+        logger.info("{} lastHeartBeatTime will be set to {}", memberState.getSelfId(), System.currentTimeMillis());
         stateMaintainer.setLastHeartBeatTime(System.currentTimeMillis());
 
         HeartBeat heartbeatResponse = createHeartbeatResponse(heartBeat);
+        if (heartBeat.getTerm() >= memberState.getTerm()) {
+            stateMaintainer.changeRoleToFollower(heartBeat.getTerm());
+            return heartbeatResponse;
+        }
 
         if (heartBeat.getLeaderId().equals(memberState.getLeaderId())) {
-            if (heartBeat.getTerm() >= memberState.getTerm()) {
-                memberState.setTerm(heartBeat.getTerm());
-                heartbeatResponse.setCode(ResponseCode.SUCCESS);
-                return heartbeatResponse;
-            }
             heartbeatResponse.setCode(ResponseCode.EXPIRED_TERM);
         } else if (memberState.getLeaderId() == null) {
             // 刚完成选举, 新 leader 第一次发送心跳

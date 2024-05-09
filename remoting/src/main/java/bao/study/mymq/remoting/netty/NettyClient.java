@@ -18,9 +18,6 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author baoyh
@@ -30,15 +27,16 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
 
     private static final Logger log = LoggerFactory.getLogger(NettyClient.class);
 
-    private final NioEventLoopGroup eventLoopGroupWorker = new NioEventLoopGroup();
-    private final Bootstrap bootstrap = new Bootstrap();
+    private NioEventLoopGroup eventLoopGroupWorker = new NioEventLoopGroup();
+    private Bootstrap bootstrap = new Bootstrap();
 
     private final ConcurrentMap<String, Channel> channelTables = new ConcurrentHashMap<>();
-    private final Lock lockChannelTables = new ReentrantLock();
-    private final static int LOCK_TIME = 3000;
 
     @Override
     public void start() {
+        eventLoopGroupWorker = new NioEventLoopGroup();
+        bootstrap = new Bootstrap();
+
         this.bootstrap.group(this.eventLoopGroupWorker).channel(NioSocketChannel.class).handler(new ChannelInitializer<SocketChannel>() {
 
             @Override
@@ -78,16 +76,11 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
 
     @Override
     public void invokeAsync(String address, RemotingCommand request, long timeoutMillis, InvokeCallback invokeCallback) {
-        log.info("start invoke async to address " + address);
         Channel channel = getOrCreateChannel(address);
-        log.info("get channel " + channel.remoteAddress());
         ResponseFuture responseFuture = new ResponseFuture();
         responseFuture.setInvokeCallback(invokeCallback);
-//        log.info("start put request " + request.getRequestId());
         responseFutureTable.put(request.getRequestId(), responseFuture);
-//        log.info("start write and flush to address " + address);
         channel.writeAndFlush(request);
-//        log.info("write and flush to address success " + address);
     }
 
     @Override
@@ -101,36 +94,18 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
     }
 
     private Channel getOrCreateChannel(String address) {
-        if (channelTables.isEmpty()) {
-            log.info(this + " channelTables is empty");
-        } else {
-            channelTables.keySet().forEach(it -> log.info(this + " remain channel " + it));
-        }
         Channel channel = channelTables.get(address);
         if (channel != null) {
-            log.info("get channel with address " + address + " from client " + this);
             return channel;
         }
 
         try {
-            while (true) {
-                if (lockChannelTables.tryLock(LOCK_TIME, TimeUnit.MILLISECONDS)) {
-                    channel = channelTables.get(address);
-                    if (channel != null) {
-                        return channel;
-                    }
-
-                    log.info("start create channel with address " + address + " to client " + this);
-                    channel = bootstrap.connect(RemotingHelper.string2SocketAddress(address)).sync().channel();
-                    log.info("success create channel with address " + address + " to client " + this);
-                    channelTables.put(address, channel);
-                    return channel;
-                }
-            }
+            channel = bootstrap.connect(RemotingHelper.string2SocketAddress(address)).sync().channel();
+            channelTables.put(address, channel);
+            log.info("Success create channel with address {}", address);
+            return channel;
         } catch (Exception e) {
-            throw new RemotingException("create channel fail", e);
-        } finally {
-            lockChannelTables.unlock();
+            throw new RemotingException("Create channel fail with address " + address, e);
         }
     }
 
