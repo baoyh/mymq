@@ -61,7 +61,7 @@ public class StateMaintainer extends ServiceThread {
                         maintainAsLeader();
                         break;
                 }
-                Thread.sleep(30);
+                Thread.sleep(300);
             } catch (Exception e) {
                 logger.error("state maintainer error ", e);
             }

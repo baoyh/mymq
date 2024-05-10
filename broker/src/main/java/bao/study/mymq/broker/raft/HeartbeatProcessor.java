@@ -23,6 +23,8 @@ public class HeartbeatProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(StateMaintainer.class);
 
+    private final Object lock = new Object();
+
     private final MemberState memberState;
 
     private final StateMaintainer stateMaintainer;
@@ -129,22 +131,26 @@ public class HeartbeatProcessor {
         stateMaintainer.setLastHeartBeatTime(System.currentTimeMillis());
 
         HeartBeat heartbeatResponse = createHeartbeatResponse(heartBeat);
-        if (heartBeat.getTerm() >= memberState.getTerm()) {
-            stateMaintainer.changeRoleToFollower(heartBeat.getTerm());
-            return heartbeatResponse;
+
+        synchronized (lock) {
+            if (heartBeat.getTerm() >= memberState.getTerm()) {
+                stateMaintainer.changeRoleToFollower(heartBeat.getTerm());
+                return heartbeatResponse;
+            }
+
+            if (heartBeat.getLeaderId().equals(memberState.getLeaderId())) {
+                heartbeatResponse.setCode(ResponseCode.EXPIRED_TERM);
+            } else if (memberState.getLeaderId() == null) {
+                // 刚完成选举, 新 leader 第一次发送心跳
+                memberState.setLeaderId(heartBeat.getLeaderId());
+                memberState.setRole(Role.FOLLOWER);
+                memberState.setTerm(heartBeat.getTerm());
+            } else {
+                // 由于分区后重新选举导致的 leader 不一致
+                heartbeatResponse.setCode(ResponseCode.INCONSISTENT_LEADER);
+            }
         }
 
-        if (heartBeat.getLeaderId().equals(memberState.getLeaderId())) {
-            heartbeatResponse.setCode(ResponseCode.EXPIRED_TERM);
-        } else if (memberState.getLeaderId() == null) {
-            // 刚完成选举, 新 leader 第一次发送心跳
-            memberState.setLeaderId(heartBeat.getLeaderId());
-            memberState.setRole(Role.FOLLOWER);
-            memberState.setTerm(heartBeat.getTerm());
-        } else {
-            // 由于分区后重新选举导致的 leader 不一致
-            heartbeatResponse.setCode(ResponseCode.INCONSISTENT_LEADER);
-        }
         return heartbeatResponse;
     }
 
