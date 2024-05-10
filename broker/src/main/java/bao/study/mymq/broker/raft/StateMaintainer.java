@@ -29,7 +29,7 @@ public class StateMaintainer extends ServiceThread {
     /**
      * 上一次收到心跳的时间戳
      */
-    private volatile AtomicLong lastHeartBeatTime = new AtomicLong(-1L);
+    private volatile long lastHeartBeatTime = -1L;
 
     private volatile long nextTimeToRequestVote = -1L;
 
@@ -46,7 +46,6 @@ public class StateMaintainer extends ServiceThread {
     public void run() {
         while (!stop) {
             try {
-                logger.info("{} lastHeartBeatTime now is {}", memberState.getSelfId(), this.getLastHeartBeatTime());
                 switch (memberState.getRole()) {
                     case FOLLOWER:
                         logger.info(memberState.getSelfId() + ": become follower");
@@ -72,11 +71,9 @@ public class StateMaintainer extends ServiceThread {
      * 1. 超过一定时间未收到心跳则变为 Candidate
      */
     private void maintainAsFollower() {
-        if (System.currentTimeMillis() - lastHeartBeatTime.get() > (long) memberState.getConfig().getHeartBeatTimeIntervalMs() * memberState.getConfig().getMaxHeartBeatLeak()) {
-            logger.info("{} will change to candidate, lastHeartBeatTime is {}, current time is {}", memberState.getSelfId(), lastHeartBeatTime.get(), System.currentTimeMillis());
+        if (System.currentTimeMillis() - lastHeartBeatTime > (long) memberState.getConfig().getHeartBeatTimeIntervalMs() * memberState.getConfig().getMaxHeartBeatLeak()) {
             if (memberState.getRole() == Role.FOLLOWER) {
                 changeRoleToCandidate(memberState.getTerm());
-                logger.info("{} nextTimeToRequestVote is {}, {}", memberState.getSelfId(), nextTimeToRequestVote, new Date(nextTimeToRequestVote));
             }
         }
     }
@@ -103,7 +100,7 @@ public class StateMaintainer extends ServiceThread {
      * 1. 定期向 follower 发送心跳
      */
     private void maintainAsLeader() throws Exception {
-        if (System.currentTimeMillis() - lastHeartBeatTime.get() >= memberState.getConfig().getHeartBeatTimeIntervalMs()) {
+        if (System.currentTimeMillis() - lastHeartBeatTime >= memberState.getConfig().getHeartBeatTimeIntervalMs()) {
             heartbeatProcessor.sendHeartBeats();
         }
     }
@@ -142,7 +139,7 @@ public class StateMaintainer extends ServiceThread {
     }
 
     public void setLastHeartBeatTime(long lastHeartBeatTime) {
-        this.lastHeartBeatTime.set(lastHeartBeatTime);
+        this.lastHeartBeatTime = lastHeartBeatTime;
         logger.info("{} lastHeartBeatTime now is set to {}", memberState.getSelfId(), this.getLastHeartBeatTime());
     }
 
@@ -155,6 +152,17 @@ public class StateMaintainer extends ServiceThread {
     }
 
     public long getLastHeartBeatTime() {
-        return lastHeartBeatTime.get();
+        return lastHeartBeatTime;
+    }
+
+    @Override
+    public String toString() {
+        return "StateMaintainer{" +
+                "heartbeatProcessor=" + heartbeatProcessor +
+                ", leaderElector=" + leaderElector +
+                ", memberState=" + memberState +
+                ", lastHeartBeatTime=" + lastHeartBeatTime +
+                ", nextTimeToRequestVote=" + nextTimeToRequestVote +
+                '}';
     }
 }

@@ -88,4 +88,15 @@ public class MemberState {
     public void setCurrVoteFor(String currVoteFor) {
         this.currVoteFor = currVoteFor;
     }
+
+    @Override
+    public String toString() {
+        return "MemberState{" +
+                "role=" + role +
+                ", leaderId='" + leaderId + '\'' +
+                ", selfId='" + selfId + '\'' +
+                ", term=" + term +
+                ", currVoteFor='" + currVoteFor + '\'' +
+                '}';
+    }
 }

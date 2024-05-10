@@ -3,7 +3,6 @@ package bao.study.mymq.remoting.netty;
 import bao.study.mymq.remoting.InvokeCallback;
 import bao.study.mymq.remoting.common.RemotingCommand;
 import bao.study.mymq.remoting.common.RemotingCommandType;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 
@@ -22,7 +21,7 @@ public abstract class NettyAbstract {
 
     public void registerRequestProcessor(NettyRequestProcessor requestProcessor, int... codes) {
         for (int code : codes) {
-            requestProcessorTable.putIfAbsent(code, requestProcessor);
+            requestProcessorTable.put(code, requestProcessor);
         }
     }
 

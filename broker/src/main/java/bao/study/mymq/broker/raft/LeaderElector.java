@@ -120,15 +120,16 @@ public class LeaderElector {
 
     public VoteResponse handleVote(VoteRequest voteRequest) {
         logger.info(memberState.getSelfId() + " receive call vote from " + voteRequest.getLocalId());
+        logger.info(memberState.getSelfId() + " curr voted for " + memberState.getCurrVoteFor());
 
         VoteResponse voteResponse = createVoteResponse(voteRequest);
         if (memberState.getRole() == Role.LEADER) {
             voteResponse.setCode(ResponseCode.REJECT_ALREADY_HAS_LEADER);
             return voteResponse;
         }
+
         synchronized (lock) {
             if (memberState.getTerm() < voteRequest.getTerm()) {
-                logger.info(memberState.getSelfId() + " curr voted for " + memberState.getCurrVoteFor());
                 logger.info(memberState.getSelfId() + " will vote for " + voteRequest.getLocalId() + " in local term " + memberState.getTerm() + " and remote term " + voteRequest.getTerm());
                 // 当前轮次小于发起方的轮次, 投票给发起方
                 memberState.setCurrVoteFor(voteRequest.getLocalId());

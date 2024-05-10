@@ -127,9 +127,7 @@ public class HeartbeatProcessor {
     public HeartBeat handleHeartbeat(HeartBeat heartBeat) {
         logger.info("{} receive heartbeat from {} at local term {} and remote term {}", memberState.getSelfId(), heartBeat.getLocalId(), memberState.getTerm(), heartBeat.getTerm());
         MemberState memberState = stateMaintainer.getMemberState();
-        logger.info("{} lastHeartBeatTime will be set to {}", memberState.getSelfId(), System.currentTimeMillis());
         stateMaintainer.setLastHeartBeatTime(System.currentTimeMillis());
-        logger.info("{} local leader is {} and remote leader is {}",memberState.getSelfId(), memberState.getLeaderId(), heartBeat.getLeaderId());
 
         HeartBeat heartbeatResponse = createHeartbeatResponse(heartBeat);
 

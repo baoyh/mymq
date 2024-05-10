@@ -35,17 +35,14 @@ public class RaftTest {
         updateNodes(nodes, a, b, c);
         startServer(a, b, c);
 
-        System.out.println(a.getRemotingClient());
-        System.out.println(b.getRemotingClient());
-        System.out.println(c.getRemotingClient());
-
         // 等待选举完成
+        // 极低概率出现轮次过多导致选举时间过长,可以适当调整间隔
         Thread.sleep(2000);
 
         AtomicInteger leaderNum = new AtomicInteger();
         AtomicInteger followerNum = new AtomicInteger();
-        RaftServer leader = countNum(leaderNum, followerNum, a, b, c);
 
+        RaftServer leader = countNum(leaderNum, followerNum, a, b, c);
         Assertions.assertEquals(1, leaderNum.get());
         Assertions.assertEquals(2, followerNum.get());
 
@@ -57,7 +54,7 @@ public class RaftTest {
         Assertions.assertEquals(1, followerNum.get());
 
         leader.startup();
-        Thread.sleep(3000);
+        Thread.sleep(2000);
 
         countNum(leaderNum, followerNum, a, b, c);
         Assertions.assertEquals(1, leaderNum.get());
