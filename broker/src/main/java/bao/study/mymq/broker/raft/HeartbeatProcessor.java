@@ -53,7 +53,7 @@ public class HeartbeatProcessor {
 
             HeartBeat heartBeat = new HeartBeat();
             heartBeat.setCode(RequestCode.SEND_HEARTBEAT);
-            heartBeat.setLeaderId(memberState.getLeaderId());
+            heartBeat.setLeaderId(memberState.getSelfId());
             heartBeat.setRemoteId(entry.getKey());
             heartBeat.setLocalId(memberState.getSelfId());
             heartBeat.setTerm(memberState.getTerm());
@@ -129,6 +129,7 @@ public class HeartbeatProcessor {
         MemberState memberState = stateMaintainer.getMemberState();
         logger.info("{} lastHeartBeatTime will be set to {}", memberState.getSelfId(), System.currentTimeMillis());
         stateMaintainer.setLastHeartBeatTime(System.currentTimeMillis());
+        logger.info("{} local leader is {} and remote leader is {}",memberState.getSelfId(), memberState.getLeaderId(), heartBeat.getLeaderId());
 
         HeartBeat heartbeatResponse = createHeartbeatResponse(heartBeat);
 
