@@ -22,7 +22,7 @@ public class LeaderElector {
 
     private static final Logger logger = LoggerFactory.getLogger(LeaderElector.class);
 
-    private static final Object lock = new Object();
+    private final Object lock = new Object();
 
     private final MemberState memberState;
 
@@ -38,6 +38,7 @@ public class LeaderElector {
 
     public VoteResult callVote() throws Exception {
         AtomicInteger success = new AtomicInteger(1);
+        AtomicInteger receive = new AtomicInteger(1);
         AtomicLong maxTerm = new AtomicLong(memberState.getTerm());
         maxTerm.incrementAndGet();
         memberState.setTerm(maxTerm.get());
@@ -66,6 +67,7 @@ public class LeaderElector {
 
             voteFeature.whenComplete(((VoteResponse voteResponse, Throwable ex) -> {
                 try {
+                    receive.incrementAndGet();
                     if (ex != null) {
                         memberState.getLiveNodes().remove(id);
                         throw ex;
@@ -95,7 +97,7 @@ public class LeaderElector {
                 } catch (Throwable e) {
                     logger.error(String.format("Vote error to node [%s]", id), e);
                 } finally {
-                    if (maxTerm.get() > memberState.getTerm() || success.get() > memberState.getNodes().size() / 2) {
+                    if (receive.get() == memberState.getNodes().size() || maxTerm.get() > memberState.getTerm() || success.get() > memberState.getNodes().size() / 2) {
                         countDownLatch.countDown();
                     }
                 }
@@ -148,8 +150,8 @@ public class LeaderElector {
                 voteResponse.setCode(ResponseCode.REJECT_ALREADY_VOTED);
                 return voteResponse;
             }
+            memberState.setCurrVoteFor(voteRequest.getLocalId());
         }
-        memberState.setCurrVoteFor(voteRequest.getLocalId());
         return voteResponse;
     }
 

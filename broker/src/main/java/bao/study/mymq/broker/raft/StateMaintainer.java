@@ -4,9 +4,7 @@ import bao.study.mymq.common.ServiceThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static bao.study.mymq.broker.raft.LeaderElector.VoteResult.*;
 
@@ -60,7 +58,7 @@ public class StateMaintainer extends ServiceThread {
                         maintainAsLeader();
                         break;
                 }
-                Thread.sleep(100);
+                Thread.sleep(50);
             } catch (Exception e) {
                 logger.error("state maintainer error ", e);
             }
@@ -72,9 +70,7 @@ public class StateMaintainer extends ServiceThread {
      */
     private void maintainAsFollower() {
         if (System.currentTimeMillis() - lastHeartBeatTime > (long) memberState.getConfig().getHeartBeatTimeIntervalMs() * memberState.getConfig().getMaxHeartBeatLeak()) {
-            if (memberState.getRole() == Role.FOLLOWER) {
-                changeRoleToCandidate(memberState.getTerm());
-            }
+            changeRoleToCandidate(memberState.getTerm());
         }
     }
 
@@ -93,7 +89,6 @@ public class StateMaintainer extends ServiceThread {
             return;
         }
         nextTimeToRequestVote = getNextTimeToRequestVote();
-        logger.info("{} nextTimeToRequestVote is {}, {}", memberState.getSelfId(), nextTimeToRequestVote, new Date(nextTimeToRequestVote));
     }
 
     /**
@@ -140,7 +135,6 @@ public class StateMaintainer extends ServiceThread {
 
     public void setLastHeartBeatTime(long lastHeartBeatTime) {
         this.lastHeartBeatTime = lastHeartBeatTime;
-        logger.info("{} lastHeartBeatTime now is set to {}", memberState.getSelfId(), this.getLastHeartBeatTime());
     }
 
     public void setHeartbeatProcessor(HeartbeatProcessor heartbeatProcessor) {

@@ -24,9 +24,9 @@ public class Config {
     private int maxVoteIntervalMs = 1000;
 
     /**
-     * 最小的发送投票间隔时间，默认为 300ms
+     * 最小的发送投票间隔时间，默认为 100ms
      */
-    private int minVoteIntervalMs = 300;
+    private int minVoteIntervalMs = 100;
 
 
     private long rpcTimeoutMillis = 3000L;
