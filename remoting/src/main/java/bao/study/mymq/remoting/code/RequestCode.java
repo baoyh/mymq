@@ -39,4 +39,8 @@ public abstract class RequestCode {
 
     public static final int CALL_VOTE = 401;
 
+    public static final int APPEND = 402;
+
+    public static final int PUSH = 403;
+
 }

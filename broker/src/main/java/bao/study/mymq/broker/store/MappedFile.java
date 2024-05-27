@@ -135,6 +135,18 @@ public class MappedFile {
         commit();
     }
 
+    public void append(ByteBuffer data) {
+        int limit = data.limit();
+        ByteBuffer byteBuffer = writeBuffer != null ? writeBuffer.slice() : mappedByteBuffer.slice();
+        byteBuffer.position(wrotePosition.get());
+
+        byteBuffer.put(data);
+        wrotePosition.addAndGet(limit);
+
+        commit();
+
+    }
+
     public void commit() {
         int wrotePos = wrotePosition.get();
         int committedPos = committedPosition.get();

@@ -1,10 +1,14 @@
 package bao.study.mymq.broker.raft;
 
+import java.io.File;
+
 /**
  * @author baoyh
  * @since 2024/4/7 16:43
  */
 public class Config {
+
+    private String selfId;
 
     /**
      * 一个心跳包的周期，默认为 200ms
@@ -30,6 +34,16 @@ public class Config {
 
 
     private long rpcTimeoutMillis = 3000L;
+
+    private String storeBaseDir = File.separator + "tmp" + File.separator + "raftstore";
+
+    private String dataStorePath;
+
+    private long dataFileSize = 1024 * 1024 * 4;
+
+    private String indexStorePath;
+
+    private long indexFileSize = 1024 * 28;
 
     public int getHeartBeatTimeIntervalMs() {
         return heartBeatTimeIntervalMs;
@@ -69,5 +83,41 @@ public class Config {
 
     public void setMinVoteIntervalMs(int minVoteIntervalMs) {
         this.minVoteIntervalMs = minVoteIntervalMs;
+    }
+
+    public void setDataStorePath(String dataStorePath) {
+        this.dataStorePath = dataStorePath;
+    }
+
+    public String getDataStorePath() {
+        return dataStorePath == null ? getDefaultPath() + File.separator + "data" : dataStorePath;
+    }
+
+    public String getIndexStorePath() {
+        return indexStorePath == null ? getDefaultPath() + File.separator + "index" : indexStorePath;
+    }
+
+    public String getDefaultPath() {
+        return storeBaseDir + File.separator + "raft-" + selfId;
+    }
+
+    public void setSelfId(String selfId) {
+        this.selfId = selfId;
+    }
+
+    public long getDataFileSize() {
+        return dataFileSize;
+    }
+
+    public void setDataFileSize(long dataFileSize) {
+        this.dataFileSize = dataFileSize;
+    }
+
+    public long getIndexFileSize() {
+        return indexFileSize;
+    }
+
+    public void setIndexFileSize(long indexFileSize) {
+        this.indexFileSize = indexFileSize;
     }
 }

@@ -38,4 +38,10 @@ public abstract class ResponseCode {
 
     public static final int REJECT_TERM_NOT_READY = 206;
 
+    /**
+     * raft log
+     */
+    public static final int INCONSISTENT_STATE = 301;
+
+
 }

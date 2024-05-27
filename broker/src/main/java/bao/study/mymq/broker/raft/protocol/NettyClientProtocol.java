@@ -2,9 +2,7 @@ package bao.study.mymq.broker.raft.protocol;
 
 import bao.study.mymq.broker.BrokerException;
 import bao.study.mymq.broker.raft.MemberState;
-import bao.study.mymq.common.protocol.raft.HeartBeat;
-import bao.study.mymq.common.protocol.raft.VoteRequest;
-import bao.study.mymq.common.protocol.raft.VoteResponse;
+import bao.study.mymq.common.protocol.raft.*;
 import bao.study.mymq.common.utils.CommonCodec;
 import bao.study.mymq.remoting.RemotingClient;
 import bao.study.mymq.remoting.code.RequestCode;
@@ -95,6 +93,33 @@ public class NettyClientProtocol implements ClientProtocol {
                 });
             } catch (Throwable e) {
                 logger.error("Call vote request failed, {}, because {}", voteRequest.baseInfo(), e.getMessage());
+                future.complete(errorResponse);
+            }
+        });
+
+        return future;
+    }
+
+    @Override
+    public CompletableFuture<PushEntryResponse> push(PushEntryRequest entryRequest) {
+        CompletableFuture<PushEntryResponse> future = new CompletableFuture<>();
+        RemotingCommand remotingCommand = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.PUSH, CommonCodec.encode(entryRequest));
+
+        PushEntryResponse errorResponse = new PushEntryResponse();
+        errorResponse.setCode(ResponseCode.NETWORK_ERROR);
+
+        executor.execute(() -> {
+            try {
+                client.invokeAsync(getAddress(entryRequest.getRemoteId()), remotingCommand, memberState.getConfig().getRpcTimeoutMillis(), responseFuture -> {
+                    RemotingCommand responseCommand = responseFuture.getResponseCommand();
+                    if (responseCommand == null) {
+                        future.complete(errorResponse);
+                    } else {
+                        future.complete(CommonCodec.decode(responseCommand.getBody(), PushEntryResponse.class));
+                    }
+                });
+            } catch (Throwable e) {
+                logger.error("Append request failed, {}, because {}", entryRequest.baseInfo(), e.getMessage());
                 future.complete(errorResponse);
             }
         });

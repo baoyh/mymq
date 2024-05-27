@@ -4,6 +4,8 @@ import bao.study.mymq.broker.raft.Config;
 import bao.study.mymq.broker.raft.MemberState;
 import bao.study.mymq.broker.raft.RaftServer;
 import bao.study.mymq.broker.raft.Role;
+import bao.study.mymq.broker.raft.client.RaftClient;
+import bao.study.mymq.common.protocol.raft.AppendEntryResponse;
 import bao.study.mymq.remoting.RemotingUtil;
 import bao.study.mymq.remoting.netty.NettyClient;
 import bao.study.mymq.remoting.netty.NettyServer;
@@ -46,6 +48,7 @@ public class RaftTest {
         Assertions.assertEquals(1, leaderNum.get());
         Assertions.assertEquals(2, followerNum.get());
 
+        // 模拟 leader 宕机, 重新发起选举
         leader.shutdown();
         Thread.sleep(2000);
 
@@ -53,6 +56,7 @@ public class RaftTest {
         Assertions.assertEquals(1, leaderNum.get());
         Assertions.assertEquals(1, followerNum.get());
 
+        // 宕机的 leader 重新启动, 变成新的 follower
         leader.startup();
         Thread.sleep(2000);
 
@@ -61,12 +65,48 @@ public class RaftTest {
         Assertions.assertEquals(2, followerNum.get());
     }
 
+    @Test
+    public void testEntryAppend() throws InterruptedException {
+        RaftServer a = createRaftServer(11000);
+        RaftServer b = createRaftServer(11001);
+        // 真实环境中会通过注册中心获取节点地址
+        Map<String, String> nodes = new HashMap<>();
+        registerNodes(nodes, a, 11000, "node-a");
+        registerNodes(nodes, b, 11001, "node-b");
+        updateNodes(nodes, a, b);
+        startServer(a, b);
+
+        Thread.sleep(2000);
+
+        String leaderAddress = getLeaderAddress(a, b);
+        Assertions.assertNotEquals(null, leaderAddress);
+        RaftClient raftClient = new RaftClient(leaderAddress);
+        raftClient.startup();
+
+        for (int i = 0; i < 10; i++) {
+            AppendEntryResponse entryResponse = raftClient.append(("test first entry" + i).getBytes());
+            System.out.println(entryResponse);
+            Assertions.assertEquals(i, entryResponse.getIndex());
+        }
+    }
+
+    private String getLeaderAddress(RaftServer... servers) {
+        for (RaftServer server : servers) {
+            if (!server.getAlive()) continue;
+            if (server.getMemberState().getRole() == Role.LEADER) {
+                return server.getMemberState().getNodes().get(server.getMemberState().getSelfId());
+            }
+        }
+        return null;
+    }
+
+
     private RaftServer countNum(AtomicInteger leaderNum, AtomicInteger followerNum, RaftServer... servers) {
         leaderNum.set(0);
         followerNum.set(0);
         RaftServer leader = null;
         for (RaftServer server : servers) {
-            if (!server.isAlive()) continue;
+            if (!server.getAlive()) continue;
             if (server.getMemberState().getRole() == Role.FOLLOWER) {
                 followerNum.incrementAndGet();
             } else if (server.getMemberState().getRole() == Role.LEADER) {
@@ -95,6 +135,7 @@ public class RaftTest {
     private void registerNodes(Map<String, String> nodes, RaftServer server, int port, String id) {
         MemberState memberState = server.getMemberState();
         memberState.setSelfId(id);
+        memberState.getConfig().setSelfId(id);
         nodes.putIfAbsent(memberState.getSelfId(), RemotingUtil.getLocalAddress() + ":" + port);
     }
 
