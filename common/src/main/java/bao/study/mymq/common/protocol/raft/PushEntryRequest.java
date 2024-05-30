@@ -37,9 +37,9 @@ public class PushEntryRequest extends BaseProtocol {
     }
 
     public enum Type {
+        COMPARE,
         APPEND,
         COMMIT,
-        COMPARE,
         TRUNCATE
     }
 }

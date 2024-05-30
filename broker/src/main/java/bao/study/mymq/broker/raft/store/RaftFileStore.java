@@ -9,6 +9,7 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static bao.study.mymq.broker.raft.store.RaftEntryIndex.INDEX_UNIT_SIZE;
 
@@ -30,6 +31,9 @@ public class RaftFileStore extends RaftStore {
      * 下一条日志下标
      */
     private volatile long endIndex = -1;
+
+    private final AtomicInteger wrotePosition = new AtomicInteger(0);
+
     /**
      * 已提交的日志索引
      */
@@ -59,25 +63,22 @@ public class RaftFileStore extends RaftStore {
     }
 
     @Override
-    public synchronized RaftEntry appendAsLeader(RaftEntry entry) {
+    public synchronized RaftEntry append(RaftEntry entry) {
         entry.computeSizeInBytes();
         entry.setIndex(endIndex + 1);
-        entry.setTerm(endTerm);
+        entry.setTerm(entry.getTerm());
         entry.setPos(getPos());
 
         appendDataFile(entry);
         appendIndexFile(entry);
 
         endIndex++;
-        committedIndex++;
-        committedPos = committedPos + entry.getSize();
+        wrotePosition.addAndGet(entry.getSize());
+        if (beginIndex == -1) {
+            beginIndex = endIndex;
+        }
 
         return entry;
-    }
-
-    @Override
-    public RaftEntry appendAsFollower(RaftEntry entry, long leaderTerm, String leaderId) {
-        return null;
     }
 
     @Override
@@ -100,6 +101,12 @@ public class RaftFileStore extends RaftStore {
     }
 
     @Override
+    public void updateCommittedIndex(long term, long committedIndex) {
+        this.committedIndex = committedIndex;
+        this.committedPos = committedIndex * INDEX_UNIT_SIZE;
+    }
+
+    @Override
     public long getEndTerm() {
         return endTerm;
     }
@@ -116,7 +123,6 @@ public class RaftFileStore extends RaftStore {
 
     private void appendDataFile(RaftEntry entry) {
         MappedFile dataFile = getLastDataFile();
-        System.out.println("dataFile:" + dataFile);
         ByteBuffer buffer = RaftEntryCodec.encode(entry);
         buffer.flip();
         dataFile.append(buffer);
@@ -137,8 +143,7 @@ public class RaftFileStore extends RaftStore {
 
     private long getPos() {
         if (endIndex == -1) return 0;
-        if (committedPos == -1) return 0;
-        return committedPos;
+        return wrotePosition.get();
     }
 
     private MappedFile getLastDataFile() {

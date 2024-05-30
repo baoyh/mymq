@@ -196,4 +196,8 @@ public class MappedFile {
     public AtomicInteger getWrotePosition() {
         return wrotePosition;
     }
+
+    public void setWrotePosition(int position) {
+        wrotePosition.set(position);
+    }
 }

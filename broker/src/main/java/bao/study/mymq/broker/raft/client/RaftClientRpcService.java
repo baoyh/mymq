@@ -27,7 +27,7 @@ public class RaftClientRpcService {
 
     public AppendEntryResponse append(AppendEntryRequest entryRequest, String leaderAddress) {
         RemotingCommand request = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.APPEND, CommonCodec.encode(entryRequest));
-        RemotingCommand response = client.invokeSync(leaderAddress, request, config.getRpcTimeoutMillis() * 10000);
+        RemotingCommand response = client.invokeSync(leaderAddress, request, config.getRpcTimeoutMillis() * 100);
         return CommonCodec.decode(response.getBody(), AppendEntryResponse.class);
     }
 
