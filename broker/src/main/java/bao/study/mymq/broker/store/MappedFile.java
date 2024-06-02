@@ -8,6 +8,10 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -50,11 +54,6 @@ public class MappedFile {
      * 物理文件
      */
     private final File file;
-
-    /**
-     * 数据会先放入 writeBuffer, 再之后刷盘时放入 mappedByteBuffer
-     */
-    private ByteBuffer writeBuffer;
 
     /**
      * 文件通道
@@ -101,7 +100,7 @@ public class MappedFile {
     }
 
     public ConsumeQueueOffset appendMessage(MessageStore messageStore) {
-        ByteBuffer byteBuffer = writeBuffer != null ? writeBuffer.slice() : mappedByteBuffer.slice();
+        ByteBuffer byteBuffer = mappedByteBuffer.slice();
         byteBuffer.position(wrotePosition.get());
 
         ConsumeQueueOffset offset = new ConsumeQueueOffset();
@@ -123,7 +122,7 @@ public class MappedFile {
     }
 
     public void appendConsumeQueueOffset(ConsumeQueueOffset offset) {
-        ByteBuffer byteBuffer = writeBuffer != null ? writeBuffer.slice() : mappedByteBuffer.slice();
+        ByteBuffer byteBuffer = mappedByteBuffer.slice();
         byteBuffer.position(wrotePosition.get());
 
         ByteBuffer messageBuffer = ConsumeQueueOffsetCodec.encode(offset);
@@ -137,7 +136,7 @@ public class MappedFile {
 
     public void append(ByteBuffer data) {
         int limit = data.limit();
-        ByteBuffer byteBuffer = writeBuffer != null ? writeBuffer.slice() : mappedByteBuffer.slice();
+        ByteBuffer byteBuffer = mappedByteBuffer.slice();
         byteBuffer.position(wrotePosition.get());
 
         byteBuffer.put(data);
@@ -147,6 +146,9 @@ public class MappedFile {
 
     }
 
+    /**
+     * TODO: 通过新线程定时执行 mappedByteBuffer.force() 提升并发能力
+     */
     public void commit() {
         int wrotePos = wrotePosition.get();
         int committedPos = committedPosition.get();
@@ -155,7 +157,7 @@ public class MappedFile {
             return;
         }
 
-        ByteBuffer byteBuffer = writeBuffer != null ? writeBuffer.slice() : mappedByteBuffer.slice();
+        ByteBuffer byteBuffer = mappedByteBuffer.slice();
         byteBuffer.position(committedPos);
         byteBuffer.limit(wrotePos);
 
@@ -171,7 +173,7 @@ public class MappedFile {
     }
 
     public ByteBuffer read(int position, int size) {
-        ByteBuffer byteBuffer = writeBuffer != null ? writeBuffer.slice() : mappedByteBuffer.slice();
+        ByteBuffer byteBuffer = mappedByteBuffer.slice();
         byteBuffer.position(position);
         byteBuffer.limit(position + size);
         return byteBuffer;
@@ -200,4 +202,9 @@ public class MappedFile {
     public void setWrotePosition(int position) {
         wrotePosition.set(position);
     }
+
+    public void setCommittedPosition(int position) {
+        committedPosition.set(position);
+    }
+
 }

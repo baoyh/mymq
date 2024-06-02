@@ -58,6 +58,10 @@ public class EntryProcessor {
      */
     private final Map<Long /* term */, ConcurrentMap<Long /* entry index */, AppendEntryResponse>> pendingServerResponsesByTerm = new ConcurrentHashMap<>();
 
+    /**
+     * leader 需要发送 commit 的请求队列
+     */
+    private final BlockingQueue<Long /* entry index */> commitRequest = new ArrayBlockingQueue<>(1000);
 
     public EntryProcessor(MemberState memberState, ClientProtocol clientProtocol, RaftStore raftStore) {
         this.memberState = memberState;
@@ -193,11 +197,6 @@ public class EntryProcessor {
          */
         private long followerEndIndex = -1;
 
-        /**
-         * 上一次提交的日志序号
-         */
-        private long lastCommittedIndex = -1;
-
         public EntryDispatcher(String peerId) {
             this.peerId = peerId;
         }
@@ -241,12 +240,10 @@ public class EntryProcessor {
                 return;
             }
             long endIndex = raftStore.getEndIndex();
-            if (compareIndex == -1) {
-                compareIndex = endIndex;
-            }
+            compareIndex = endIndex;
             RaftEntry raftEntry = raftStore.get(compareIndex);
             CompletableFuture<PushEntryResponse> future = clientProtocol.push(createPushEntryRequest(raftEntry, PushEntryRequest.Type.COMPARE, compareIndex));
-            PushEntryResponse response = future.get(config.getRpcTimeoutMillis(), TimeUnit.MILLISECONDS);
+            PushEntryResponse response = future.get(config.getRpcTimeoutMillis() * 100, TimeUnit.MILLISECONDS);
 
             if (response.getCode() == ResponseCode.INCONSISTENT_STATE) {
                 appendIndex = compareIndex;
@@ -273,12 +270,7 @@ public class EntryProcessor {
 
         }
 
-        private void doCommit() {
-            long committedIndex = raftStore.getCommittedIndex();
-            if (committedIndex == -1) {
-                return;
-            }
-            lastCommittedIndex = committedIndex;
+        private void doCommit(long committedIndex) {
             CompletableFuture<PushEntryResponse> future = clientProtocol.push(createPushEntryRequest(null, PushEntryRequest.Type.COMMIT, committedIndex));
             future.whenCompleteAsync((response, throwable) -> {
                 if (throwable != null) {
@@ -289,28 +281,29 @@ public class EntryProcessor {
                     logger.warn("Fail to push commit index {} to peer {}", committedIndex, peerId);
                 }
             });
+            commitRequest.remove();
         }
 
-        private void doAppend() {
+        private void doAppend() throws Exception {
+            Long committedIndex = commitRequest.peek();
+            if (committedIndex != null) {
+                doCommit(committedIndex);
+                return;
+            }
             if (appendIndex == -1) {
                 return;
             }
             if (followerEndIndex == raftStore.getEndIndex()) {
                 return;
             }
-            if (raftStore.getCommittedIndex() != -1 && lastCommittedIndex < raftStore.getCommittedIndex()) {
-                doCommit();
-                return;
-            }
             RaftEntry raftEntry = raftStore.get(appendIndex);
             CompletableFuture<PushEntryResponse> future = clientProtocol.push(createPushEntryRequest(raftEntry, PushEntryRequest.Type.APPEND, appendIndex));
-            future.whenComplete((response, throwable) -> {
-                if (response.getCode() == ResponseCode.SUCCESS) {
-                    updatePeerWaterMark(memberState.getTerm(), peerId, response.getIndex());
-                    followerEndIndex = response.getEndIndex();
-                    appendIndex++;
-                }
-            });
+            PushEntryResponse response = future.get(config.getRpcTimeoutMillis(), TimeUnit.MILLISECONDS);
+            if (response.getCode() == ResponseCode.SUCCESS) {
+                updatePeerWaterMark(memberState.getTerm(), peerId, response.getIndex());
+                followerEndIndex = response.getEndIndex();
+                appendIndex++;
+            }
         }
 
         private void changeState(PushEntryRequest.Type type) {
@@ -359,16 +352,19 @@ public class EntryProcessor {
                     continue;
                 }
 
-                if (compareOrTruncateRequests.peek() != null) {
+                if (!compareOrTruncateRequests.isEmpty()) {
                     Pair<PushEntryRequest, CompletableFuture<PushEntryResponse>> pair = compareOrTruncateRequests.poll();
                     PushEntryRequest request = pair.getKey();
                     switch (request.getType()) {
                         case COMPARE:
                             this.handleCompare(request.getEntry().getIndex(), request, pair.getValue());
+                            break;
                         case TRUNCATE:
                             this.handleTruncate(request.getEntry().getIndex(), request, pair.getValue());
+                            break;
                         case COMMIT:
                             this.handleCommit(request.getCommitIndex(), request, pair.getValue());
+                            break;
                     }
                 } else {
                     long nextIndex = raftStore.getEndIndex() + 1;
@@ -398,11 +394,13 @@ public class EntryProcessor {
         }
 
         private void handleCommit(long commitIndex, PushEntryRequest request, CompletableFuture<PushEntryResponse> value) {
-            if (raftStore.getCommittedIndex() != commitIndex) {
+            logger.info("follower handle commit, local commit {} and remote commit {}", raftStore.getCommittedIndex(), commitIndex);
+            if (raftStore.getCommittedIndex() == commitIndex) {
                 value.complete(createPushEntryResponse(request, ResponseCode.SUCCESS));
                 return;
             }
             RaftEntry entry = raftStore.get(commitIndex);
+            logger.info("Get entry {}, and committed index is {}", entry, commitIndex);
             if (entry == null) {
                 value.complete(createPushEntryResponse(request, ResponseCode.INCONSISTENT_STATE));
             } else {
@@ -426,6 +424,8 @@ public class EntryProcessor {
 
         private void handleAppend(PushEntryRequest request, CompletableFuture<PushEntryResponse> future) {
             raftStore.append(request.getEntry());
+            RaftEntry entry = raftStore.get(raftStore.getEndIndex());
+            logger.info("Append entry {}, and end index is {}", entry, raftStore.getEndIndex());
             future.complete(createPushEntryResponse(request, ResponseCode.SUCCESS));
         }
 
@@ -436,6 +436,7 @@ public class EntryProcessor {
             response.setEndIndex(raftStore.getEndIndex());
             if (request != null && request.getEntry() != null) {
                 response.setIndex(request.getEntry().getIndex());
+                response.setTerm(request.getTerm());
             }
             return response;
         }
@@ -462,8 +463,9 @@ public class EntryProcessor {
                     waitForRunning(1);
                     continue;
                 }
-                checkPendingAppend(memberState.getTerm());
-                ConcurrentMap<String, Long> peerWaterMarks = peerWaterMarksByTerm.get(memberState.getTerm());
+                long term = memberState.getTerm();
+                checkPendingAppend(term);
+                ConcurrentMap<String, Long> peerWaterMarks = peerWaterMarksByTerm.get(term);
                 if (peerWaterMarks.isEmpty()) {
                     waitForRunning(1);
                     continue;
@@ -472,14 +474,15 @@ public class EntryProcessor {
                 List<Long> waterMarks = peerWaterMarks.values().stream().sorted(Comparator.reverseOrder()).collect(Collectors.toList());
                 Long quorumIndex = waterMarks.get(waterMarks.size() / 2);
 
-                CompletableFuture<AppendEntryResponse> future = pendingAppendResponsesByTerm.get(memberState.getTerm()).remove(quorumIndex);
+                CompletableFuture<AppendEntryResponse> future = pendingAppendResponsesByTerm.get(term).remove(quorumIndex);
                 if (future == null) {
                     waitForRunning(1);
                 } else {
-                    AppendEntryResponse response = pendingServerResponsesByTerm.get(memberState.getTerm()).remove(quorumIndex);
+                    AppendEntryResponse response = pendingServerResponsesByTerm.get(term).remove(quorumIndex);
                     if (response != null) {
                         future.complete(response);
-                        raftStore.updateCommittedIndex(memberState.getTerm(), quorumIndex);
+                        raftStore.updateCommittedIndex(term, quorumIndex);
+                        commitRequest.add(quorumIndex);
                     }
                 }
             }

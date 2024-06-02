@@ -86,7 +86,6 @@ public class RaftEntry {
         RaftEntry other = (RaftEntry) entry;
         if (this.size != other.size
                 || this.index != other.index
-                || this.term != other.term
                 || this.pos != other.pos) {
             return false;
         }
@@ -114,7 +113,6 @@ public class RaftEntry {
         int h = 1;
         h = prime * h + size;
         h = prime * h + (int) index;
-        h = prime * h + (int) term;
         h = prime * h + (int) pos;
         if (body != null) {
             for (byte b : body) {

@@ -80,6 +80,7 @@ public class StateMaintainer extends ServiceThread {
      * 3. 失败时再次发起新一轮投票
      */
     private void maintainAsCandidate() throws Exception {
+        logger.info("nextTimeToRequestVote is {}, current time is {}", nextTimeToRequestVote, System.currentTimeMillis());
         if (System.currentTimeMillis() < nextTimeToRequestVote) return;
 
         LeaderElector.VoteResult voteResult = leaderElector.callVote();

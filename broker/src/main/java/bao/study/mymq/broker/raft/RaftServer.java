@@ -51,6 +51,7 @@ public class RaftServer {
         startRemoting();
         startStateMaintainer();
         startEntryProcessor();
+        startRaftStore();
         alive.compareAndSet(false, true);
     }
 
@@ -78,6 +79,10 @@ public class RaftServer {
 
     private void startEntryProcessor() {
         entryProcessor.start();
+    }
+
+    private void startRaftStore() {
+        raftStore.startup();
     }
 
     private MemberState createMemberState() {

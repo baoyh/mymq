@@ -45,6 +45,11 @@ public class Config {
 
     private long indexFileSize = 1024 * 28;
 
+    /**
+     * 内存数据的刷盘间隔, 默认 10ms
+     */
+    private int flushIntervalMs = 10;
+
     public int getHeartBeatTimeIntervalMs() {
         return heartBeatTimeIntervalMs;
     }
@@ -119,5 +124,13 @@ public class Config {
 
     public void setIndexFileSize(long indexFileSize) {
         this.indexFileSize = indexFileSize;
+    }
+
+    public int getFlushIntervalMs() {
+        return flushIntervalMs;
+    }
+
+    public void setFlushIntervalMs(int flushIntervalMs) {
+        this.flushIntervalMs = flushIntervalMs;
     }
 }

@@ -49,11 +49,7 @@ public abstract class RaftStore {
         return -1;
     }
 
-    public void startup() {
+    public abstract void startup();
 
-    }
-
-    public void shutdown() {
-
-    }
+    public abstract void shutdown();
 }

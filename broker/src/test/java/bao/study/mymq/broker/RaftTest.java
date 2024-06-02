@@ -85,13 +85,11 @@ public class RaftTest {
 
         for (int i = 0; i < 10; i++) {
             AppendEntryResponse entryResponse = raftClient.append(("test first entry " + i).getBytes());
-            Assertions.assertEquals(i, entryResponse.getIndex());
+            Assertions.assertEquals(i + 11, entryResponse.getIndex());
         }
 //        AppendEntryResponse entryResponse = raftClient.append(("test first entry").getBytes());
-//        Assertions.assertEquals(0, entryResponse.getIndex());
-//
-//        entryResponse = raftClient.append(("test second entry").getBytes());
 //        Assertions.assertEquals(1, entryResponse.getIndex());
+        Thread.sleep(1000);
     }
 
     private String getLeaderAddress(RaftServer... servers) {

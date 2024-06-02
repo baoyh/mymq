@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author baoyh
@@ -16,7 +17,7 @@ public abstract class ServiceThread implements Runnable {
 
     protected volatile boolean stop = false;
 
-    private final CountDownLatch waitNode = new CountDownLatch(1);
+    private final AtomicReference<CountDownLatch> waitNode = new AtomicReference<>(new CountDownLatch(1));
 
     public void start() {
         log.info("Try to start service " + getServiceName());
@@ -32,13 +33,25 @@ public abstract class ServiceThread implements Runnable {
 
     public void waitForRunning(long timeout) {
         try {
-            waitNode.await(timeout, TimeUnit.MILLISECONDS);
+            waitNode.get().await(timeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             log.error("Interrupted " + e);
         }
     }
 
+    public void waitForWakeup() {
+        try {
+            waitNode.get().await();
+        } catch (InterruptedException e) {
+            log.error("Interrupted " + e);
+        }
+    }
+
+    public void reset() {
+        waitNode.set(new CountDownLatch(1));
+    }
+
     public void wakeup() {
-        waitNode.countDown();
+        waitNode.get().countDown();
     }
 }
