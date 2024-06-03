@@ -107,7 +107,8 @@ public class LeaderElector {
         countDownLatch.await(memberState.getConfig().getMaxVoteIntervalMs(), TimeUnit.MILLISECONDS);
 
         if (hasLeader.get()) {
-            stateMaintainer.changeRoleToFollower(memberState.getTerm());
+            // 等待接收心跳之后绑定 leaderId
+            stateMaintainer.changeRoleToFollower(memberState.getTerm(), null);
             return VoteResult.CHANGE_TO_FOLLOWER;
         }
         if (maxTerm.get() > memberState.getTerm()) {

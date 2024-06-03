@@ -70,7 +70,13 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
         Channel channel = getOrCreateChannel(address);
         ResponseFuture responseFuture = new ResponseFuture();
         responseFutureTable.put(request.getRequestId(), responseFuture);
-        channel.writeAndFlush(request);
+        channel.writeAndFlush(request).addListener((ChannelFutureListener) f -> {
+            if (!f.isSuccess()) {
+                requestFail(request.getRequestId());
+                closeChannel(address);
+                log.warn("Send a request command to address {} failed.", address);
+            }
+        });
         return responseFuture.awaitResponse(timeoutMillis);
     }
 
@@ -80,8 +86,36 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
         ResponseFuture responseFuture = new ResponseFuture();
         responseFuture.setInvokeCallback(invokeCallback);
         responseFutureTable.put(request.getRequestId(), responseFuture);
-        channel.writeAndFlush(request);
+        channel.writeAndFlush(request).addListener((ChannelFutureListener) f -> {
+            if (!f.isSuccess()) {
+                requestFail(request.getRequestId());
+                closeChannel(address);
+                log.warn("Send a request command to address {} failed.", address);
+            }
+        });
     }
+
+    private void requestFail(int requestId) {
+        ResponseFuture responseFuture = responseFutureTable.remove(requestId);
+        if (responseFuture == null) return;
+        InvokeCallback invokeCallback = responseFuture.getInvokeCallback();
+        if (invokeCallback != null) {
+            invokeCallback.callback(responseFuture);
+        }
+        responseFuture.getCountDownLatch().countDown();
+    }
+
+    private void closeChannel(String address) {
+        Channel channel = channelTables.remove(address);
+        if (channel != null) {
+            channel.close().addListener(future -> {
+                if (future.isSuccess()) {
+                    log.info("Close channel close the connection to remote address {}", address);
+                }
+            });
+        }
+    }
+
 
     @Override
     public List<String> getRouterAddressList() {

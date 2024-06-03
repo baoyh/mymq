@@ -63,11 +63,16 @@ public class HeartbeatProcessor {
 
             future.whenComplete((HeartBeat response, Throwable ex) -> {
                 try {
+                    logger.info("{} finish send heartbeat to {} at local term {}", memberState.getSelfId(), heartBeat.getRemoteId(), memberState.getTerm());
                     all.incrementAndGet();
                     if (ex != null) {
                         // 抛出异常视为该节点不可用
                         memberState.getLiveNodes().remove(entry.getKey());
                         throw ex;
+                    }
+                    if (response == null || response.getCode() == ResponseCode.NETWORK_ERROR) {
+                        memberState.getLiveNodes().remove(entry.getKey());
+                        return;
                     }
 
                     switch (response.getCode()) {
@@ -102,6 +107,7 @@ public class HeartbeatProcessor {
 
                 } catch (Throwable e) {
                     logger.error("Send heartbeat error ", e);
+                    memberState.getLiveNodes().remove(entry.getKey());
                 } finally {
                     if (memberState.getNodes().size() == all.get()) {
                         countDownLatch.countDown();
@@ -133,7 +139,7 @@ public class HeartbeatProcessor {
 
         synchronized (lock) {
             if (heartBeat.getTerm() >= memberState.getTerm()) {
-                stateMaintainer.changeRoleToFollower(heartBeat.getTerm());
+                stateMaintainer.changeRoleToFollower(heartBeat.getTerm(), heartBeat.getLeaderId());
                 return heartbeatResponse;
             }
 

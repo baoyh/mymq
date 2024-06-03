@@ -281,7 +281,7 @@ public class EntryProcessor {
                     logger.warn("Fail to push commit index {} to peer {}", committedIndex, peerId);
                 }
             });
-            commitRequest.remove();
+            commitRequest.poll();
         }
 
         private void doAppend() throws Exception {
@@ -298,12 +298,19 @@ public class EntryProcessor {
             }
             RaftEntry raftEntry = raftStore.get(appendIndex);
             CompletableFuture<PushEntryResponse> future = clientProtocol.push(createPushEntryRequest(raftEntry, PushEntryRequest.Type.APPEND, appendIndex));
-            PushEntryResponse response = future.get(config.getRpcTimeoutMillis(), TimeUnit.MILLISECONDS);
-            if (response.getCode() == ResponseCode.SUCCESS) {
-                updatePeerWaterMark(memberState.getTerm(), peerId, response.getIndex());
-                followerEndIndex = response.getEndIndex();
-                appendIndex++;
+            try {
+                PushEntryResponse response = future.get(config.getRpcTimeoutMillis(), TimeUnit.MILLISECONDS);
+                if (response.getCode() == ResponseCode.SUCCESS) {
+                    updatePeerWaterMark(memberState.getTerm(), peerId, response.getIndex());
+                    followerEndIndex = response.getEndIndex();
+                    appendIndex++;
+                }
+            } catch (Throwable ex) {
+                logger.info("Fail to push append index {} to peer {}", appendIndex, peerId);
+                changeState(PushEntryRequest.Type.COMPARE);
+                throw ex;
             }
+
         }
 
         private void changeState(PushEntryRequest.Type type) {
@@ -352,8 +359,11 @@ public class EntryProcessor {
                     continue;
                 }
 
-                if (!compareOrTruncateRequests.isEmpty()) {
+                if (compareOrTruncateRequests.peek() != null) {
                     Pair<PushEntryRequest, CompletableFuture<PushEntryResponse>> pair = compareOrTruncateRequests.poll();
+                    if (pair == null) {
+                        continue;
+                    }
                     PushEntryRequest request = pair.getKey();
                     switch (request.getType()) {
                         case COMPARE:

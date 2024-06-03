@@ -21,7 +21,7 @@ public class RaftServer {
 
     private static final Object lock = new Object();
 
-    private AtomicBoolean alive = new AtomicBoolean(false);
+    private final AtomicBoolean alive = new AtomicBoolean(false);
 
     private final Config config;
 
@@ -72,6 +72,10 @@ public class RaftServer {
 
                 stateMaintainer.setHeartbeatProcessor(heartbeatProcessor);
                 stateMaintainer.setLeaderElector(leaderElector);
+
+                if (memberState.getLeaderId() != null) {
+                    stateMaintainer.setLastHeartBeatTime(System.currentTimeMillis());
+                }
             }
         }
         stateMaintainer.start();

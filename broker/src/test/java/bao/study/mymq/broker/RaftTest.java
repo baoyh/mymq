@@ -66,6 +66,33 @@ public class RaftTest {
     }
 
     @Test
+    public void testThreeServerAndRestartFollower() throws InterruptedException {
+        RaftServer a = createRaftServer(11000);
+        RaftServer b = createRaftServer(11001);
+        RaftServer c = createRaftServer(11002);
+        // 真实环境中会通过注册中心获取节点地址
+        Map<String, String> nodes = new HashMap<>();
+        registerNodes(nodes, a, 11000, "node-a");
+        registerNodes(nodes, b, 11001, "node-b");
+        registerNodes(nodes, c, 11002, "node-c");
+
+        // 指定 a 为 leader
+        updateNodes(nodes, "node-a", a, b, c);
+        startServer(a, b, c);
+
+        Thread.sleep(2000);
+
+        // follower c 宕机依然满足集群可用, 但 c 并没有相关日志
+        c.shutdown();
+        Thread.sleep(1000);
+        c.startup();
+        // 等待 c 重新加入集群, 并成为 follower
+        Thread.sleep(2000);
+        Assertions.assertSame(c.getMemberState().getRole(), Role.FOLLOWER);
+        Assertions.assertEquals(c.getMemberState().getLeaderId(), "node-a");
+    }
+
+    @Test
     public void testEntryAppend() throws InterruptedException {
         RaftServer a = createRaftServer(11000);
         RaftServer b = createRaftServer(11001);
@@ -85,12 +112,54 @@ public class RaftTest {
 
         for (int i = 0; i < 10; i++) {
             AppendEntryResponse entryResponse = raftClient.append(("test first entry " + i).getBytes());
-            Assertions.assertEquals(i + 11, entryResponse.getIndex());
+            Assertions.assertEquals(i, entryResponse.getIndex());
         }
-//        AppendEntryResponse entryResponse = raftClient.append(("test first entry").getBytes());
-//        Assertions.assertEquals(1, entryResponse.getIndex());
-        Thread.sleep(1000);
+        // 等待落盘
+        Thread.sleep(100);
     }
+
+    @Test
+    public void testThreeServerAppend() throws InterruptedException {
+        RaftServer a = createRaftServer(11000);
+        RaftServer b = createRaftServer(11001);
+        RaftServer c = createRaftServer(11002);
+        // 真实环境中会通过注册中心获取节点地址
+        Map<String, String> nodes = new HashMap<>();
+        registerNodes(nodes, a, 11000, "node-a");
+        registerNodes(nodes, b, 11001, "node-b");
+        registerNodes(nodes, c, 11002, "node-c");
+
+        // 指定 a 为 leader
+        updateNodes(nodes, "node-a", a, b, c);
+        startServer(a, b, c);
+
+        Thread.sleep(2000);
+
+        RaftClient raftClient = new RaftClient(nodes.get("node-a"));
+        raftClient.startup();
+
+        // 首次发送日志
+        for (int i = 0; i < 10; i++) {
+            AppendEntryResponse entryResponse = raftClient.append(("test first entry " + i).getBytes());
+            Assertions.assertEquals(i, entryResponse.getIndex());
+        }
+        // 等待落盘
+        Thread.sleep(100);
+
+        // follower c 宕机依然满足集群可用, 但 c 并没有相关日志
+        c.shutdown();
+        for (int i = 0; i < 10; i++) {
+            AppendEntryResponse entryResponse = raftClient.append(("test first entry " + i).getBytes());
+            Assertions.assertEquals(i + 10, entryResponse.getIndex());
+        }
+        // 等待落盘
+        Thread.sleep(100);
+
+        c.startup();
+        // 等待 c 重新加入集群并完成和 leader 的同步
+        Thread.sleep(2000);
+    }
+
 
     private String getLeaderAddress(RaftServer... servers) {
         for (RaftServer server : servers) {
@@ -149,6 +218,24 @@ public class RaftTest {
         for (RaftServer server : servers) {
             server.getMemberState().setNodes(nodes);
             server.getMemberState().setLiveNodes(liveNodes);
+        }
+    }
+
+    private void updateNodes(Map<String, String> nodes, String leaderId, RaftServer... servers) {
+
+        Map<String, Boolean> liveNodes = new HashMap<>();
+        nodes.keySet().forEach(it -> liveNodes.put(it, true));
+
+        for (RaftServer server : servers) {
+            MemberState memberState = server.getMemberState();
+            memberState.setNodes(nodes);
+            memberState.setLiveNodes(liveNodes);
+            if (memberState.getSelfId().equals(leaderId)) {
+                memberState.setRole(Role.LEADER);
+            } else {
+                memberState.setRole(Role.FOLLOWER);
+            }
+            memberState.setLeaderId(leaderId);
         }
     }
 }

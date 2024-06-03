@@ -101,10 +101,10 @@ public class StateMaintainer extends ServiceThread {
         }
     }
 
-    public void changeRoleToFollower(long term) {
+    public void changeRoleToFollower(long term, String leaderId) {
         memberState.setTerm(Math.max(term, memberState.getTerm()));
         memberState.setRole(Role.FOLLOWER);
-        memberState.setLeaderId(null);
+        memberState.setLeaderId(leaderId);
         memberState.setCurrVoteFor(null);
     }
 
