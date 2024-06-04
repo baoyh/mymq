@@ -114,6 +114,8 @@ public class RaftTest {
             AppendEntryResponse entryResponse = raftClient.append(("test first entry " + i).getBytes());
             Assertions.assertEquals(i, entryResponse.getIndex());
         }
+//        AppendEntryResponse entryResponse = raftClient.append(("test first entry ").getBytes());
+//        Assertions.assertEquals(0, entryResponse.getIndex());
         // 等待落盘
         Thread.sleep(100);
     }
@@ -152,12 +154,14 @@ public class RaftTest {
             AppendEntryResponse entryResponse = raftClient.append(("test first entry " + i).getBytes());
             Assertions.assertEquals(i + 10, entryResponse.getIndex());
         }
-        // 等待落盘
-        Thread.sleep(100);
 
+        Thread.sleep(3000);
+        c = createRaftServer(11002);
+        registerNodes(nodes, c, 11002, "node-c");
+        updateNodes(nodes, "node-a", a, b, c);
         c.startup();
         // 等待 c 重新加入集群并完成和 leader 的同步
-        Thread.sleep(2000);
+        Thread.sleep(3000);
     }
 
 

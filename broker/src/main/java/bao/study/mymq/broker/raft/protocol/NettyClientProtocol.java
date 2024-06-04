@@ -30,9 +30,9 @@ public class NettyClientProtocol implements ClientProtocol {
 
     private final MemberState memberState;
 
-    private ExecutorService executor = Executors.newCachedThreadPool(new ThreadFactory() {
+    private final ExecutorService executor = Executors.newCachedThreadPool(new ThreadFactory() {
 
-        private AtomicInteger threadIndex = new AtomicInteger(0);
+        private final AtomicInteger threadIndex = new AtomicInteger(0);
 
         @Override
         public Thread newThread(Runnable r) {

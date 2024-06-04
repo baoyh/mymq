@@ -31,7 +31,7 @@ public class NettyServerProtocol implements ServerProtocol, NettyRequestProcesso
 
     private final EntryProcessor entryProcessor;
 
-    private ExecutorService futureExecutor = Executors.newFixedThreadPool(4);
+    private final ExecutorService futureExecutor = Executors.newFixedThreadPool(4);
 
     public NettyServerProtocol(HeartbeatProcessor heartbeatProcessor, LeaderElector leaderElector, EntryProcessor entryProcessor) {
         this.heartbeatProcessor = heartbeatProcessor;

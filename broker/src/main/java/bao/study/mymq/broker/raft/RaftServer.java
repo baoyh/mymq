@@ -33,9 +33,9 @@ public class RaftServer {
 
     private StateMaintainer stateMaintainer;
 
-    private final RaftStore raftStore;
+    private RaftStore raftStore;
 
-    private final EntryProcessor entryProcessor;
+    private EntryProcessor entryProcessor;
 
     public RaftServer(Config config, RemotingClient remotingClient, RemotingServer remotingServer) {
         this.config = config;
@@ -49,9 +49,9 @@ public class RaftServer {
 
     public void startup() {
         startRemoting();
-        startStateMaintainer();
-        startEntryProcessor();
         startRaftStore();
+        startEntryProcessor();
+        startStateMaintainer();
         alive.compareAndSet(false, true);
     }
 
@@ -82,10 +82,20 @@ public class RaftServer {
     }
 
     private void startEntryProcessor() {
+        synchronized (lock) {
+            if (entryProcessor == null) {
+                entryProcessor = new EntryProcessor(memberState, new NettyClientProtocol(remotingClient, memberState), raftStore);
+            }
+        }
         entryProcessor.start();
     }
 
     private void startRaftStore() {
+        synchronized (lock) {
+            if (raftStore == null) {
+                raftStore = new RaftFileStore(config);
+            }
+        }
         raftStore.startup();
     }
 
@@ -100,10 +110,18 @@ public class RaftServer {
 
     public void shutdown() {
         stateMaintainer.shutdown();
-        stateMaintainer = null;
         remotingServer.shutdown();
         remotingClient.shutdown();
+        raftStore.shutdown();
+        entryProcessor.shutdown();
         alive.compareAndSet(true, false);
+        reset();
+    }
+
+    private void reset() {
+        stateMaintainer = null;
+        raftStore = null;
+        entryProcessor = null;
     }
 
     public Config getConfig() {
