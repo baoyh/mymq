@@ -9,6 +9,7 @@ import bao.study.mymq.common.utils.CommonCodec;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -20,7 +21,7 @@ public class CommitLogManager extends ConfigManager {
 
     private final transient CommitLog commitLog;
 
-    private ConcurrentMap<String/* mappedFile name */, Integer/* committedPosition */> committedTable;
+    private ConcurrentMap<String/* mappedFile name */, Integer/* committedPosition */> committedTable = new ConcurrentHashMap<>();
 
     public CommitLogManager(CommitLog commitLog) {
         this.commitLog = commitLog;
@@ -35,26 +36,26 @@ public class CommitLogManager extends ConfigManager {
     }
 
     @Override
-    public boolean load() {
+    public void load() {
         super.load();
-
         MessageStoreConfig messageStoreConfig = commitLog.getMessageStoreConfig();
         File folder = new File(messageStoreConfig.getCommitLogPath());
-        File[] files = folder.listFiles();
-        assert files != null;
-
         List<MappedFile> mappedFileList = new CopyOnWriteArrayList<>();
-        if (files.length == 0) {
+
+        if (!folder.exists() || folder.listFiles().length == 0) {
             mappedFileList.add(new MappedFile(
                     messageStoreConfig.getCommitLogPath() + File.separator + messageStoreConfig.getCommitLogFirstName(),
                     messageStoreConfig.getCommitLogFileSize()));
         } else {
-            for (File file : files) {
-                mappedFileList.add(new MappedFile(file.getPath(), messageStoreConfig.getCommitLogFileSize(), committedTable.get(file.getName())));
+            for (File file : folder.listFiles()) {
+                Integer committedIndex = committedTable.get(file.getName());
+                if (committedIndex == null) {
+                    committedIndex = 0;
+                }
+                mappedFileList.add(new MappedFile(file.getPath(), messageStoreConfig.getCommitLogFileSize(), committedIndex));
             }
         }
         commitLog.setMappedFileList(mappedFileList);
-        return true;
     }
 
     @Override
@@ -64,6 +65,7 @@ public class CommitLogManager extends ConfigManager {
 
     @Override
     public void decode(String json) {
+        if (json == null || json.isEmpty()) return;
         CommitLogManager commitLogManager = CommonCodec.decode(json.getBytes(StandardCharsets.UTF_8), CommitLogManager.class);
         this.committedTable = commitLogManager.getCommittedTable();
     }

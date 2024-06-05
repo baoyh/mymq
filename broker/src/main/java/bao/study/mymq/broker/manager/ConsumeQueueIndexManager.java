@@ -39,6 +39,7 @@ public class ConsumeQueueIndexManager extends ConfigManager {
 
     @Override
     public void decode(String json) {
+        if (json == null || json.isEmpty()) return;
         ConsumeQueueIndexManager decode = CommonCodec.decode(json, ConsumeQueueIndexManager.class);
         this.consumedOffset = decode.consumedOffset;
     }

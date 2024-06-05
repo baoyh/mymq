@@ -14,7 +14,7 @@ public class MessageStoreConfig extends BrokerConfig {
 
     public String getCommitLogPath() {
         if (commitLogPath == null) {
-            commitLogPath = getConfigRootPath() + File.separator + "commitlog";
+            commitLogPath = dataPath() + File.separator + "commitlog";
         }
         return commitLogPath;
     }

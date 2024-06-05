@@ -42,9 +42,9 @@ public class ConsumeQueue {
         return offsets;
     }
 
-    public void append(long offset, int size) {
+    public void append(long commitlogOffset, int size) {
         MappedFile mappedFile = MappedFileHelper.latestMappedFile(mappedFileList);
-        mappedFile.appendConsumeQueueOffset(new ConsumeQueueOffset(offset, size));
+        mappedFile.appendConsumeQueueOffset(new ConsumeQueueOffset(commitlogOffset, size));
     }
 
     public String getLastFileName() {

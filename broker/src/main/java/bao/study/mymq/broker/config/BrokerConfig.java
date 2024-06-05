@@ -1,6 +1,5 @@
 package bao.study.mymq.broker.config;
 
-import bao.study.mymq.common.Constant;
 
 import java.io.File;
 
@@ -10,9 +9,11 @@ import java.io.File;
  */
 public class BrokerConfig {
 
-    private String configRootPath;
+//    private static final String HOME_PATH = System.getProperty("user.home") + File.separator + "mymq";
 
-    private static final String HOME_PATH = System.getProperty(Constant.MYMQ_HOME_PROPERTY, System.getenv(Constant.MYMQ_HOME_ENV));
+    private static final String HOME_PATH = System.getProperty("user.dir");
+
+    private static final String DATA_PATH = HOME_PATH + File.separator + "store";
 
     private static final String CONFIG_PATH = HOME_PATH + File.separator + "config";
 
@@ -25,9 +26,7 @@ public class BrokerConfig {
     private static final int holdTime = 20 * 1000;
 
     public String getConfigRootPath() {
-        String homePath = System.getProperty(Constant.MYMQ_HOME_PROPERTY, System.getenv(Constant.MYMQ_HOME_ENV));
-        configRootPath = homePath == null ? configRootPath : homePath + File.separator + "store";
-        return configRootPath;
+        return CONFIG_PATH;
     }
 
     public static String consumeQueueOffsetConfigPath() {
@@ -40,6 +39,10 @@ public class BrokerConfig {
 
     public static String consumeQueueConfigPath() {
         return CONFIG_CONSUMEQUEUE;
+    }
+
+    public static String dataPath() {
+        return DATA_PATH;
     }
 
     public static int getHoldTime() {

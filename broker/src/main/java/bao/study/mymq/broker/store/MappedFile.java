@@ -1,6 +1,7 @@
 package bao.study.mymq.broker.store;
 
 import bao.study.mymq.broker.BrokerException;
+import bao.study.mymq.common.utils.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -77,14 +78,7 @@ public class MappedFile {
         fileFromOffset = Long.parseLong(file.getName());
 
         try {
-            if (!file.getParentFile().exists()) {
-                file.getParentFile().mkdirs();
-                try {
-                    file.createNewFile();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            IOUtils.initFile(file);
             fileChannel = new RandomAccessFile(file, "rw").getChannel();
             mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, fileSize);
         } catch (IOException e) {

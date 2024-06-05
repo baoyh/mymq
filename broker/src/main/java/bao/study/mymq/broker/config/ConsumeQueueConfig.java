@@ -14,7 +14,7 @@ public class ConsumeQueueConfig extends BrokerConfig {
 
     public String getConsumeQueuePath() {
         if (consumeQueuePath == null) {
-            consumeQueuePath = getConfigRootPath() + File.separator + "consumequeue";
+            consumeQueuePath = dataPath() + File.separator + "consumequeue";
         }
         return consumeQueuePath;
     }

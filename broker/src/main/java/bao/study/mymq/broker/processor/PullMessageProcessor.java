@@ -66,6 +66,7 @@ public class PullMessageProcessor implements NettyRequestProcessor {
         PullMessageBody body = CommonCodec.decode(msg.getBody(), PullMessageBody.class);
         ConsumeQueueIndexManager consumeQueueIndexManager = brokerController.getConsumeOffsetManager();
         ConcurrentMap<String, ConcurrentMap<Integer, Long>> consumedOffset = consumeQueueIndexManager.getConsumedOffset();
+        checkConsumedOffset(consumedOffset, body.getTopic(), body.getGroup(), body.getQueueId());
         ConcurrentMap<Integer, Long> offsetTable = consumedOffset.get(body.getTopic() + Constant.TOPIC_SEPARATOR + body.getGroup());
 
         String key = MessageStoreHelper.createKey(body.getTopic(), body.getQueueId());
@@ -99,6 +100,19 @@ public class PullMessageProcessor implements NettyRequestProcessor {
 
         } else {
             return RemotingCommandFactory.createResponseRemotingCommand(FOUND_MESSAGE, CommonCodec.encode(messages));
+        }
+    }
+
+    private void checkConsumedOffset(ConcurrentMap<String, ConcurrentMap<Integer, Long>> consumedOffset, String topic, String group, int queueId) {
+        ConcurrentHashMap<Integer, Long> map = new ConcurrentHashMap<>();
+        map.put(queueId, 0L);
+        String key = topic + Constant.TOPIC_SEPARATOR + group;
+        if (consumedOffset.containsKey(key)) {
+            if (!consumedOffset.get(key).containsKey(queueId)) {
+                consumedOffset.put(key, map);
+            }
+        } else {
+            consumedOffset.put(key, map);
         }
     }
 

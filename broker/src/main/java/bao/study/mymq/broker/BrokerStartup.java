@@ -71,7 +71,7 @@ public class BrokerStartup {
 
             log.info("broker started");
         } catch (Throwable e) {
-            e.printStackTrace();
+            log.error(e.getMessage(), e);
             System.exit(-1);
         }
     }
@@ -82,12 +82,7 @@ public class BrokerStartup {
         CommitLogManager commitLogManager = new CommitLogManager(new CommitLog(new MessageStoreConfig()));
         brokerController = new BrokerController(consumeQueueIndexManager, consumeQueueManager, commitLogManager);
 
-        boolean initialize = brokerController.initialize();
-        if (!initialize) {
-            shutdown();
-            System.exit(1);
-        }
-
+        brokerController.initialize();
         brokerController.start();
 
         registerRequestProcessor();

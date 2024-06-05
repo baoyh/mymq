@@ -33,11 +33,10 @@ public class BrokerController {
         this.pullRequestHoldService = new PullRequestHoldService(this);
     }
 
-    protected boolean initialize() {
-        boolean result = consumeQueueIndexManager.load();
-        result = result && consumeQueueManager.load();
-        result = result && commitLogManager.load();
-        return result;
+    protected void initialize() {
+        consumeQueueIndexManager.load();
+        consumeQueueManager.load();
+        commitLogManager.load();
     }
 
     protected void start() {

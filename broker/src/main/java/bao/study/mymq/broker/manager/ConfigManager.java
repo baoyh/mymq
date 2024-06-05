@@ -1,6 +1,7 @@
 package bao.study.mymq.broker.manager;
 
 import bao.study.mymq.broker.BrokerException;
+import bao.study.mymq.common.utils.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,28 +17,38 @@ public abstract class ConfigManager {
 
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
-    public boolean load() {
+    public void load() {
         File file = new File(configFilePath());
+        if (!file.exists()) {
+            IOUtils.initFile(file);
+            return;
+        }
         try {
             String fileStr = file2String(file);
             if (fileStr != null) {
                 decode(fileStr);
-                return true;
             }
         } catch (Exception e) {
             log.error("Load file " + file.getName() + " fail", e);
         }
-        return false;
     }
 
     public void commit() {
-        RandomAccessFile file;
+        RandomAccessFile file = null;
         try {
             file = new RandomAccessFile(configFilePath(), "rw");
             file.setLength(0);
             file.write(encode().getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             log.error("Commit file fail", e);
+        } finally {
+            if (file != null) {
+                try {
+                    file.close();
+                } catch (IOException e) {
+                    log.error("Close file fail", e);
+                }
+            }
         }
     }
 

@@ -318,4 +318,16 @@ public class IOUtils {
         }
     }
 
+    public static void initFile(File file) {
+        if (file.exists()) return;
+        if (!file.getParentFile().exists()) {
+            file.getParentFile().mkdirs();
+        }
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
