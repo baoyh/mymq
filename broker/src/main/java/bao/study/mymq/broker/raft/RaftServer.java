@@ -4,10 +4,13 @@ import bao.study.mymq.broker.raft.protocol.NettyClientProtocol;
 import bao.study.mymq.broker.raft.protocol.NettyServerProtocol;
 import bao.study.mymq.broker.raft.store.RaftFileStore;
 import bao.study.mymq.broker.raft.store.RaftStore;
+import bao.study.mymq.common.Constant;
 import bao.study.mymq.remoting.RemotingClient;
 import bao.study.mymq.remoting.RemotingServer;
 import bao.study.mymq.remoting.code.RequestCode;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -47,6 +50,12 @@ public class RaftServer {
         this.entryProcessor = new EntryProcessor(memberState, new NettyClientProtocol(remotingClient, memberState), raftStore);
     }
 
+    public RaftServer(Config config, Map<String, String> nodes, String selfId, RemotingClient remotingClient, RemotingServer remotingServer) {
+        this(config, remotingClient, remotingServer);
+        updateNodes(nodes, selfId);
+    }
+
+
     public void startup() {
         startRemoting();
         startRaftStore();
@@ -56,8 +65,28 @@ public class RaftServer {
     }
 
     private void startRemoting() {
-        remotingServer.start();
-        remotingClient.start();
+        if (!remotingServer.hasStarted()) {
+            remotingServer.start();
+        }
+        if (!remotingClient.hasStarted()) {
+            remotingClient.start();
+        }
+    }
+
+    private void updateNodes(Map<String, String> nodes, String selfId) {
+        memberState.setNodes(nodes);
+        Map<String, Boolean> liveNodes = new HashMap<>();
+        nodes.keySet().forEach(it -> liveNodes.put(it, true));
+        memberState.setLiveNodes(liveNodes);
+
+        memberState.setSelfId(selfId);
+        memberState.getConfig().setSelfId(selfId);
+        String[] info = selfId.split(Constant.RAFT_ID_SEPARATOR);
+        if (Long.parseLong(info[info.length - 1]) == Constant.MASTER_ID) {
+            memberState.setRole(Role.LEADER);
+        } else {
+            memberState.setRole(Role.FOLLOWER);
+        }
     }
 
     private void startStateMaintainer() {
@@ -142,6 +171,10 @@ public class RaftServer {
 
     public boolean getAlive() {
         return alive.get();
+    }
+
+    public EntryProcessor getEntryProcessor() {
+        return entryProcessor;
     }
 }
 

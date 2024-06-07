@@ -8,6 +8,7 @@ import io.netty.channel.ChannelHandlerContext;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author baoyh
@@ -18,6 +19,12 @@ public abstract class NettyAbstract {
     private final Map<Integer, NettyRequestProcessor> requestProcessorTable = new ConcurrentHashMap<>();
 
     protected final Map<Integer, ResponseFuture> responseFutureTable = new ConcurrentHashMap<>();
+
+    protected final AtomicBoolean hasStarted = new AtomicBoolean(false);
+
+    public boolean hasStarted() {
+        return hasStarted.get();
+    }
 
     public void registerRequestProcessor(NettyRequestProcessor requestProcessor, int... codes) {
         for (int code : codes) {

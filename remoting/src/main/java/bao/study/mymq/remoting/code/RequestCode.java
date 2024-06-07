@@ -21,6 +21,8 @@ public abstract class RequestCode {
 
     public static final int UNREGISTER_BROKER = 201;
 
+    public static final int QUERY_BROKERS_BY_BROKER_NAME = 202;
+
 
     /**
      * client

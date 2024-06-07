@@ -23,6 +23,8 @@ public class RouterRequestProcessor implements NettyRequestProcessor {
                 return registerBroker(msg);
             case RequestCode.GET_ROUTE_BY_TOPIC:
                 return getRouteByTopic(msg);
+            case RequestCode.QUERY_BROKERS_BY_BROKER_NAME:
+                return queryBrokersByBrokerName(msg);
             default:
                 return null;
         }
@@ -34,6 +36,10 @@ public class RouterRequestProcessor implements NettyRequestProcessor {
 
     private RemotingCommand getRouteByTopic(RemotingCommand msg) {
         return routerInfoManager.getRouteByTopic(msg);
+    }
+
+    private RemotingCommand queryBrokersByBrokerName(RemotingCommand msg) {
+        return routerInfoManager.queryBrokersByBrokerName(msg);
     }
 
 }

@@ -9,4 +9,6 @@ public interface Remoting {
     void start();
 
     void shutdown();
+
+    boolean hasStarted();
 }

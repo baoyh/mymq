@@ -1,6 +1,9 @@
 package bao.study.mymq.broker.raft.store;
 
+import bao.study.mymq.broker.store.MappedFile;
 import bao.study.mymq.common.protocol.raft.RaftEntry;
+
+import java.util.List;
 
 /**
  * @author baoyh
@@ -36,6 +39,8 @@ public abstract class RaftStore {
      * 获取 Leader 第一条消息的下标
      */
     public abstract long getBeginIndex();
+
+    public abstract List<MappedFile> getDataFileList();
 
 
     public void flush() {

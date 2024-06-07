@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -23,9 +24,11 @@ public class RouterInfoManager {
 
     private static final Logger log = LoggerFactory.getLogger(RouterInfoManager.class);
 
-    private final Map<String /* topic */, TopicPublishInfo> topicTable = new HashMap<>();
+    private final Map<String /* topic */, TopicPublishInfo> topicTable = new ConcurrentHashMap<>();
 
-    private final Map<BrokerDataIndex, Integer /* index in brokerDataList */> registered = new HashMap<>();
+    private final Map<BrokerDataIndex, Integer /* index in brokerDataList */> registered = new ConcurrentHashMap<>();
+
+    private final Map<String /* brokerName */, BrokerData> brokerTable = new ConcurrentHashMap<>();
 
     private final ReentrantLock lock = new ReentrantLock();
 
@@ -79,6 +82,8 @@ public class RouterInfoManager {
 
                 topicTable.put(topic, topicPublishInfo);
 
+                brokerTable.put(brokerName, brokerData);
+
             }
 
         } catch (Exception e) {
@@ -97,6 +102,12 @@ public class RouterInfoManager {
         String topic = CommonCodec.decode(msg.getBody(), String.class);
         TopicPublishInfo topicPublishInfo = topicTable.get(topic);
         return RemotingCommandFactory.createResponseRemotingCommand(ResponseCode.SUCCESS, CommonCodec.encode(topicPublishInfo));
+    }
+
+    public RemotingCommand queryBrokersByBrokerName(RemotingCommand msg) {
+        String brokerName = CommonCodec.decode(msg.getBody(), String.class);
+        BrokerData brokerData = brokerTable.get(brokerName);
+        return RemotingCommandFactory.createResponseRemotingCommand(ResponseCode.SUCCESS, CommonCodec.encode(brokerData));
     }
 
     private static class BrokerDataIndex {

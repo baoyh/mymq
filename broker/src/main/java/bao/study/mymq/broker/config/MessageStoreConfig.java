@@ -27,7 +27,11 @@ public class MessageStoreConfig extends BrokerConfig {
         return commitLogFileSize;
     }
 
-    public void setCommitLogFileSize(int commitLogFileSize) {
+    public void setCommitLogFileSize(long commitLogFileSize) {
         this.commitLogFileSize = commitLogFileSize;
+    }
+
+    public void setCommitLogPath(String commitLogPath) {
+        this.commitLogPath = commitLogPath;
     }
 }

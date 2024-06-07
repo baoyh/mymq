@@ -12,9 +12,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class CommitLog {
 
-    private final MessageStoreConfig messageStoreConfig;
+    protected final MessageStoreConfig messageStoreConfig;
 
-    private List<MappedFile> mappedFileList = new CopyOnWriteArrayList<>();
+    protected List<MappedFile> mappedFileList = new CopyOnWriteArrayList<>();
 
     public CommitLog(MessageStoreConfig messageStoreConfig) {
         this.messageStoreConfig = messageStoreConfig;

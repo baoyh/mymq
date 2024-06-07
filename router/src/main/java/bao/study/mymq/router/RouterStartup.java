@@ -28,6 +28,6 @@ public class RouterStartup {
     }
 
     private static void registerRequestProcessor(RemotingServer remotingServer) {
-        remotingServer.registerRequestProcessor(new RouterRequestProcessor(), RequestCode.REGISTER_BROKER, RequestCode.GET_ROUTE_BY_TOPIC);
+        remotingServer.registerRequestProcessor(new RouterRequestProcessor(), RequestCode.REGISTER_BROKER, RequestCode.GET_ROUTE_BY_TOPIC, RequestCode.QUERY_BROKERS_BY_BROKER_NAME);
     }
 }

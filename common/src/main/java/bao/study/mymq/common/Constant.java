@@ -21,4 +21,6 @@ public abstract class Constant {
     /* broker */
 
     public static final String TOPIC_SEPARATOR = "@";
+
+    public static final String RAFT_ID_SEPARATOR = "@";
 }

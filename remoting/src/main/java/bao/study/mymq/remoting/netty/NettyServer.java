@@ -12,6 +12,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * @author baoyh
  * @since 2022/5/13 15:09
@@ -45,6 +47,7 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
                 }
             });
             serverBootstrap.bind(port).sync();
+            hasStarted.compareAndSet(false, true);
             log.info("Success start netty server in port {}", port);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -55,7 +58,10 @@ public class NettyServer extends NettyAbstract implements RemotingServer {
     public void shutdown() {
         bossGroup.shutdownGracefully();
         workerGroup.shutdownGracefully();
+        hasStarted.compareAndSet(true, false);
     }
+
+
 
     @ChannelHandler.Sharable
     class ServerHandler extends SimpleChannelInboundHandler<RemotingCommand> {

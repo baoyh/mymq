@@ -46,15 +46,15 @@ public class StateMaintainer extends ServiceThread {
             try {
                 switch (memberState.getRole()) {
                     case FOLLOWER:
-                        logger.info(memberState.getSelfId() + ": become follower");
+                        logger.debug(memberState.getSelfId() + ": become follower");
                         maintainAsFollower();
                         break;
                     case CANDIDATE:
-                        logger.info(memberState.getSelfId() + ": become candidate");
+                        logger.debug(memberState.getSelfId() + ": become candidate");
                         maintainAsCandidate();
                         break;
                     case LEADER:
-                        logger.info(memberState.getSelfId() + ": become leader");
+                        logger.debug(memberState.getSelfId() + ": become leader");
                         maintainAsLeader();
                         break;
                 }

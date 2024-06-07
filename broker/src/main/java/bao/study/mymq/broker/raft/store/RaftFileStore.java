@@ -208,6 +208,10 @@ public class RaftFileStore extends RaftStore {
         return dataFileList.isEmpty() ? createDataFile() : MappedFileHelper.latestMappedFile(dataFileList);
     }
 
+    public List<MappedFile> getDataFileList() {
+        return dataFileList;
+    }
+
     private MappedFile createDataFile() {
         String dataStorePath = config.getDataStorePath();
         MappedFile mappedFile = new MappedFile(dataStorePath + File.separator + "00000000", config.getDataFileSize());

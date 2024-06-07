@@ -1,6 +1,8 @@
 package bao.study.mymq.broker.store;
 
+import bao.study.mymq.broker.raft.store.RaftEntryCodec;
 import bao.study.mymq.broker.util.MappedFileHelper;
+import bao.study.mymq.common.protocol.raft.RaftEntry;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
@@ -17,11 +19,6 @@ public class MappedFileTest {
     public void readTest() {
         MappedFile mappedFile = new MappedFile("D:\\Work\\code\\mymq\\store\\consumequeue\\topic1\\0\\00000000", 12 * 1024);
         mappedFile.setWrotePosition(24);
-//        ByteBuffer read = mappedFile.read(0, 12);
-//        ConsumeQueueOffset decode = ConsumeQueueOffsetCodec.decode(read);
-//        read = mappedFile.read(12, 12);
-//        decode = ConsumeQueueOffsetCodec.decode(read);
-//        System.out.println(decode);
 
         long consumedQueueIndexOffset = 0L;
         int size = 12;
@@ -35,5 +32,17 @@ public class MappedFileTest {
             position = position + size;
         }
         System.out.println(offsets);
+    }
+
+    @Test
+    public void readCommitlog() {
+        MappedFile mappedFile = new MappedFile("D:\\Work\\code\\mymq\\raftstore\\raft-broker1@0\\data\\00000000", 12 * 1024 * 1024);
+        ByteBuffer read = mappedFile.read(0, 103);
+        RaftEntry decode = RaftEntryCodec.decode(read);
+        assert decode != null;
+        ByteBuffer put = ByteBuffer.allocate(decode.getBody().length).put(decode.getBody());
+        put.flip();
+        MessageStore messageStore = MessageStoreCodec.decode(put);
+        System.out.println(messageStore);
     }
 }

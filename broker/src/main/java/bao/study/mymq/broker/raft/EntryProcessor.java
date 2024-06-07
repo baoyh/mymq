@@ -1,6 +1,7 @@
 package bao.study.mymq.broker.raft;
 
 import bao.study.mymq.broker.raft.protocol.ClientProtocol;
+import bao.study.mymq.broker.store.MappedFile;
 import bao.study.mymq.common.protocol.raft.*;
 import bao.study.mymq.broker.raft.store.RaftStore;
 import bao.study.mymq.common.ServiceThread;
@@ -174,6 +175,10 @@ public class EntryProcessor {
         entryResponse.setCode(ResponseCode.SUCCESS);
         entryResponse.setLeaderId(memberState.getLeaderId());
         return entryResponse;
+    }
+
+    public List<MappedFile> getDataFileList() {
+        return raftStore.getDataFileList();
     }
 
 

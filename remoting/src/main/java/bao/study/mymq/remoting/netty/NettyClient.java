@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author baoyh
@@ -44,6 +45,8 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
                 ch.pipeline().addLast(new KryoNettyDecode()).addLast(new KryoNettyEncode()).addLast(new ClientHandler());
             }
         });
+
+        hasStarted.compareAndSet(false, true);
     }
 
     @Override
@@ -53,6 +56,7 @@ public class NettyClient extends NettyAbstract implements RemotingClient {
                         future.isSuccess())));
         this.channelTables.clear();
         this.eventLoopGroupWorker.shutdownGracefully();
+        hasStarted.compareAndSet(true, false);
     }
 
     @Override
