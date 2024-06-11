@@ -19,31 +19,10 @@ public class ProducerClient {
 
         int i = 0;
         while (i <= 5) {
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
             SendResult result = producer.send(new Message("topic1", ("hello" + i).getBytes(StandardCharsets.UTF_8)));
             System.out.println(result);
             i++;
         }
-
-
-//        producer.send(new Message("topic2", "world".getBytes(StandardCharsets.UTF_8)), new SendCallback() {
-//
-//            @Override
-//            public void onSuccess(SendResult sendResult) {
-//                System.out.println("send async success");
-//                System.out.println(sendResult);
-//            }
-//
-//            @Override
-//            public void onException(Throwable e) {
-//                System.out.println(Arrays.toString(e.getStackTrace()));
-//            }
-//        });
-
         producer.shutdown();
     }
 }

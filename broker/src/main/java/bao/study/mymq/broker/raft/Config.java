@@ -35,7 +35,7 @@ public class Config {
 
     private long rpcTimeoutMillis = 3000L;
 
-    private final String storeBaseDir = System.getProperty("user.dir") + File.separator + "raftstore";
+    private final String storeBaseDir = System.getProperty("user.dir") + File.separator + "store";
 
     private String dataStorePath;
 

@@ -63,7 +63,6 @@ public class HeartbeatProcessor {
 
             future.whenComplete((HeartBeat response, Throwable ex) -> {
                 try {
-                    logger.info("{} finish send heartbeat to {} at local term {}", memberState.getSelfId(), heartBeat.getRemoteId(), memberState.getTerm());
                     all.incrementAndGet();
                     if (ex != null) {
                         // 抛出异常视为该节点不可用

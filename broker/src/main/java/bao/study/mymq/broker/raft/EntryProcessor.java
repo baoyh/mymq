@@ -216,7 +216,7 @@ public class EntryProcessor {
 
         @Override
         public String getServiceName() {
-            return EntryDispatcher.class.getName();
+            return EntryDispatcher.class.getSimpleName();
         }
 
         @Override
@@ -365,7 +365,7 @@ public class EntryProcessor {
 
         @Override
         public String getServiceName() {
-            return EntryHandler.class.getName();
+            return EntryHandler.class.getSimpleName();
         }
 
         @Override
@@ -412,7 +412,7 @@ public class EntryProcessor {
          * 接收 leader 发送的的 push 请求, 并将其放入处理队列中
          */
         public CompletableFuture<PushEntryResponse> handlePush(PushEntryRequest entryRequest) throws InterruptedException {
-            logger.info("follower {} handle push {}", memberState.getSelfId(), entryRequest.getType());
+            logger.debug("follower {} handle push {}", memberState.getSelfId(), entryRequest.getType());
             PushEntryRequest.Type type = entryRequest.getType();
             CompletableFuture<PushEntryResponse> future = new CompletableFuture<>();
             if (type == PushEntryRequest.Type.APPEND) {
@@ -427,13 +427,12 @@ public class EntryProcessor {
         }
 
         private void handleCommit(long commitIndex, PushEntryRequest request, CompletableFuture<PushEntryResponse> value) {
-            logger.info("follower {} handle commit, local commit {} and remote commit {}", memberState.getSelfId(), raftStore.getCommittedIndex(), commitIndex);
+            logger.debug("follower {} handle commit, local commit {} and remote commit {}", memberState.getSelfId(), raftStore.getCommittedIndex(), commitIndex);
             if (raftStore.getCommittedIndex() == commitIndex) {
                 value.complete(createPushEntryResponse(request, ResponseCode.SUCCESS));
                 return;
             }
             RaftEntry entry = raftStore.get(commitIndex);
-            logger.info("Get entry {}, and committed index is {}", entry, commitIndex);
             if (entry == null) {
                 value.complete(createPushEntryResponse(request, ResponseCode.INCONSISTENT_STATE));
             } else {
@@ -458,7 +457,7 @@ public class EntryProcessor {
         private void handleAppend(PushEntryRequest request, CompletableFuture<PushEntryResponse> future) {
             raftStore.append(request.getEntry());
             RaftEntry entry = raftStore.get(raftStore.getEndIndex());
-            logger.info("Append entry {}, and end index is {}", entry, raftStore.getEndIndex());
+            logger.debug("Append entry {}, and end index is {}", entry, raftStore.getEndIndex());
             future.complete(createPushEntryResponse(request, ResponseCode.SUCCESS));
         }
 
@@ -482,7 +481,7 @@ public class EntryProcessor {
 
         @Override
         public String getServiceName() {
-            return QuorumAckChecker.class.getName();
+            return QuorumAckChecker.class.getSimpleName();
         }
 
         @Override

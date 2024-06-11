@@ -1,4 +1,4 @@
-package bao.study.mymq.broker;
+package bao.study.mymq.test;
 
 import bao.study.mymq.broker.raft.Config;
 import bao.study.mymq.broker.raft.MemberState;
@@ -23,7 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RaftTest {
 
     @Test
-    public void testThreeServer() throws InterruptedException {
+    public void testThreeServerAndRestartLeader() throws InterruptedException {
+        CommonUtil.clear();
         RaftServer a = createRaftServer(11000);
         RaftServer b = createRaftServer(11001);
         RaftServer c = createRaftServer(11002);
@@ -67,6 +68,7 @@ public class RaftTest {
 
     @Test
     public void testThreeServerAndRestartFollower() throws InterruptedException {
+        CommonUtil.clear();
         RaftServer a = createRaftServer(11000);
         RaftServer b = createRaftServer(11001);
         RaftServer c = createRaftServer(11002);
@@ -94,6 +96,7 @@ public class RaftTest {
 
     @Test
     public void testEntryAppend() throws InterruptedException {
+        CommonUtil.clear();
         RaftServer a = createRaftServer(11000);
         RaftServer b = createRaftServer(11001);
         // 真实环境中会通过注册中心获取节点地址
@@ -114,14 +117,13 @@ public class RaftTest {
             AppendEntryResponse entryResponse = raftClient.append(("test first entry " + i).getBytes());
             Assertions.assertEquals(i, entryResponse.getIndex());
         }
-//        AppendEntryResponse entryResponse = raftClient.append(("test first entry ").getBytes());
-//        Assertions.assertEquals(0, entryResponse.getIndex());
         // 等待落盘
         Thread.sleep(100);
     }
 
     @Test
     public void testThreeServerAppend() throws InterruptedException {
+        CommonUtil.clear();
         RaftServer a = createRaftServer(11000);
         RaftServer b = createRaftServer(11001);
         RaftServer c = createRaftServer(11002);

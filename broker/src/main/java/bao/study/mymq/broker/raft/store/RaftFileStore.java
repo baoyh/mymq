@@ -256,7 +256,7 @@ public class RaftFileStore extends RaftStore {
 
         @Override
         public String getServiceName() {
-            return FlushService.class.getName();
+            return FlushService.class.getSimpleName();
         }
 
         @Override
@@ -271,7 +271,7 @@ public class RaftFileStore extends RaftStore {
         @Override
         public void shutdown() {
             super.shutdown();
-            persistCheckPoint();
+//            persistCheckPoint();
         }
     }
 }

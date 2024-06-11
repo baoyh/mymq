@@ -55,19 +55,13 @@ public class BrokerStartup {
         try {
 
             int port = 10910;
-            remotingServer = new NettyServer(port);
-            remotingServer.start();
-
-            remotingClient = new NettyClient();
-            remotingClient.start();
-
             brokerProperties = new BrokerProperties("broker1", "cluster1", "localhost:9875", port, Constant.MASTER_ID);
 
             Map<String, Integer> topics = new HashMap<>();
             topics.put("topic1", 4);
             topics.put("topic2", 4);
 
-            start(topics);
+            start(port, topics);
 
             log.info("broker started");
         } catch (Throwable e) {
@@ -76,11 +70,20 @@ public class BrokerStartup {
         }
     }
 
-    private static void start(Map<String, Integer> topics) {
+    public static void start(int port, Map<String, Integer> topics) {
+        startRemoting(port);
         registerBroker(topics);
         queryBrokers();
         initialize();
         registerRequestProcessor();
+    }
+
+    private static void startRemoting(int port) {
+        remotingServer = new NettyServer(port);
+        remotingServer.start();
+
+        remotingClient = new NettyClient();
+        remotingClient.start();
     }
 
     private static void registerBroker(Map<String, Integer> topics) {
@@ -129,7 +132,7 @@ public class BrokerStartup {
         return brokerProperties.getBrokerName() + Constant.RAFT_ID_SEPARATOR + brokerProperties.getBrokerId();
     }
 
-    private static void shutdown() {
+    public static void shutdown() {
         remotingServer.shutdown();
         remotingClient.shutdown();
         raftServer.shutdown();
@@ -140,5 +143,7 @@ public class BrokerStartup {
         remotingServer.registerRequestProcessor(brokerController.getPullMessageProcessor(), QUERY_CONSUMER_OFFSET, PULL_MESSAGE, CONSUMER_SEND_MSG_BACK);
     }
 
-
+    public static void setBrokerProperties(BrokerProperties brokerProperties) {
+        BrokerStartup.brokerProperties = brokerProperties;
+    }
 }

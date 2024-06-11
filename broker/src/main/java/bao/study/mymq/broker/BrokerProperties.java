@@ -43,7 +43,7 @@ public class BrokerProperties {
         this.clusterName = clusterName;
     }
 
-    public long getPort() {
+    public int getPort() {
         return port;
     }
 
