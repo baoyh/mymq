@@ -9,7 +9,6 @@ import bao.study.mymq.remoting.RemotingClient;
 import bao.study.mymq.remoting.RemotingServer;
 import bao.study.mymq.remoting.code.RequestCode;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -55,7 +54,6 @@ public class RaftServer {
         updateNodes(nodes, selfId);
     }
 
-
     public void startup() {
         startRemoting();
         startRaftStore();
@@ -73,11 +71,13 @@ public class RaftServer {
         }
     }
 
-    private void updateNodes(Map<String, String> nodes, String selfId) {
-        memberState.setNodes(nodes);
-        Map<String, Boolean> liveNodes = new HashMap<>();
-        nodes.keySet().forEach(it -> liveNodes.put(it, true));
-        memberState.setLiveNodes(liveNodes);
+    public void updateNodes(Map<String, String> nodes, String selfId) {
+        Map<String, String> raftNodes = memberState.getNodes();
+        raftNodes.clear();
+        raftNodes.putAll(nodes);
+        Map<String, Boolean> liveNodes = memberState.getLiveNodes();
+        liveNodes.clear();
+        raftNodes.forEach((k, v) -> liveNodes.put(k, true));
 
         memberState.setSelfId(selfId);
         memberState.getConfig().setSelfId(selfId);
@@ -87,6 +87,8 @@ public class RaftServer {
         } else {
             memberState.setRole(Role.FOLLOWER);
         }
+
+        entryProcessor.updateAndStartEntryDispatchers();
     }
 
     private void startStateMaintainer() {

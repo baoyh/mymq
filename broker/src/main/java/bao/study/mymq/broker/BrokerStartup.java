@@ -5,13 +5,11 @@ import bao.study.mymq.broker.config.MessageStoreConfig;
 import bao.study.mymq.broker.manager.CommitLogManager;
 import bao.study.mymq.broker.manager.ConsumeQueueManager;
 import bao.study.mymq.broker.manager.ConsumeQueueIndexManager;
-import bao.study.mymq.broker.processor.SendMessageProcessor;
 import bao.study.mymq.broker.raft.Config;
 import bao.study.mymq.broker.raft.RaftServer;
 import bao.study.mymq.broker.store.RaftCommitLog;
 import bao.study.mymq.common.Constant;
 import bao.study.mymq.common.protocol.body.RegisterBrokerBody;
-import bao.study.mymq.common.protocol.broker.BrokerData;
 import bao.study.mymq.common.utils.CommonCodec;
 import bao.study.mymq.remoting.RemotingClient;
 import bao.study.mymq.remoting.RemotingServer;
@@ -26,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static bao.study.mymq.remoting.code.RequestCode.*;
 
@@ -48,8 +45,6 @@ public class BrokerStartup {
 
     private static BrokerProperties brokerProperties;
 
-    private static final Map<Long /* broker id */, String /* broker address */> addressMap = new ConcurrentHashMap<>();
-
     public static void main(String[] args) {
 
         try {
@@ -70,12 +65,12 @@ public class BrokerStartup {
         }
     }
 
-    public static void start(int port, Map<String, Integer> topics) {
+    public static BrokerController start(int port, Map<String, Integer> topics) {
         startRemoting(port);
         registerBroker(topics);
-        queryBrokers();
         initialize();
         registerRequestProcessor();
+        return brokerController;
     }
 
     private static void startRemoting(int port) {
@@ -100,32 +95,18 @@ public class BrokerStartup {
         remotingClient.invokeOneway(brokerProperties.getRouterAddress(), remotingCommand, 3000);
     }
 
-    private static void queryBrokers() {
-        RemotingCommand remotingCommand = RemotingCommandFactory.createRequestRemotingCommand(QUERY_BROKERS_BY_BROKER_NAME, CommonCodec.encode(brokerProperties.getBrokerName()));
-        RemotingCommand response = remotingClient.invokeSync(brokerProperties.getRouterAddress(), remotingCommand, 3000);
-        BrokerData brokerData = CommonCodec.decode(response.getBody(), BrokerData.class);
-        addressMap.putAll(brokerData.getAddressMap());
-    }
-
     private static void initialize() {
         ConsumeQueueIndexManager consumeQueueIndexManager = new ConsumeQueueIndexManager();
         ConsumeQueueManager consumeQueueManager = new ConsumeQueueManager(new ConsumeQueueConfig());
 
-        raftServer = new RaftServer(new Config(), getRaftNodes(), getSelfId(), remotingClient, remotingServer);
+        raftServer = new RaftServer(new Config(), new HashMap<>(), getSelfId(), remotingClient, remotingServer);
         CommitLogManager commitLogManager = new CommitLogManager(new RaftCommitLog(new MessageStoreConfig(), raftServer));
-        brokerController = new BrokerController(consumeQueueIndexManager, consumeQueueManager, commitLogManager);
+        brokerController = new BrokerController(remotingClient, remotingServer, brokerProperties, consumeQueueIndexManager, consumeQueueManager, commitLogManager, raftServer);
 
         brokerController.initialize();
         brokerController.start();
-        raftServer.startup();
 
         registerRequestProcessor();
-    }
-
-    private static Map<String, String> getRaftNodes() {
-        Map<String, String> nodes = new HashMap<>();
-        addressMap.forEach((k, v) -> nodes.put(brokerProperties.getBrokerName() + Constant.RAFT_ID_SEPARATOR + k, v));
-        return nodes;
     }
 
     private static String getSelfId() {
@@ -133,13 +114,11 @@ public class BrokerStartup {
     }
 
     public static void shutdown() {
-        remotingServer.shutdown();
-        remotingClient.shutdown();
-        raftServer.shutdown();
+        brokerController.shutdown();
     }
 
     private static void registerRequestProcessor() {
-        remotingServer.registerRequestProcessor(new SendMessageProcessor(brokerController), SEND_MESSAGE);
+        remotingServer.registerRequestProcessor(brokerController.getSendMessageProcessor(), SEND_MESSAGE);
         remotingServer.registerRequestProcessor(brokerController.getPullMessageProcessor(), QUERY_CONSUMER_OFFSET, PULL_MESSAGE, CONSUMER_SEND_MSG_BACK);
     }
 

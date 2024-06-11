@@ -22,12 +22,12 @@ public class RouterStartup {
             remotingServer.start();
             log.info("router started");
         } catch (Throwable e) {
-            e.printStackTrace();
+            log.error("router started failed", e);
             System.exit(-1);
         }
     }
 
     private static void registerRequestProcessor(RemotingServer remotingServer) {
-        remotingServer.registerRequestProcessor(new RouterRequestProcessor(), RequestCode.REGISTER_BROKER, RequestCode.GET_ROUTE_BY_TOPIC, RequestCode.QUERY_BROKERS_BY_BROKER_NAME);
+        remotingServer.registerRequestProcessor(new RouterRequestProcessor(), RequestCode.REGISTER_BROKER, RequestCode.GET_ROUTE_BY_TOPIC, RequestCode.BROKER_HEARTBEAT);
     }
 }

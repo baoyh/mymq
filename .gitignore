@@ -8,3 +8,8 @@ target/
 .idea/
 *.versionsBackup
 nohup.out
+config/
+store/
+*.log
+*.json
+*.txt

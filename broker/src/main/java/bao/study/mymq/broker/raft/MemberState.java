@@ -2,6 +2,7 @@ package bao.study.mymq.broker.raft;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author baoyh
@@ -21,9 +22,9 @@ public class MemberState {
 
     private volatile String currVoteFor;
 
-    private Map<String /*id*/, String /*address*/> nodes = new HashMap<>();
+    private Map<String /*id*/, String /*address*/> nodes = new ConcurrentHashMap<>();
 
-    private Map<String /*id*/, Boolean> liveNodes = new HashMap<>();
+    private Map<String /*id*/, Boolean> liveNodes = new ConcurrentHashMap<>();
 
     public Role getRole() {
         return role;

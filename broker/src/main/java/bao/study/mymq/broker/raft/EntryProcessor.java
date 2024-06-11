@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -41,7 +40,7 @@ public class EntryProcessor {
 
     private final QuorumAckChecker quorumAckChecker;
 
-    private final Map<String, EntryDispatcher> entryDispatchers = new HashMap<>();
+    private final Map<String, EntryDispatcher> entryDispatchers = new ConcurrentHashMap<>();
 
     /**
      * 每个节点基于投票轮次的当前水位线标记
@@ -95,6 +94,23 @@ public class EntryProcessor {
         if (!entryDispatchers.isEmpty()) {
             entryDispatchers.forEach((k, v) -> v.shutdown());
         }
+    }
+
+    public void updateAndStartEntryDispatchers() {
+        entryDispatchers.forEach((k, v) -> {
+            if (!memberState.getNodes().containsKey(k)) {
+                v.shutdown();
+                entryDispatchers.remove(k);
+            }
+        });
+
+        memberState.getNodes().forEach((k, v) -> {
+            if (!entryDispatchers.containsKey(k)) {
+                EntryDispatcher entryDispatcher = new EntryDispatcher(k);
+                entryDispatchers.put(k, entryDispatcher);
+                entryDispatcher.start();
+            }
+        });
     }
 
     public CompletableFuture<AppendEntryResponse> handleAppend(AppendEntryRequest entryRequest) {

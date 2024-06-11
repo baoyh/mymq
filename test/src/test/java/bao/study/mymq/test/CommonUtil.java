@@ -1,21 +1,16 @@
 package bao.study.mymq.test;
 
+import bao.study.mymq.broker.BrokerController;
 import bao.study.mymq.broker.BrokerProperties;
 import bao.study.mymq.broker.BrokerStartup;
 import bao.study.mymq.remoting.RemotingServer;
 import bao.study.mymq.remoting.code.RequestCode;
 import bao.study.mymq.remoting.netty.NettyServer;
-import bao.study.mymq.router.RouterStartup;
 import bao.study.mymq.router.processor.RouterRequestProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Map;
 
 /**
@@ -29,29 +24,46 @@ public class CommonUtil {
     public static void launchRouter(int port) {
         RemotingServer remotingServer = new NettyServer(port);
         try {
-            remotingServer.registerRequestProcessor(new RouterRequestProcessor(), RequestCode.REGISTER_BROKER, RequestCode.GET_ROUTE_BY_TOPIC, RequestCode.QUERY_BROKERS_BY_BROKER_NAME);
+            remotingServer.registerRequestProcessor(new RouterRequestProcessor(), RequestCode.REGISTER_BROKER, RequestCode.GET_ROUTE_BY_TOPIC, RequestCode.BROKER_HEARTBEAT);
             remotingServer.start();
             log.info("router started");
         } catch (Throwable e) {
-            e.printStackTrace();
+            log.error("router started failed", e);
             System.exit(-1);
         }
     }
 
-    public static void launchBroker(BrokerProperties brokerProperties, Map<String, Integer> topics) {
+    public static BrokerController launchBroker(BrokerProperties brokerProperties, Map<String, Integer> topics) {
         BrokerStartup.setBrokerProperties(brokerProperties);
-        BrokerStartup.start(brokerProperties.getPort(), topics);
+        BrokerController controller = BrokerStartup.start(brokerProperties.getPort(), topics);
         log.info("broker started");
+        return controller;
     }
 
     public static void clear() {
         try {
             String path = System.getProperty("user.dir");
-            Files.deleteIfExists(Paths.get(path + File.separator + "store"));
-            Files.deleteIfExists(Paths.get(path + File.separator + "config"));
+            deleteDir(path + File.separator + "store");
+            deleteDir(path + File.separator + "config");
         } catch (Exception e) {
             log.error("clear failed", e);
         }
     }
+
+    public static void deleteDir(String dirPath) {
+        File file = new File(dirPath);
+        if (!file.isFile()) {
+            File[] files = file.listFiles();
+            if (files == null) {
+                file.delete();
+            } else {
+                for (File f : files) {
+                    deleteDir(f.getAbsolutePath());
+                }
+            }
+        }
+        file.delete();
+    }
+
 
 }

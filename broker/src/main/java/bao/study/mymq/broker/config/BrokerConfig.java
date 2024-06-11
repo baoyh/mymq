@@ -25,6 +25,8 @@ public class BrokerConfig {
 
     private static final int holdTime = 20 * 1000;
 
+    private static final long rpcTimeoutMillis = 3000;
+
     public String getConfigRootPath() {
         return CONFIG_PATH;
     }
@@ -47,6 +49,10 @@ public class BrokerConfig {
 
     public static int getHoldTime() {
         return holdTime;
+    }
+
+    public static long getRpcTimeoutMillis() {
+        return rpcTimeoutMillis;
     }
 
 }

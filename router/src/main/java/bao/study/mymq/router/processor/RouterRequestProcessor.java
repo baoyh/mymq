@@ -23,7 +23,7 @@ public class RouterRequestProcessor implements NettyRequestProcessor {
                 return registerBroker(msg);
             case RequestCode.GET_ROUTE_BY_TOPIC:
                 return getRouteByTopic(msg);
-            case RequestCode.QUERY_BROKERS_BY_BROKER_NAME:
+            case RequestCode.BROKER_HEARTBEAT:
                 return queryBrokersByBrokerName(msg);
             default:
                 return null;
