@@ -36,7 +36,7 @@ public class ConsumeQueueManager extends ConfigManager {
     }
 
     /**
-     * 消费提交后将消息消费偏移落盘
+     * 消息提交后将消息消费偏移落盘
      */
     public void updateWhenMessageArriving(String topic, int queueId, long commitlogOffset, int size) {
         ConsumeQueue consumeQueue = getOrInitConsumeQueue(topic, queueId);

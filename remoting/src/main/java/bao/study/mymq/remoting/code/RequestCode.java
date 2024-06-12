@@ -23,6 +23,8 @@ public abstract class RequestCode {
 
     public static final int BROKER_HEARTBEAT = 202;
 
+    public static final int FLUSH_SYNC = 203;
+
 
     /**
      * client

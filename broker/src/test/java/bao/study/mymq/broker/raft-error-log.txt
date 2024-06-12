@@ -1,0 +1,186 @@
+"C:\Program Files\Java\jdk1.8.0_161\bin\java.exe" -ea -Didea.test.cyclic.buffer.size=1048576 "-javaagent:C:\Users\bao\AppData\Local\Programs\IntelliJ IDEA Ultimate\lib\idea_rt.jar=55286:C:\Users\bao\AppData\Local\Programs\IntelliJ IDEA Ultimate\bin" -Dfile.encoding=UTF-8 -classpath "C:\Users\bao\.m2\repository\org\junit\platform\junit-platform-launcher\1.8.2\junit-platform-launcher-1.8.2.jar;C:\Users\bao\.m2\repository\org\junit\platform\junit-platform-engine\1.8.2\junit-platform-engine-1.8.2.jar;C:\Users\bao\.m2\repository\org\opentest4j\opentest4j\1.2.0\opentest4j-1.2.0.jar;C:\Users\bao\.m2\repository\org\junit\platform\junit-platform-commons\1.8.2\junit-platform-commons-1.8.2.jar;C:\Users\bao\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\bao\.m2\repository\org\junit\jupiter\junit-jupiter-engine\5.8.2\junit-jupiter-engine-5.8.2.jar;C:\Users\bao\.m2\repository\org\junit\jupiter\junit-jupiter-api\5.8.2\junit-jupiter-api-5.8.2.jar;C:\Users\bao\AppData\Local\Programs\IntelliJ IDEA Ultimate\lib\idea_rt.jar;C:\Users\bao\AppData\Local\Programs\IntelliJ IDEA Ultimate\plugins\junit\lib\junit5-rt.jar;C:\Users\bao\AppData\Local\Programs\IntelliJ IDEA Ultimate\plugins\junit\lib\junit-rt.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\charsets.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\deploy.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\ext\access-bridge-64.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\ext\cldrdata.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\ext\dnsns.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\ext\jaccess.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\ext\jfxrt.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\ext\localedata.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\ext\nashorn.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\ext\sunec.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\ext\sunjce_provider.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\ext\sunmscapi.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\ext\sunpkcs11.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\ext\zipfs.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\javaws.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\jce.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\jfr.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\jfxswt.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\jsse.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\management-agent.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\plugin.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\resources.jar;C:\Program Files\Java\jdk1.8.0_161\jre\lib\rt.jar;D:\Work\code\mymq\broker\target\test-classes;D:\Work\code\mymq\broker\target\classes;D:\Work\code\mymq\remoting\target\classes;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-all\4.1.108.Final\netty-all-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-buffer\4.1.108.Final\netty-buffer-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-codec\4.1.108.Final\netty-codec-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-codec-dns\4.1.108.Final\netty-codec-dns-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-codec-haproxy\4.1.108.Final\netty-codec-haproxy-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-codec-http\4.1.108.Final\netty-codec-http-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-codec-http2\4.1.108.Final\netty-codec-http2-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-codec-memcache\4.1.108.Final\netty-codec-memcache-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-codec-mqtt\4.1.108.Final\netty-codec-mqtt-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-codec-redis\4.1.108.Final\netty-codec-redis-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-codec-smtp\4.1.108.Final\netty-codec-smtp-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-codec-socks\4.1.108.Final\netty-codec-socks-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-codec-stomp\4.1.108.Final\netty-codec-stomp-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-codec-xml\4.1.108.Final\netty-codec-xml-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-common\4.1.108.Final\netty-common-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-handler\4.1.108.Final\netty-handler-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-transport-native-unix-common\4.1.108.Final\netty-transport-native-unix-common-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-handler-proxy\4.1.108.Final\netty-handler-proxy-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-handler-ssl-ocsp\4.1.108.Final\netty-handler-ssl-ocsp-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-resolver\4.1.108.Final\netty-resolver-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-resolver-dns\4.1.108.Final\netty-resolver-dns-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-transport\4.1.108.Final\netty-transport-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-transport-rxtx\4.1.108.Final\netty-transport-rxtx-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-transport-sctp\4.1.108.Final\netty-transport-sctp-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-transport-udt\4.1.108.Final\netty-transport-udt-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-transport-classes-epoll\4.1.108.Final\netty-transport-classes-epoll-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-transport-classes-kqueue\4.1.108.Final\netty-transport-classes-kqueue-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-resolver-dns-classes-macos\4.1.108.Final\netty-resolver-dns-classes-macos-4.1.108.Final.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-transport-native-epoll\4.1.108.Final\netty-transport-native-epoll-4.1.108.Final-linux-x86_64.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-transport-native-epoll\4.1.108.Final\netty-transport-native-epoll-4.1.108.Final-linux-aarch_64.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-transport-native-epoll\4.1.108.Final\netty-transport-native-epoll-4.1.108.Final-linux-riscv64.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-transport-native-kqueue\4.1.108.Final\netty-transport-native-kqueue-4.1.108.Final-osx-x86_64.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-transport-native-kqueue\4.1.108.Final\netty-transport-native-kqueue-4.1.108.Final-osx-aarch_64.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-resolver-dns-native-macos\4.1.108.Final\netty-resolver-dns-native-macos-4.1.108.Final-osx-x86_64.jar;D:\Work\apache-maven-3.8.2\repository\io\netty\netty-resolver-dns-native-macos\4.1.108.Final\netty-resolver-dns-native-macos-4.1.108.Final-osx-aarch_64.jar;D:\Work\apache-maven-3.8.2\repository\com\esotericsoftware\kryo\5.3.0\kryo-5.3.0.jar;D:\Work\apache-maven-3.8.2\repository\com\esotericsoftware\reflectasm\1.11.9\reflectasm-1.11.9.jar;D:\Work\apache-maven-3.8.2\repository\org\objenesis\objenesis\3.2\objenesis-3.2.jar;D:\Work\apache-maven-3.8.2\repository\com\esotericsoftware\minlog\1.3.1\minlog-1.3.1.jar;D:\Work\code\mymq\common\target\classes;D:\Work\apache-maven-3.8.2\repository\com\google\code\gson\gson\2.9.0\gson-2.9.0.jar;D:\Work\apache-maven-3.8.2\repository\org\slf4j\slf4j-api\1.7.36\slf4j-api-1.7.36.jar;D:\Work\apache-maven-3.8.2\repository\ch\qos\logback\logback-core\1.2.11\logback-core-1.2.11.jar;D:\Work\apache-maven-3.8.2\repository\ch\qos\logback\logback-access\1.2.11\logback-access-1.2.11.jar;D:\Work\apache-maven-3.8.2\repository\ch\qos\logback\logback-classic\1.2.11\logback-classic-1.2.11.jar;D:\Work\apache-maven-3.8.2\repository\org\junit\jupiter\junit-jupiter-api\5.8.2\junit-jupiter-api-5.8.2.jar;D:\Work\apache-maven-3.8.2\repository\org\opentest4j\opentest4j\1.2.0\opentest4j-1.2.0.jar;D:\Work\apache-maven-3.8.2\repository\org\junit\platform\junit-platform-commons\1.8.2\junit-platform-commons-1.8.2.jar;D:\Work\apache-maven-3.8.2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar" com.intellij.rt.junit.JUnitStarter -ideVersion5 -junit5 bao.study.mymq.broker.RaftTest
+2024-05-10 14:10:03.589 [main] INFO  bao.study.mymq.remoting.netty.NettyServer - Success start netty server in port 11000
+2024-05-10 14:10:03.604 [main] INFO  bao.study.mymq.common.ServiceThread - Try to start service StateMaintainer
+2024-05-10 14:10:03.604 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become follower
+2024-05-10 14:10:03.628 [main] INFO  bao.study.mymq.remoting.netty.NettyServer - Success start netty server in port 11001
+2024-05-10 14:10:03.635 [main] INFO  bao.study.mymq.common.ServiceThread - Try to start service StateMaintainer
+2024-05-10 14:10:03.635 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become follower
+2024-05-10 14:10:03.649 [main] INFO  bao.study.mymq.remoting.netty.NettyServer - Success start netty server in port 11002
+2024-05-10 14:10:03.656 [main] INFO  bao.study.mymq.common.ServiceThread - Try to start service StateMaintainer
+2024-05-10 14:10:03.656 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become follower
+2024-05-10 14:10:03.719 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become candidate
+2024-05-10 14:10:03.749 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become candidate
+2024-05-10 14:10:03.765 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become candidate
+2024-05-10 14:10:03.827 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become candidate
+2024-05-10 14:10:03.859 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become candidate
+2024-05-10 14:10:03.875 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become candidate
+2024-05-10 14:10:03.938 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become candidate
+2024-05-10 14:10:03.968 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become candidate
+2024-05-10 14:10:03.984 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become candidate
+2024-05-10 14:10:04.046 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become candidate
+2024-05-10 14:10:04.077 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become candidate
+2024-05-10 14:10:04.093 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become candidate
+2024-05-10 14:10:04.156 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become candidate
+2024-05-10 14:10:04.186 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become candidate
+2024-05-10 14:10:04.202 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become candidate
+2024-05-10 14:10:04.265 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become candidate
+2024-05-10 14:10:04.296 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become candidate
+2024-05-10 14:10:04.312 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become candidate
+2024-05-10 14:10:04.373 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become candidate
+2024-05-10 14:10:04.404 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become candidate
+2024-05-10 14:10:04.421 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become candidate
+2024-05-10 14:10:04.483 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become candidate
+2024-05-10 14:10:04.483 [StateMaintainer] INFO  bao.study.mymq.broker.raft.LeaderElector - node-a voted for self at term 1
+2024-05-10 14:10:04.483 [StateMaintainer] INFO  bao.study.mymq.broker.raft.LeaderElector - node-a start call vote node-b
+2024-05-10 14:10:04.506 [StateMaintainer] INFO  bao.study.mymq.broker.raft.LeaderElector - node-a start call vote node-c
+2024-05-10 14:10:04.515 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become candidate
+2024-05-10 14:10:04.515 [RaftExecutor_2] INFO  bao.study.mymq.remoting.netty.NettyClient - Success create channel with address 172.31.96.1:11002
+2024-05-10 14:10:04.515 [RaftExecutor_1] INFO  bao.study.mymq.remoting.netty.NettyClient - Success create channel with address 172.31.96.1:11001
+2024-05-10 14:10:04.531 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become candidate
+2024-05-10 14:10:04.531 [StateMaintainer] INFO  bao.study.mymq.broker.raft.LeaderElector - node-c voted for self at term 1
+2024-05-10 14:10:04.531 [StateMaintainer] INFO  bao.study.mymq.broker.raft.LeaderElector - node-c start call vote node-a
+2024-05-10 14:10:04.531 [StateMaintainer] INFO  bao.study.mymq.broker.raft.LeaderElector - node-c start call vote node-b
+2024-05-10 14:10:04.532 [RaftExecutor_2] INFO  bao.study.mymq.remoting.netty.NettyClient - Success create channel with address 172.31.96.1:11001
+2024-05-10 14:10:04.532 [RaftExecutor_1] INFO  bao.study.mymq.remoting.netty.NettyClient - Success create channel with address 172.31.96.1:11000
+2024-05-10 14:10:04.569 [nioEventLoopGroup-15-1] INFO  bao.study.mymq.broker.raft.LeaderElector - node-b receive call vote from node-a
+2024-05-10 14:10:04.569 [nioEventLoopGroup-15-2] INFO  bao.study.mymq.broker.raft.LeaderElector - node-b receive call vote from node-c
+2024-05-10 14:10:04.569 [nioEventLoopGroup-12-1] INFO  bao.study.mymq.broker.raft.LeaderElector - node-a receive call vote from node-c
+2024-05-10 14:10:04.569 [nioEventLoopGroup-18-1] INFO  bao.study.mymq.broker.raft.LeaderElector - node-c receive call vote from node-a
+2024-05-10 14:10:04.569 [nioEventLoopGroup-12-1] INFO  bao.study.mymq.broker.raft.LeaderElector - node-a curr voted for node-a
+2024-05-10 14:10:04.569 [nioEventLoopGroup-15-2] INFO  bao.study.mymq.broker.raft.LeaderElector - node-b curr voted for null
+2024-05-10 14:10:04.569 [nioEventLoopGroup-15-1] INFO  bao.study.mymq.broker.raft.LeaderElector - node-b curr voted for null
+2024-05-10 14:10:04.569 [nioEventLoopGroup-18-1] INFO  bao.study.mymq.broker.raft.LeaderElector - node-c curr voted for node-c
+2024-05-10 14:10:04.569 [nioEventLoopGroup-15-2] INFO  bao.study.mymq.broker.raft.LeaderElector - node-b will vote for node-c in local term 0 and remote term 1
+2024-05-10 14:10:04.570 [nioEventLoopGroup-19-2] INFO  bao.study.mymq.broker.raft.LeaderElector - node-b voted node-c
+2024-05-10 14:10:04.570 [nioEventLoopGroup-19-1] INFO  bao.study.mymq.broker.raft.LeaderElector - node-a reject already voted node-c
+2024-05-10 14:10:04.570 [nioEventLoopGroup-13-1] INFO  bao.study.mymq.broker.raft.LeaderElector - node-c reject already voted node-a
+2024-05-10 14:10:04.570 [nioEventLoopGroup-13-2] INFO  bao.study.mymq.broker.raft.LeaderElector - node-b voted node-a
+2024-05-10 14:10:04.625 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become candidate
+2024-05-10 14:10:04.673 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become leader
+2024-05-10 14:10:04.673 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become leader
+2024-05-10 14:10:04.674 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c start send heartbeat to node-a at local term 1
+2024-05-10 14:10:04.674 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a start send heartbeat to node-b at local term 1
+2024-05-10 14:10:04.677 [nioEventLoopGroup-12-1] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a receive heartbeat from node-c at local term 1 and remote term 1
+2024-05-10 14:10:04.677 [nioEventLoopGroup-12-1] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a lastHeartBeatTime now is set to 1715321404677
+2024-05-10 14:10:04.677 [nioEventLoopGroup-15-1] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b receive heartbeat from node-a at local term 1 and remote term 1
+2024-05-10 14:10:04.678 [nioEventLoopGroup-15-1] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b lastHeartBeatTime now is set to 1715321404678
+2024-05-10 14:10:04.678 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a start send heartbeat to node-c at local term 1
+2024-05-10 14:10:04.679 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c start send heartbeat to node-b at local term 1
+2024-05-10 14:10:04.680 [nioEventLoopGroup-15-2] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b receive heartbeat from node-c at local term 1 and remote term 1
+2024-05-10 14:10:04.680 [nioEventLoopGroup-18-1] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c receive heartbeat from node-a at local term 1 and remote term 1
+2024-05-10 14:10:04.680 [nioEventLoopGroup-18-1] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c lastHeartBeatTime now is set to 1715321404680
+2024-05-10 14:10:04.680 [nioEventLoopGroup-15-2] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b lastHeartBeatTime now is set to 1715321404680
+2024-05-10 14:10:04.680 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a lastHeartBeatTime now is set to 1715321404680
+2024-05-10 14:10:04.681 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c lastHeartBeatTime now is set to 1715321404681
+2024-05-10 14:10:04.736 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become follower
+2024-05-10 14:10:04.784 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become follower
+2024-05-10 14:10:04.784 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become follower
+2024-05-10 14:10:04.847 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become follower
+2024-05-10 14:10:04.893 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become follower
+2024-05-10 14:10:04.893 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become follower
+2024-05-10 14:10:04.956 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become follower
+2024-05-10 14:10:05.002 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become follower
+2024-05-10 14:10:05.002 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become follower
+2024-05-10 14:10:05.064 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become follower
+2024-05-10 14:10:05.112 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become follower
+2024-05-10 14:10:05.112 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become follower
+2024-05-10 14:10:05.175 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become follower
+2024-05-10 14:10:05.222 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become follower
+2024-05-10 14:10:05.222 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become follower
+2024-05-10 14:10:05.286 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become follower
+2024-05-10 14:10:05.333 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become follower
+2024-05-10 14:10:05.333 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become follower
+2024-05-10 14:10:05.396 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become candidate
+2024-05-10 14:10:05.443 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become candidate
+2024-05-10 14:10:05.443 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become candidate
+2024-05-10 14:10:05.506 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become candidate
+2024-05-10 14:10:05.553 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become candidate
+2024-05-10 14:10:05.553 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become candidate
+2024-05-10 14:10:05.615 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-b: become candidate
+2024-05-10 14:10:05.663 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-a: become candidate
+2024-05-10 14:10:05.663 [StateMaintainer] INFO  bao.study.mymq.broker.raft.StateMaintainer - node-c: become candidate
+
+org.opentest4j.AssertionFailedError: 
+Expected :1
+Actual   :0
+<Click to see difference>
+
+
+	at org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:55)
+	at org.junit.jupiter.api.AssertionUtils.failNotEqual(AssertionUtils.java:62)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:527)
+	at bao.study.mymq.broker.RaftTest.testThreeServer(RaftTest.java:46)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:725)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:149)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:140)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:84)
+	at org.junit.jupiter.engine.execution.ExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(ExecutableInvoker.java:115)
+	at org.junit.jupiter.engine.execution.ExecutableInvoker.lambda$invoke$0(ExecutableInvoker.java:105)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.ExecutableInvoker.invoke(ExecutableInvoker.java:104)
+	at org.junit.jupiter.engine.execution.ExecutableInvoker.invoke(ExecutableInvoker.java:98)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:214)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:210)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:135)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:66)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:151)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at java.util.ArrayList.forEach(ArrayList.java:1257)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at java.util.ArrayList.forEach(ArrayList.java:1257)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:107)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:88)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:67)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:52)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:114)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:86)
+	at org.junit.platform.launcher.core.DefaultLauncherSession$DelegatingLauncher.execute(DefaultLauncherSession.java:86)
+	at org.junit.platform.launcher.core.SessionPerRequestLauncher.execute(SessionPerRequestLauncher.java:53)
+	at com.intellij.junit5.JUnit5IdeaTestRunner.startRunnerWithArgs(JUnit5IdeaTestRunner.java:57)
+	at com.intellij.rt.junit.IdeaTestRunner$Repeater$1.execute(IdeaTestRunner.java:38)
+	at com.intellij.rt.execution.junit.TestsRepeater.repeat(TestsRepeater.java:11)
+	at com.intellij.rt.junit.IdeaTestRunner$Repeater.startRunnerWithArgs(IdeaTestRunner.java:35)
+	at com.intellij.rt.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:232)
+	at com.intellij.rt.junit.JUnitStarter.main(JUnitStarter.java:55)
+
+
+Process finished with exit code -1

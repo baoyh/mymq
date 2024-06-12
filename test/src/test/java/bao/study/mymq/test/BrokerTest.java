@@ -72,7 +72,7 @@ public class BrokerTest {
         consumer.start();
 
         // 等待消息消费成功发送通知给 broker
-        TimeUnit.SECONDS.sleep(2);
+        TimeUnit.SECONDS.sleep(1);
         consumer.shutdown();
 
         a.shutdown();

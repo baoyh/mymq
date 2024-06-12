@@ -5,9 +5,12 @@ import bao.study.mymq.broker.longpolling.PullRequestHoldService;
 import bao.study.mymq.broker.manager.CommitLogManager;
 import bao.study.mymq.broker.manager.ConsumeQueueIndexManager;
 import bao.study.mymq.broker.manager.ConsumeQueueManager;
+import bao.study.mymq.broker.processor.FlushSyncProcessor;
 import bao.study.mymq.broker.processor.PullMessageProcessor;
 import bao.study.mymq.broker.processor.SendMessageProcessor;
 import bao.study.mymq.broker.raft.RaftServer;
+import bao.study.mymq.broker.service.FlushSyncService;
+import bao.study.mymq.broker.service.HeartbeatService;
 import bao.study.mymq.broker.store.CommitLog;
 import bao.study.mymq.common.Constant;
 import bao.study.mymq.remoting.RemotingClient;
@@ -38,9 +41,13 @@ public class BrokerController {
 
     private final PullMessageProcessor pullMessageProcessor;
 
+    private final FlushSyncProcessor flushSyncProcessor;
+
     private final PullRequestHoldService pullRequestHoldService;
 
     private final HeartbeatService heartbeatService;
+
+    private final FlushSyncService flushSyncService;
 
     private final RaftServer raftServer;
 
@@ -63,6 +70,8 @@ public class BrokerController {
             addressMap.forEach((k, v) -> nodes.put(brokerProperties.getBrokerName() + Constant.RAFT_ID_SEPARATOR + k, v));
             raftServer.updateNodes(nodes, brokerProperties.getBrokerName() + Constant.RAFT_ID_SEPARATOR + brokerProperties.getBrokerId());
         });
+        this.flushSyncService = new FlushSyncService(this);
+        this.flushSyncProcessor = new FlushSyncProcessor(this);
     }
 
     protected void initialize() {
@@ -120,6 +129,18 @@ public class BrokerController {
 
     public SendMessageProcessor getSendMessageProcessor() {
         return sendMessageProcessor;
+    }
+
+    public HeartbeatService getHeartbeatService() {
+        return heartbeatService;
+    }
+
+    public FlushSyncService getFlushSyncService() {
+        return flushSyncService;
+    }
+
+    public FlushSyncProcessor getFlushSyncProcessor() {
+        return flushSyncProcessor;
     }
 
 }

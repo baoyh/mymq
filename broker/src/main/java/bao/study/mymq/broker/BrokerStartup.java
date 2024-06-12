@@ -41,8 +41,6 @@ public class BrokerStartup {
 
     private static BrokerController brokerController;
 
-    private static RaftServer raftServer;
-
     private static BrokerProperties brokerProperties;
 
     public static void main(String[] args) {
@@ -99,7 +97,7 @@ public class BrokerStartup {
         ConsumeQueueIndexManager consumeQueueIndexManager = new ConsumeQueueIndexManager();
         ConsumeQueueManager consumeQueueManager = new ConsumeQueueManager(new ConsumeQueueConfig());
 
-        raftServer = new RaftServer(new Config(), new HashMap<>(), getSelfId(), remotingClient, remotingServer);
+        RaftServer raftServer = new RaftServer(new Config(), new HashMap<>(), getSelfId(), remotingClient, remotingServer);
         CommitLogManager commitLogManager = new CommitLogManager(new RaftCommitLog(new MessageStoreConfig(), raftServer));
         brokerController = new BrokerController(remotingClient, remotingServer, brokerProperties, consumeQueueIndexManager, consumeQueueManager, commitLogManager, raftServer);
 
@@ -120,6 +118,7 @@ public class BrokerStartup {
     private static void registerRequestProcessor() {
         remotingServer.registerRequestProcessor(brokerController.getSendMessageProcessor(), SEND_MESSAGE);
         remotingServer.registerRequestProcessor(brokerController.getPullMessageProcessor(), QUERY_CONSUMER_OFFSET, PULL_MESSAGE, CONSUMER_SEND_MSG_BACK);
+        remotingServer.registerRequestProcessor(brokerController.getFlushSyncProcessor(), FLUSH_SYNC);
     }
 
     public static void setBrokerProperties(BrokerProperties brokerProperties) {

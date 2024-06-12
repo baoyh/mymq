@@ -1,5 +1,7 @@
-package bao.study.mymq.broker;
+package bao.study.mymq.broker.service;
 
+import bao.study.mymq.broker.BrokerController;
+import bao.study.mymq.broker.BrokerProperties;
 import bao.study.mymq.broker.config.BrokerConfig;
 import bao.study.mymq.common.ServiceThread;
 import bao.study.mymq.common.protocol.broker.BrokerData;
@@ -73,7 +75,11 @@ public class HeartbeatService extends ServiceThread {
         }
     }
 
-    interface HeartbeatServiceCallback {
+    public Map<Long, String> getAddressMap() {
+        return addressMap;
+    }
+
+    public interface HeartbeatServiceCallback {
 
         void onHeartbeatSuccess(Map<Long, String> addressMap);
     }

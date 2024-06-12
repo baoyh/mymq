@@ -27,11 +27,10 @@ public class RaftCommitLog extends CommitLog {
     private final RaftServer raftServer;
 
     public RaftCommitLog(MessageStoreConfig messageStoreConfig, RaftServer raftServer) {
-        super(messageStoreConfig);
+        super(messageStoreConfig, raftServer.getEntryProcessor().getDataFileList());
         this.raftServer = raftServer;
         messageStoreConfig.setCommitLogFileSize(raftServer.getConfig().getDataFileSize());
         messageStoreConfig.setCommitLogPath(raftServer.getConfig().getDataStorePath());
-        setMappedFileList(raftServer.getEntryProcessor().getDataFileList());
     }
 
     @Override

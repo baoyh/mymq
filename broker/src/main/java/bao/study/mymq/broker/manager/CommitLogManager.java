@@ -11,7 +11,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author baoyh
@@ -40,7 +39,7 @@ public class CommitLogManager extends ConfigManager {
         super.load();
         MessageStoreConfig messageStoreConfig = commitLog.getMessageStoreConfig();
         File folder = new File(messageStoreConfig.getCommitLogPath());
-        List<MappedFile> mappedFileList = new CopyOnWriteArrayList<>();
+        List<MappedFile> mappedFileList = commitLog.getMappedFileList();
 
         if (!folder.exists() || folder.listFiles().length == 0) {
             mappedFileList.add(new MappedFile(
@@ -55,7 +54,6 @@ public class CommitLogManager extends ConfigManager {
                 mappedFileList.add(new MappedFile(file.getPath(), messageStoreConfig.getCommitLogFileSize(), committedIndex));
             }
         }
-        commitLog.setMappedFileList(mappedFileList);
     }
 
     @Override

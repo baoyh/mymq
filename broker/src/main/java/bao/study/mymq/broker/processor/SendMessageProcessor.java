@@ -36,6 +36,8 @@ public class SendMessageProcessor implements NettyRequestProcessor {
         brokerController.getConsumeQueueManager().updateWhenMessageArriving(messageExt.getTopic(), messageExt.getQueueId(), offset.getOffset(), offset.getSize());
         brokerController.getPullRequestHoldService().wakeupWhenMessageArriving(messageExt.getTopic(), messageExt.getQueueId());
 
+        brokerController.getFlushSyncService().flushSync(messageExt.getTopic(), messageExt.getQueueId(), offset.getOffset(), offset.getSize());
+
         msg.setRemotingCommandType(RemotingCommandType.RESPONSE);
         msg.setCode(ResponseCode.SUCCESS);
         return msg;

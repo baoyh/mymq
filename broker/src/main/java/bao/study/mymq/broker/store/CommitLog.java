@@ -20,6 +20,11 @@ public class CommitLog {
         this.messageStoreConfig = messageStoreConfig;
     }
 
+    public CommitLog(MessageStoreConfig messageStoreConfig, List<MappedFile> mappedFileList) {
+        this.messageStoreConfig = messageStoreConfig;
+        this.mappedFileList = mappedFileList;
+    }
+
     public MappedFile latestMappedFile() {
         return MappedFileHelper.latestMappedFile(mappedFileList);
     }
@@ -38,7 +43,7 @@ public class CommitLog {
         return messageStoreConfig;
     }
 
-    public void setMappedFileList(List<MappedFile> mappedFileList) {
-        this.mappedFileList = mappedFileList;
+    public List<MappedFile> getMappedFileList() {
+        return mappedFileList;
     }
 }

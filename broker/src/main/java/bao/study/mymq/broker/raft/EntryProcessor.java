@@ -105,7 +105,7 @@ public class EntryProcessor {
         });
 
         memberState.getNodes().forEach((k, v) -> {
-            if (!entryDispatchers.containsKey(k)) {
+            if (!entryDispatchers.containsKey(k) && !k.equals(memberState.getSelfId())) {
                 EntryDispatcher entryDispatcher = new EntryDispatcher(k);
                 entryDispatchers.put(k, entryDispatcher);
                 entryDispatcher.start();
