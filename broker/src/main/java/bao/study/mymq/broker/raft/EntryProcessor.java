@@ -5,9 +5,9 @@ import bao.study.mymq.broker.store.MappedFile;
 import bao.study.mymq.common.protocol.raft.*;
 import bao.study.mymq.broker.raft.store.RaftStore;
 import bao.study.mymq.common.ServiceThread;
+import bao.study.mymq.common.utils.Pair;
 import bao.study.mymq.remoting.code.RequestCode;
 import bao.study.mymq.remoting.code.ResponseCode;
-import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
