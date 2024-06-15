@@ -24,7 +24,9 @@ public class RouterRequestProcessor implements NettyRequestProcessor {
             case RequestCode.GET_ROUTE_BY_TOPIC:
                 return getRouteByTopic(msg);
             case RequestCode.BROKER_HEARTBEAT:
-                return queryBrokersByBrokerName(msg);
+                return handleHeartbeat(msg);
+            case RequestCode.QUERY_ALIVE_BROKERS:
+                return queryAliveBrokers(msg);
             default:
                 return null;
         }
@@ -38,8 +40,19 @@ public class RouterRequestProcessor implements NettyRequestProcessor {
         return routerInfoManager.getRouteByTopic(msg);
     }
 
-    private RemotingCommand queryBrokersByBrokerName(RemotingCommand msg) {
-        return routerInfoManager.queryBrokersByBrokerName(msg);
+    private RemotingCommand handleHeartbeat(RemotingCommand msg) {
+        return routerInfoManager.handleHeartbeat(msg);
     }
 
+    private RemotingCommand queryAliveBrokers(RemotingCommand msg) {
+        return routerInfoManager.queryAliveBrokers(msg);
+    }
+
+    public void start() {
+        routerInfoManager.start();
+    }
+
+    public void shutdown() {
+        routerInfoManager.shutdown();
+    }
 }

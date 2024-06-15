@@ -1,5 +1,6 @@
 package bao.study.mymq.broker.manager;
 
+import bao.study.mymq.broker.BrokerProperties;
 import bao.study.mymq.broker.config.BrokerConfig;
 import bao.study.mymq.broker.config.MessageStoreConfig;
 import bao.study.mymq.broker.store.CommitLog;
@@ -20,10 +21,13 @@ public class CommitLogManager extends ConfigManager {
 
     private final transient CommitLog commitLog;
 
+    private final transient BrokerProperties brokerProperties;
+
     private ConcurrentMap<String/* mappedFile name */, Integer/* committedPosition */> committedTable = new ConcurrentHashMap<>();
 
-    public CommitLogManager(CommitLog commitLog) {
+    public CommitLogManager(CommitLog commitLog, BrokerProperties brokerProperties) {
         this.commitLog = commitLog;
+        this.brokerProperties = brokerProperties;
     }
 
     public void updateCommittedTable() {
@@ -70,7 +74,8 @@ public class CommitLogManager extends ConfigManager {
 
     @Override
     public String configFilePath() {
-        return BrokerConfig.commitlogConfigPath();
+        return BrokerConfig.getConfigRootPath() + File.separator + brokerProperties.getBrokerName() +
+                File.separator + brokerProperties.getBrokerId() + File.separator + BrokerConfig.commitlogConfigName();
     }
 
     public CommitLog getCommitLog() {

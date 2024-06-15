@@ -1,5 +1,7 @@
 package bao.study.mymq.common.protocol.message;
 
+import java.util.Objects;
+
 /**
  * @author baoyh
  * @since 2022/6/30 16:44
@@ -40,5 +42,22 @@ public class MessageQueue {
 
     public void setQueueId(int queueId) {
         this.queueId = queueId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MessageQueue that = (MessageQueue) o;
+        return queueId == that.queueId && Objects.equals(brokerName, that.brokerName) && Objects.equals(topic, that.topic);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(brokerName, topic, queueId);
+    }
+
+    public String getKey() {
+        return brokerName + "-" + topic + "-" + queueId;
     }
 }

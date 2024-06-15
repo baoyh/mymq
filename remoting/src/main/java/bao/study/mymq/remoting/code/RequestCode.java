@@ -35,6 +35,8 @@ public abstract class RequestCode {
 
     public static final int CONSUMER_SEND_MSG_BACK = 302;
 
+    public static final int QUERY_ALIVE_BROKERS = 303;
+
 
     /**
      * raft

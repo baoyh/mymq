@@ -1,9 +1,11 @@
 package bao.study.mymq.router.routeinfo;
 
 import bao.study.mymq.common.Constant;
+import bao.study.mymq.common.ServiceThread;
 import bao.study.mymq.common.protocol.TopicPublishInfo;
 import bao.study.mymq.common.protocol.body.RegisterBrokerBody;
 import bao.study.mymq.common.protocol.broker.BrokerData;
+import bao.study.mymq.common.protocol.broker.Heartbeat;
 import bao.study.mymq.common.protocol.message.MessageQueue;
 import bao.study.mymq.common.utils.CommonCodec;
 import bao.study.mymq.remoting.code.ResponseCode;
@@ -30,7 +32,19 @@ public class RouterInfoManager {
 
     private final Map<String /* brokerName */, BrokerData> brokerTable = new ConcurrentHashMap<>();
 
+    private final Map<String /* brokerName */, ConcurrentHashMap<Long /* brokerId */, Long /* lastHeartbeatTime */>> aliveBrokerTable = new ConcurrentHashMap<>();
+
     private final ReentrantLock lock = new ReentrantLock();
+
+    private final AliveBrokerManager aliveBrokerManager = new AliveBrokerManager();
+
+    public void start() {
+        aliveBrokerManager.start();
+    }
+
+    public void shutdown() {
+        aliveBrokerManager.shutdown();
+    }
 
     public RemotingCommand registerBroker(RemotingCommand msg) {
 
@@ -79,11 +93,9 @@ public class RouterInfoManager {
                 }
 
                 registered.put(index, brokerDataList.size() - 1);
-
                 topicTable.put(topic, topicPublishInfo);
-
                 brokerTable.put(brokerName, brokerData);
-
+                updateAliveBrokerTable(brokerName, brokerId);
             }
 
         } catch (Exception e) {
@@ -104,10 +116,57 @@ public class RouterInfoManager {
         return RemotingCommandFactory.createResponseRemotingCommand(ResponseCode.SUCCESS, CommonCodec.encode(topicPublishInfo));
     }
 
-    public RemotingCommand queryBrokersByBrokerName(RemotingCommand msg) {
-        String brokerName = CommonCodec.decode(msg.getBody(), String.class);
-        BrokerData brokerData = brokerTable.get(brokerName);
+    public RemotingCommand handleHeartbeat(RemotingCommand msg) {
+        Heartbeat heartbeat = CommonCodec.decode(msg.getBody(), Heartbeat.class);
+        BrokerData brokerData = brokerTable.get(heartbeat.getBrokerName());
+        updateAliveBrokerTable(heartbeat.getBrokerName(), heartbeat.getBrokerId());
         return RemotingCommandFactory.createResponseRemotingCommand(ResponseCode.SUCCESS, CommonCodec.encode(brokerData));
+    }
+
+    private void updateAliveBrokerTable(String brokerName, long brokerId) {
+        ConcurrentHashMap<Long, Long> brokers = aliveBrokerTable.getOrDefault(brokerName, new ConcurrentHashMap<>());
+        brokers.put(brokerId, System.currentTimeMillis());
+        aliveBrokerTable.put(brokerName, brokers);
+    }
+
+    public RemotingCommand queryAliveBrokers(RemotingCommand msg) {
+        String brokerName = CommonCodec.decode(msg.getBody(), String.class);
+        ConcurrentHashMap<Long, Long> brokers = aliveBrokerTable.get(brokerName);
+        if (brokers == null || brokers.isEmpty()) {
+            return RemotingCommandFactory.createResponseRemotingCommand(ResponseCode.NOT_FOUND_BROKER, null);
+        }
+
+        BrokerData brokerData = new BrokerData(null, brokerName);
+        brokers.forEach((k, v) -> brokerData.getAddressMap().put(k, brokerTable.get(brokerName).getAddressMap().get(k)));
+        return RemotingCommandFactory.createResponseRemotingCommand(ResponseCode.SUCCESS, CommonCodec.encode(brokerData));
+    }
+
+    private class AliveBrokerManager extends ServiceThread {
+
+        @Override
+        public String getServiceName() {
+            return AliveBrokerManager.class.getSimpleName();
+        }
+
+        @Override
+        public void run() {
+            while (!stop) {
+                try {
+                    checkHeartbeat();
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                } finally {
+                    waitForRunning(100);
+                }
+            }
+        }
+
+        public void checkHeartbeat() {
+            Set<Map.Entry<String, ConcurrentHashMap<Long, Long>>> entries = aliveBrokerTable.entrySet();
+            for (Map.Entry<String, ConcurrentHashMap<Long, Long>> entry : entries) {
+                entry.getValue().entrySet().removeIf(e -> e.getValue() < System.currentTimeMillis() + 100 - 3 * 200);
+            }
+        }
     }
 
     private static class BrokerDataIndex {

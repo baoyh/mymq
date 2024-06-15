@@ -5,6 +5,7 @@ import bao.study.mymq.broker.BrokerProperties;
 import bao.study.mymq.broker.config.BrokerConfig;
 import bao.study.mymq.common.ServiceThread;
 import bao.study.mymq.common.protocol.broker.BrokerData;
+import bao.study.mymq.common.protocol.broker.Heartbeat;
 import bao.study.mymq.common.utils.CommonCodec;
 import bao.study.mymq.remoting.RemotingClient;
 import bao.study.mymq.remoting.common.RemotingCommand;
@@ -56,13 +57,14 @@ public class HeartbeatService extends ServiceThread {
             } catch (Throwable e) {
                 log.error("Send heartbeat failed", e);
             } finally {
-                waitForRunning(100);
+                waitForRunning(200);
             }
         }
     }
 
     public void sendHeartbeat() {
-        RemotingCommand remotingCommand = RemotingCommandFactory.createRequestRemotingCommand(BROKER_HEARTBEAT, CommonCodec.encode(brokerProperties.getBrokerName()));
+        RemotingCommand remotingCommand = RemotingCommandFactory.createRequestRemotingCommand(BROKER_HEARTBEAT,
+                CommonCodec.encode(new Heartbeat(brokerProperties.getBrokerName(), brokerProperties.getBrokerId())));
         RemotingCommand response = client.invokeSync(brokerProperties.getRouterAddress(), remotingCommand, BrokerConfig.getRpcTimeoutMillis());
         BrokerData brokerData = CommonCodec.decode(response.getBody(), BrokerData.class);
         updateBrokerData(brokerData);

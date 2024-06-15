@@ -21,17 +21,22 @@ public class CommonUtil {
 
     private static final Logger log = LoggerFactory.getLogger(CommonUtil.class);
 
-    public static void launchRouter(int port) {
+    public static RemotingServer launchRouter(int port) {
         RemotingServer remotingServer = new NettyServer(port);
         try {
-            remotingServer.registerRequestProcessor(new RouterRequestProcessor(), RequestCode.REGISTER_BROKER, RequestCode.GET_ROUTE_BY_TOPIC, RequestCode.BROKER_HEARTBEAT);
+            RouterRequestProcessor processor = new RouterRequestProcessor();
+            remotingServer.registerRequestProcessor(new RouterRequestProcessor(), RequestCode.REGISTER_BROKER,
+                    RequestCode.GET_ROUTE_BY_TOPIC, RequestCode.BROKER_HEARTBEAT, RequestCode.QUERY_ALIVE_BROKERS);
             remotingServer.start();
+            processor.start();
             log.info("router started");
         } catch (Throwable e) {
             log.error("router started failed", e);
             System.exit(-1);
         }
+        return remotingServer;
     }
+
 
     public static BrokerController launchBroker(BrokerProperties brokerProperties, Map<String, Integer> topics) {
         BrokerStartup.setBrokerProperties(brokerProperties);

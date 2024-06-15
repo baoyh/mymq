@@ -1,5 +1,6 @@
 package bao.study.mymq.test;
 
+import bao.study.mymq.broker.BrokerController;
 import bao.study.mymq.broker.BrokerProperties;
 import bao.study.mymq.client.producer.DefaultProducer;
 import bao.study.mymq.client.producer.SendCallback;
@@ -7,6 +8,7 @@ import bao.study.mymq.client.producer.SendResult;
 import bao.study.mymq.client.producer.SendStatus;
 import bao.study.mymq.common.Constant;
 import bao.study.mymq.common.protocol.Message;
+import bao.study.mymq.remoting.RemotingServer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -28,11 +30,11 @@ public class SendMessageTest {
     @Test
     public void testSendMessage() {
         CommonUtil.clear();
-        CommonUtil.launchRouter(9875);
+        RemotingServer router = CommonUtil.launchRouter(9875);
         BrokerProperties brokerProperties = new BrokerProperties("broker1", "cluster1", "localhost:9875", 10910, Constant.MASTER_ID);
         Map<String, Integer> topics = new HashMap<>();
         topics.put("topic1", 4);
-        CommonUtil.launchBroker(brokerProperties, topics);
+        BrokerController broker = CommonUtil.launchBroker(brokerProperties, topics);
 
         DefaultProducer producer = new DefaultProducer();
         producer.setRouterAddress("localhost:9875");
@@ -48,16 +50,20 @@ public class SendMessageTest {
             Assertions.assertEquals(result.getMessageQueue().getQueueId(), queueId);
             queueId++;
         }
+
+        producer.shutdown();
+        broker.shutdown();
+        router.shutdown();
     }
 
     @Test
     public void testSendMessageAsync() throws InterruptedException {
         CommonUtil.clear();
-        CommonUtil.launchRouter(9875);
+        RemotingServer router = CommonUtil.launchRouter(9875);
         BrokerProperties brokerProperties = new BrokerProperties("broker1", "cluster1", "localhost:9875", 10910, Constant.MASTER_ID);
         Map<String, Integer> topics = new HashMap<>();
         topics.put("topic1", 4);
-        CommonUtil.launchBroker(brokerProperties, topics);
+        BrokerController broker = CommonUtil.launchBroker(brokerProperties, topics);
 
         DefaultProducer producer = new DefaultProducer();
         producer.setRouterAddress("localhost:9875");
@@ -80,5 +86,9 @@ public class SendMessageTest {
 
         // 等待消息发送完成并回调
         TimeUnit.SECONDS.sleep(1);
+
+        producer.shutdown();
+        broker.shutdown();
+        router.shutdown();
     }
 }

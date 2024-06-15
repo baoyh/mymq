@@ -17,6 +17,8 @@ public abstract class ResponseCode {
 
     public static final int NOT_FOUND_MESSAGE = 11;
 
+    public static final int NOT_FOUND_BROKER = 12;
+
 
     /**
      * raft heartbeat

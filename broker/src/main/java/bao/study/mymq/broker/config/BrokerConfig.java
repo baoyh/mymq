@@ -17,29 +17,29 @@ public class BrokerConfig {
 
     private static final String CONFIG_PATH = HOME_PATH + File.separator + "config";
 
-    private static final String CONFIG_CONSUMEQUEUE_OFFSET = CONFIG_PATH + File.separator + "consumequeueIndex.json";
+    private static final String CONFIG_CONSUMEQUEUE_OFFSET = "consumequeueIndex.json";
 
-    private static final String CONFIG_COMMITLOG = CONFIG_PATH + File.separator + "commitlog.json";
+    private static final String CONFIG_COMMITLOG = "commitlog.json";
 
-    private static final String CONFIG_CONSUMEQUEUE = CONFIG_PATH + File.separator + "consumequeue.json";
+    private static final String CONFIG_CONSUMEQUEUE = "consumequeue.json";
 
     private static final int holdTime = 20 * 1000;
 
     private static final long rpcTimeoutMillis = 3000;
 
-    public String getConfigRootPath() {
+    public static String getConfigRootPath() {
         return CONFIG_PATH;
     }
 
-    public static String consumeQueueOffsetConfigPath() {
+    public static String consumeQueueOffsetConfigName() {
         return CONFIG_CONSUMEQUEUE_OFFSET;
     }
 
-    public static String commitlogConfigPath() {
+    public static String commitlogConfigName() {
         return CONFIG_COMMITLOG;
     }
 
-    public static String consumeQueueConfigPath() {
+    public static String consumeQueueConfigName() {
         return CONFIG_CONSUMEQUEUE;
     }
 

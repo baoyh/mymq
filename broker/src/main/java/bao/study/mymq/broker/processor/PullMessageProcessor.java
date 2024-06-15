@@ -20,6 +20,8 @@ import bao.study.mymq.remoting.common.RemotingCommandFactory;
 import bao.study.mymq.remoting.netty.NettyRequestProcessor;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +36,8 @@ import static bao.study.mymq.remoting.code.ResponseCode.*;
  * @since 2022/10/14 10:12
  */
 public class PullMessageProcessor implements NettyRequestProcessor {
+
+    private static final Logger log = LoggerFactory.getLogger(PullMessageProcessor.class);
 
     private final BrokerController brokerController;
 
@@ -66,7 +70,7 @@ public class PullMessageProcessor implements NettyRequestProcessor {
         PullMessageBody body = CommonCodec.decode(msg.getBody(), PullMessageBody.class);
         ConsumeQueueIndexManager consumeQueueIndexManager = brokerController.getConsumeOffsetManager();
         ConcurrentMap<String, ConcurrentMap<Integer, Long>> consumedOffset = consumeQueueIndexManager.getConsumedOffset();
-        checkConsumedOffset(consumedOffset, body.getTopic(), body.getGroup(), body.getQueueId());
+        consumeQueueIndexManager.checkConsumedOffset(body.getTopic(), body.getGroup(), body.getQueueId());
         ConcurrentMap<Integer, Long> offsetTable = consumedOffset.get(body.getTopic() + Constant.TOPIC_SEPARATOR + body.getGroup());
 
         String key = MessageStoreHelper.createKey(body.getTopic(), body.getQueueId());
@@ -103,18 +107,6 @@ public class PullMessageProcessor implements NettyRequestProcessor {
         }
     }
 
-    private void checkConsumedOffset(ConcurrentMap<String, ConcurrentMap<Integer, Long>> consumedOffset, String topic, String group, int queueId) {
-        ConcurrentHashMap<Integer, Long> map = new ConcurrentHashMap<>();
-        map.put(queueId, 0L);
-        String key = topic + Constant.TOPIC_SEPARATOR + group;
-        if (consumedOffset.containsKey(key)) {
-            if (!consumedOffset.get(key).containsKey(queueId)) {
-                consumedOffset.put(key, map);
-            }
-        } else {
-            consumedOffset.put(key, map);
-        }
-    }
 
     private RemotingCommand sendMessageBack(RemotingCommand msg) {
         SendMessageBackBody body = CommonCodec.decode(msg.getBody(), SendMessageBackBody.class);

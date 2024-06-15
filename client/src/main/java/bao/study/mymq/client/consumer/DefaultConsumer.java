@@ -2,7 +2,7 @@ package bao.study.mymq.client.consumer;
 
 import bao.study.mymq.client.BrokerInstance;
 import bao.study.mymq.client.Client;
-import bao.study.mymq.common.Constant;
+import bao.study.mymq.client.consistenthash.AllocateMessageQueueConsistentHash;
 import bao.study.mymq.common.ServiceThread;
 import bao.study.mymq.common.protocol.MessageExt;
 import bao.study.mymq.common.protocol.TopicPublishInfo;
@@ -39,20 +39,21 @@ public class DefaultConsumer extends Client implements Consumer {
 
     private final BrokerInstance brokerInstance = new BrokerInstance();
 
-    private final ThreadLocal<Map<String /* brokerName */, Integer /* brokerIdIndex */>> consumerWhichBroker = ThreadLocal.withInitial(HashMap::new);
+    private final Map<String /* brokerName */, AllocateMessageQueueConsistentHash> consistentHashTable = new ConcurrentHashMap<>();
 
-    private final Map<String /* brokerName */, Map<Long, String> /* address */> brokerTable = new ConcurrentHashMap<>();
+    private final Map<MessageQueue, String /* brokerAddress */> consumeWhichBroker = new ConcurrentHashMap<>();
 
-    private final Map<String /* brokerName */, List<Long> /* brokerIds */> brokerIdTable = new ConcurrentHashMap<>();
+    private final Map<String /* brokerName */, ConcurrentHashMap<Long, String> /* address */> brokerTable = new ConcurrentHashMap<>();
 
     private final LinkedBlockingQueue<MessageQueue> pullRequestQueue = new LinkedBlockingQueue<>();
 
-    private final long consumeTimeout = 3 * 1000L;
+    private final long rpcTimeoutMills = 3 * 1000L;
 
     @Override
     protected void doStart() {
         init();
         pull();
+        handleBroker();
     }
 
     private void init() {
@@ -61,6 +62,7 @@ public class DefaultConsumer extends Client implements Consumer {
 
             TopicPublishInfo topicPublishInfo = brokerInstance.findTopicPublishInfo(topic, this);
             registerBrokerTable(topicPublishInfo.getBrokerDataList());
+            initConsistentHashTable();
 
             List<MessageQueue> messageQueueList = topicPublishInfo.getMessageQueueList();
             pullRequestQueue.addAll(messageQueueList);
@@ -72,6 +74,11 @@ public class DefaultConsumer extends Client implements Consumer {
         pullMessageService.start();
     }
 
+    private void handleBroker() {
+        BrokerHandler brokerHandler = new BrokerHandler();
+        brokerHandler.start();
+    }
+
     private void pullMessage(MessageQueue messageQueue) {
 
         PullMessageBody body = new PullMessageBody();
@@ -80,89 +87,106 @@ public class DefaultConsumer extends Client implements Consumer {
         body.setQueueId(messageQueue.getQueueId());
         RemotingCommand remotingCommand = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.PULL_MESSAGE, CommonCodec.encode(body));
 
-        String address = selectOneBroker(messageQueue.getBrokerName());
-        remotingClient.invokeAsync(address, remotingCommand, consumeTimeout, responseFuture -> {
-            RemotingCommand responseCommand = responseFuture.getResponseCommand();
-            switch (responseCommand.getCode()) {
-                case ResponseCode.FOUND_MESSAGE:
-                    byte[] response = responseCommand.getBody();
-                    try {
-                        if (response != null) {
-                            List<MessageExt> messages = CommonCodec.decodeAsList(response, MessageExt.class);
-                            ConsumeConcurrentlyStatus consumeConcurrentlyStatus = messageListener.consumerMessage(messages);
-                            RemotingCommand command = sendMessageBack(consumeConcurrentlyStatus, messages);
-                            remotingClient.invokeOneway(address, command, consumeTimeout);
-                        }
-                    } finally {
-                        pullRequestQueue.add(messageQueue);
-                    }
-
-                    break;
-                case ResponseCode.NOT_FOUND_MESSAGE:
+        String address = selectOneBroker(messageQueue);
+        try {
+            log.info("pull message from broker: {}, message queue: {}", address, messageQueue.getQueueId());
+            remotingClient.invokeAsync(address, remotingCommand, rpcTimeoutMills, responseFuture -> {
+                RemotingCommand responseCommand = responseFuture.getResponseCommand();
+                if (responseCommand == null) {
+                    removeNode(messageQueue, address);
                     pullRequestQueue.add(messageQueue);
-                    break;
-                default:
-                    break;
-            }
+                    return;
+                }
+                switch (responseCommand.getCode()) {
+                    case ResponseCode.FOUND_MESSAGE:
+                        byte[] response = responseCommand.getBody();
+                        try {
+                            if (response != null) {
+                                List<MessageExt> messages = CommonCodec.decodeAsList(response, MessageExt.class);
+                                ConsumeConcurrentlyStatus consumeConcurrentlyStatus = messageListener.consumerMessage(messages);
+                                sendMessageBackToAllBroker(consumeConcurrentlyStatus, messages);
+                            }
+                        } finally {
+                            pullRequestQueue.add(messageQueue);
+                        }
 
+                        break;
+                    case ResponseCode.NOT_FOUND_MESSAGE:
+                        pullRequestQueue.add(messageQueue);
+                        break;
+                    default:
+                        break;
+                }
+            });
+        } catch (Throwable ex) {
+            log.error(ex.getMessage(), ex);
+            removeNode(messageQueue, address);
+            pullRequestQueue.add(messageQueue);
+        }
+    }
+
+    private void sendMessageBackToAllBroker(ConsumeConcurrentlyStatus consumeConcurrentlyStatus, List<MessageExt> messages) {
+        if (consumeConcurrentlyStatus != ConsumeConcurrentlyStatus.CONSUME_SUCCESS) {
+            return;
+        }
+        SendMessageBackBody sendMessageBackBody = new SendMessageBackBody();
+        MessageExt messageExt = messages.stream().max(Comparator.comparingLong(MessageExt::getOffset)).get();
+        sendMessageBackBody.setStatus(true);
+        sendMessageBackBody.setOffset(messageExt.getOffset());
+        sendMessageBackBody.setTopic(messageExt.getTopic());
+        sendMessageBackBody.setQueueId(messageExt.getQueueId());
+        sendMessageBackBody.setGroup(messageExt.getGroup());
+        RemotingCommand remotingCommand = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.CONSUMER_SEND_MSG_BACK, CommonCodec.encode(sendMessageBackBody));
+
+        brokerTable.get(messageExt.getBrokerName()).forEach((brokerId, address) -> {
+            try {
+                remotingClient.invokeOneway(address, remotingCommand, rpcTimeoutMills);
+            } catch (Throwable ex) {
+                log.error(ex.getMessage(), ex);
+            }
         });
     }
 
-    private RemotingCommand sendMessageBack(ConsumeConcurrentlyStatus consumeConcurrentlyStatus, List<MessageExt> messages) {
-        SendMessageBackBody sendMessageBackBody = new SendMessageBackBody();
-        switch (consumeConcurrentlyStatus) {
-            case RECONSUME_LATER:
-                sendMessageBackBody.setStatus(false);
-                break;
-            case CONSUME_SUCCESS:
-                MessageExt messageExt = messages.stream().max(Comparator.comparingLong(MessageExt::getOffset)).get();
-                sendMessageBackBody.setStatus(true);
-                sendMessageBackBody.setOffset(messageExt.getOffset());
-                sendMessageBackBody.setTopic(messageExt.getTopic());
-                sendMessageBackBody.setQueueId(messageExt.getQueueId());
-                sendMessageBackBody.setGroup(messageExt.getGroup());
-                break;
+
+    private String selectOneBroker(MessageQueue messageQueue) {
+        String whichBroker = consumeWhichBroker.get(messageQueue);
+        if (whichBroker != null) {
+            return whichBroker;
         }
-        return RemotingCommandFactory.createRequestRemotingCommand(RequestCode.CONSUMER_SEND_MSG_BACK, CommonCodec.encode(sendMessageBackBody));
-    }
-
-    private String selectOneBroker(String brokerName) {
-        Map<String, Integer> whichBroker = consumerWhichBroker.get();
-        Integer index = whichBroker.get(brokerName);
-        if (index == null) {
-            index = 0;
-        }
-
-        List<Long> slaves = brokerIdTable.get(brokerName);
-        Long brokerId = slaves.get(index);
-        String address = brokerTable.get(brokerName).get(brokerId);
-
-        index++;
-        if (index == slaves.size()) {
-            index = 0;
-        }
-        whichBroker.put(brokerName, index);
-        consumerWhichBroker.set(whichBroker);
-
+        String address = consistentHashTable.get(messageQueue.getBrokerName()).get(messageQueue.getKey());
+        consumeWhichBroker.put(messageQueue, address);
         return address;
     }
 
     private void registerBrokerTable(List<BrokerData> brokerDataList) {
         for (BrokerData brokerData : brokerDataList) {
-            List<Long> brokerIds = new ArrayList<>();
-            for (Long brokerId : brokerData.getAddressMap().keySet()) {
-                if (brokerId != 0L) {
-                    // 当存在 slave 时, 只有 slave 可以进行消费
-                    brokerIds.add(brokerId);
-                }
-            }
-            if (brokerIds.isEmpty()) {
-                // 当不存在 slave, master 需承担消费
-                brokerIds.add(Constant.MASTER_ID);
-            }
-            brokerIdTable.put(brokerData.getBrokerName(), brokerIds);
-            brokerTable.put(brokerData.getBrokerName(), brokerData.getAddressMap());
+            brokerTable.put(brokerData.getBrokerName(), new ConcurrentHashMap<>(brokerData.getAddressMap()));
         }
+    }
+
+    private void initConsistentHashTable() {
+        Set<String> brokerNames = brokerTable.keySet();
+        for (String brokerName : brokerNames) {
+            AllocateMessageQueueConsistentHash consistentHash = new AllocateMessageQueueConsistentHash(100);
+            brokerTable.get(brokerName).forEach((key, value) -> consistentHash.add(value));
+            consistentHashTable.put(brokerName, consistentHash);
+        }
+    }
+
+    private void removeNode(MessageQueue messageQueue, String address) {
+        consumeWhichBroker.remove(messageQueue);
+        consistentHashTable.get(messageQueue.getBrokerName()).remove(address);
+        brokerTable.get(messageQueue.getBrokerName()).forEach((k, v) -> {
+            if (v.equals(address)) {
+                brokerTable.get(messageQueue.getBrokerName()).remove(k);
+            }
+        });
+    }
+
+    public BrokerData queryAliveBrokers(String brokerName) {
+        RemotingCommand remotingCommand = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.QUERY_ALIVE_BROKERS, CommonCodec.encode(brokerName));
+        RemotingCommand response = remotingClient.invokeSync(getRouterAddress(), remotingCommand, rpcTimeoutMills);
+        return CommonCodec.decode(response.getBody(), BrokerData.class);
     }
 
     @Override
@@ -204,5 +228,47 @@ public class DefaultConsumer extends Client implements Consumer {
                 }
             }
         }
+    }
+
+    class BrokerHandler extends ServiceThread {
+
+        @Override
+        public String getServiceName() {
+            return BrokerHandler.class.getSimpleName();
+        }
+
+        @Override
+        public void run() {
+            while (!stop) {
+                try {
+                    waitForRunning(1000);
+                    handleBrokerTable();
+                } catch (Throwable ex) {
+                    log.error(ex.getMessage(), ex);
+                }
+            }
+        }
+
+        private void handleBrokerTable() {
+            Map<String, BrokerData> map = new HashMap<>();
+            for (Map.Entry<String, ConcurrentHashMap<Long, String>> entry : brokerTable.entrySet()) {
+                String brokerName = entry.getKey();
+                BrokerData brokers = queryAliveBrokers(brokerName);
+                map.put(brokerName, brokers);
+            }
+
+            brokerTable.forEach((k, v) -> {
+                for (Long brokerId : v.keySet()) {
+                    if (!map.get(k).getAddressMap().containsKey(brokerId)) {
+                        brokerTable.get(k).remove(brokerId);
+                    }
+                }
+            });
+
+            map.forEach((k, v) -> {
+                v.getAddressMap().forEach((brokerId, address) -> brokerTable.get(k).put(brokerId, address));
+            });
+        }
+
     }
 }

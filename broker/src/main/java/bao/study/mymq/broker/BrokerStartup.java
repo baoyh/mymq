@@ -94,11 +94,11 @@ public class BrokerStartup {
     }
 
     private static void initialize() {
-        ConsumeQueueIndexManager consumeQueueIndexManager = new ConsumeQueueIndexManager();
-        ConsumeQueueManager consumeQueueManager = new ConsumeQueueManager(new ConsumeQueueConfig());
+        ConsumeQueueIndexManager consumeQueueIndexManager = new ConsumeQueueIndexManager(brokerProperties);
+        ConsumeQueueManager consumeQueueManager = new ConsumeQueueManager(new ConsumeQueueConfig(), brokerProperties);
 
         RaftServer raftServer = new RaftServer(new Config(), new HashMap<>(), getSelfId(), remotingClient, remotingServer);
-        CommitLogManager commitLogManager = new CommitLogManager(new RaftCommitLog(new MessageStoreConfig(), raftServer));
+        CommitLogManager commitLogManager = new CommitLogManager(new RaftCommitLog(new MessageStoreConfig(), raftServer), brokerProperties);
         brokerController = new BrokerController(remotingClient, remotingServer, brokerProperties, consumeQueueIndexManager, consumeQueueManager, commitLogManager, raftServer);
 
         brokerController.initialize();

@@ -64,6 +64,10 @@ public class RaftTest {
         countNum(leaderNum, followerNum, a, b, c);
         Assertions.assertEquals(1, leaderNum.get());
         Assertions.assertEquals(2, followerNum.get());
+
+        a.shutdown();
+        b.shutdown();
+        c.shutdown();
     }
 
     @Test
@@ -92,6 +96,10 @@ public class RaftTest {
         Thread.sleep(2000);
         Assertions.assertSame(c.getMemberState().getRole(), Role.FOLLOWER);
         Assertions.assertEquals(c.getMemberState().getLeaderId(), "node-a");
+
+        a.shutdown();
+        b.shutdown();
+        c.shutdown();
     }
 
     @Test
@@ -119,6 +127,9 @@ public class RaftTest {
         }
         // 等待落盘
         Thread.sleep(100);
+
+        a.shutdown();
+        b.shutdown();
     }
 
     @Test
@@ -164,6 +175,10 @@ public class RaftTest {
         c.startup();
         // 等待 c 重新加入集群并完成和 leader 的同步
         Thread.sleep(3000);
+
+        a.shutdown();
+        b.shutdown();
+        c.shutdown();
     }
 
 

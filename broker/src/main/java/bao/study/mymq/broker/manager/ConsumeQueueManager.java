@@ -1,5 +1,6 @@
 package bao.study.mymq.broker.manager;
 
+import bao.study.mymq.broker.BrokerProperties;
 import bao.study.mymq.broker.config.BrokerConfig;
 import bao.study.mymq.broker.config.ConsumeQueueConfig;
 import bao.study.mymq.broker.store.ConsumeQueue;
@@ -25,14 +26,17 @@ public class ConsumeQueueManager extends ConfigManager {
 
     private final transient ConsumeQueueConfig consumeQueueConfig;
 
+    private final transient BrokerProperties brokerProperties;
+
     // 存放每一个 topic/queue 对应的 ConsumeQueue
     private final transient ConcurrentHashMap<String /*topic@queue*/, ConsumeQueue> consumeQueueTable = new ConcurrentHashMap<>();
 
     // 存放已经被提交的消息的偏移, 其中包括还未被消费过的部分
     private ConcurrentMap<String /*topic@queue*/, ConcurrentMap<String/* mappedFile name */, AtomicInteger/* committedPosition */>> committedTable = new ConcurrentHashMap<>();
 
-    public ConsumeQueueManager(ConsumeQueueConfig consumeQueueConfig) {
+    public ConsumeQueueManager(ConsumeQueueConfig consumeQueueConfig, BrokerProperties brokerProperties) {
         this.consumeQueueConfig = consumeQueueConfig;
+        this.brokerProperties = brokerProperties;
     }
 
     /**
@@ -120,7 +124,8 @@ public class ConsumeQueueManager extends ConfigManager {
 
     @Override
     public String configFilePath() {
-        return BrokerConfig.consumeQueueConfigPath();
+        return BrokerConfig.getConfigRootPath() + File.separator + brokerProperties.getBrokerName() +
+                File.separator + brokerProperties.getBrokerId() + File.separator + BrokerConfig.consumeQueueConfigName();
     }
 
     public ConcurrentHashMap<String, ConsumeQueue> getConsumeQueueTable() {

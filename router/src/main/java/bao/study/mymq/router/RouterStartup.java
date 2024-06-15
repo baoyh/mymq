@@ -18,8 +18,10 @@ public class RouterStartup {
     public static void main(String[] args) {
         RemotingServer remotingServer = new NettyServer(9875);
         try {
-            registerRequestProcessor(remotingServer);
+            RouterRequestProcessor processor = new RouterRequestProcessor();
+            registerRequestProcessor(remotingServer, processor);
             remotingServer.start();
+            processor.start();
             log.info("router started");
         } catch (Throwable e) {
             log.error("router started failed", e);
@@ -27,7 +29,7 @@ public class RouterStartup {
         }
     }
 
-    private static void registerRequestProcessor(RemotingServer remotingServer) {
-        remotingServer.registerRequestProcessor(new RouterRequestProcessor(), RequestCode.REGISTER_BROKER, RequestCode.GET_ROUTE_BY_TOPIC, RequestCode.BROKER_HEARTBEAT);
+    private static void registerRequestProcessor(RemotingServer remotingServer, RouterRequestProcessor processor) {
+        remotingServer.registerRequestProcessor(processor, RequestCode.REGISTER_BROKER, RequestCode.GET_ROUTE_BY_TOPIC, RequestCode.BROKER_HEARTBEAT, RequestCode.QUERY_ALIVE_BROKERS);
     }
 }
