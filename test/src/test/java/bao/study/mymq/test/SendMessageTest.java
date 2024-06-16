@@ -91,4 +91,45 @@ public class SendMessageTest {
         broker.shutdown();
         router.shutdown();
     }
+
+    @Test
+    public void testMultiProducer() throws InterruptedException {
+        CommonUtil.clear();
+        RemotingServer router = CommonUtil.launchRouter(9875);
+        BrokerProperties brokerProperties = new BrokerProperties("broker1", "cluster1", "localhost:9875", 10910, Constant.MASTER_ID);
+        Map<String, Integer> topics = new HashMap<>();
+        topics.put("topic1", 4);
+        topics.put("topic2", 4);
+        BrokerController broker = CommonUtil.launchBroker(brokerProperties, topics);
+
+        DefaultProducer a = new DefaultProducer();
+        a.setRouterAddress("localhost:9875");
+        a.start();
+
+        DefaultProducer b = new DefaultProducer();
+        b.setRouterAddress("localhost:9875");
+        b.start();
+
+        new Thread(() -> {
+            for (int i = 0; i < 10; i++) {
+                SendResult result = a.send(new Message("topic1", ("hello" + i).getBytes(StandardCharsets.UTF_8)));
+                Assertions.assertEquals(result.getSendStatus(), SendStatus.SEND_OK);
+            }
+        }).start();
+
+        new Thread(() -> {
+            for (int i = 0; i < 10; i++) {
+                SendResult result = b.send(new Message("topic2", ("hello" + i).getBytes(StandardCharsets.UTF_8)));
+                Assertions.assertEquals(result.getSendStatus(), SendStatus.SEND_OK);
+            }
+        }).start();
+
+        // 等待消息发送完成并回调
+        TimeUnit.SECONDS.sleep(1);
+
+        a.shutdown();
+        b.shutdown();
+        broker.shutdown();
+        router.shutdown();
+    }
 }

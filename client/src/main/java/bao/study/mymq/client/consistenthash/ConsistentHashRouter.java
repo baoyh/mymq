@@ -55,6 +55,10 @@ public class ConsistentHashRouter {
         return entry.getValue().getNode();
     }
 
+    public boolean contains(String key) {
+        return nodes.containsKey(key);
+    }
+
     public void removeNode(Node node) {
         if (node == null || node.getKey() == null || !nodes.containsKey(node.getKey())) {
             return;
@@ -83,4 +87,5 @@ public class ConsistentHashRouter {
         }
         return h;
     }
+
 }

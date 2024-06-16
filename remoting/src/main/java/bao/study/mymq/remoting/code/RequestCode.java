@@ -37,6 +37,10 @@ public abstract class RequestCode {
 
     public static final int QUERY_ALIVE_BROKERS = 303;
 
+    public static final int REGISTER_CONSUMER = 304;
+
+    public static final int QUERY_CONSUMERS_BY_GROUP = 305;
+
 
     /**
      * raft

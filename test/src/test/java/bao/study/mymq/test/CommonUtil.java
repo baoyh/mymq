@@ -25,8 +25,8 @@ public class CommonUtil {
         RemotingServer remotingServer = new NettyServer(port);
         try {
             RouterRequestProcessor processor = new RouterRequestProcessor();
-            remotingServer.registerRequestProcessor(new RouterRequestProcessor(), RequestCode.REGISTER_BROKER,
-                    RequestCode.GET_ROUTE_BY_TOPIC, RequestCode.BROKER_HEARTBEAT, RequestCode.QUERY_ALIVE_BROKERS);
+            remotingServer.registerRequestProcessor(processor, RequestCode.REGISTER_BROKER, RequestCode.GET_ROUTE_BY_TOPIC,
+                    RequestCode.REGISTER_CONSUMER, RequestCode.QUERY_CONSUMERS_BY_GROUP, RequestCode.BROKER_HEARTBEAT, RequestCode.QUERY_ALIVE_BROKERS);
             remotingServer.start();
             processor.start();
             log.info("router started");

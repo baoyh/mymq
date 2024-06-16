@@ -18,6 +18,10 @@ public class AllocateMessageQueueConsistentHash {
         return consistentHashRouter.getNode(key).getKey();
     }
 
+    public boolean contains(String key) {
+        return consistentHashRouter.contains(key);
+    }
+
     public void add(String key) {
         consistentHashRouter.addNode(new NodeImpl(key), virtualCount);
     }
@@ -29,9 +33,6 @@ public class AllocateMessageQueueConsistentHash {
 
     static class NodeImpl implements Node {
 
-        /**
-         * broker id or message queue hash
-         */
         private final String key;
 
         public NodeImpl(String key) {

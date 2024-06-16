@@ -2,6 +2,7 @@ package bao.study.mymq.client.consumer;
 
 import bao.study.mymq.client.BrokerInstance;
 import bao.study.mymq.client.Client;
+import bao.study.mymq.client.ClientException;
 import bao.study.mymq.client.consistenthash.AllocateMessageQueueConsistentHash;
 import bao.study.mymq.common.ServiceThread;
 import bao.study.mymq.common.protocol.MessageExt;
@@ -9,6 +10,7 @@ import bao.study.mymq.common.protocol.TopicPublishInfo;
 import bao.study.mymq.common.protocol.body.PullMessageBody;
 import bao.study.mymq.common.protocol.body.SendMessageBackBody;
 import bao.study.mymq.common.protocol.broker.BrokerData;
+import bao.study.mymq.common.protocol.client.ConsumerData;
 import bao.study.mymq.common.protocol.message.MessageQueue;
 import bao.study.mymq.common.utils.CommonCodec;
 import bao.study.mymq.remoting.code.RequestCode;
@@ -33,11 +35,17 @@ public class DefaultConsumer extends Client implements Consumer {
 
     private String group;
 
+    private final String consumerId = UUID.randomUUID().toString();
+
     private final Set<String> topics = new CopyOnWriteArraySet<>();
 
     private MessageListener messageListener;
 
     private final BrokerInstance brokerInstance = new BrokerInstance();
+
+    private final Map<MessageQueue, Boolean /* valid */> messageQueueTable = new ConcurrentHashMap<>();
+
+    private final AllocateMessageQueueConsistentHash messageQueueBalance = new AllocateMessageQueueConsistentHash(100);
 
     private final Map<String /* brokerName */, AllocateMessageQueueConsistentHash> consistentHashTable = new ConcurrentHashMap<>();
 
@@ -51,9 +59,29 @@ public class DefaultConsumer extends Client implements Consumer {
 
     @Override
     protected void doStart() {
+        check();
+        register();
         init();
         pull();
         handleBroker();
+        loadBalance();
+    }
+
+    private void check() {
+        if (group == null) {
+            throw new ClientException("group is null");
+        }
+        if (topics.isEmpty()) {
+            throw new ClientException("topics is empty");
+        }
+        if (messageListener == null) {
+            throw new ClientException("messageListener is null");
+        }
+    }
+
+    private void register() {
+        RemotingCommand request = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.REGISTER_CONSUMER, CommonCodec.encode(new ConsumerData(consumerId, group, topics)));
+        remotingClient.invokeOneway(getRouterAddress(), request, rpcTimeoutMills);
     }
 
     private void init() {
@@ -65,7 +93,7 @@ public class DefaultConsumer extends Client implements Consumer {
             initConsistentHashTable();
 
             List<MessageQueue> messageQueueList = topicPublishInfo.getMessageQueueList();
-            pullRequestQueue.addAll(messageQueueList);
+            loadBalanceImpl(messageQueueList, topic, group);
         }
     }
 
@@ -79,7 +107,20 @@ public class DefaultConsumer extends Client implements Consumer {
         brokerHandler.start();
     }
 
+    private void loadBalance() {
+        ConsumerLoadBalance consumerLoadBalance = new ConsumerLoadBalance();
+        consumerLoadBalance.start();
+    }
+
     private void pullMessage(MessageQueue messageQueue) {
+
+        if (!messageQueueTable.containsKey(messageQueue)) {
+            return;
+        }
+        if (!messageQueueTable.get(messageQueue)) {
+            pullRequestQueue.remove(messageQueue);
+            return;
+        }
 
         PullMessageBody body = new PullMessageBody();
         body.setGroup(group);
@@ -156,6 +197,42 @@ public class DefaultConsumer extends Client implements Consumer {
         String address = consistentHashTable.get(messageQueue.getBrokerName()).get(messageQueue.getKey());
         consumeWhichBroker.put(messageQueue, address);
         return address;
+    }
+
+    private void loadBalanceImpl(List<MessageQueue> allMessageQueue, String topic, String group) {
+        List<ConsumerData> consumers = findConsumersByGroup(group);
+        Set<String> consumerIds = new HashSet<>();
+        consumerIds.add(this.consumerId);
+        consumers.forEach(consumer -> {
+            if (consumer.getTopics().contains(topic)) {
+                consumerIds.add(consumer.getConsumerId());
+            }
+        });
+
+        for (String consumerId : consumerIds) {
+            if (!messageQueueBalance.contains(consumerId)) {
+                messageQueueBalance.add(consumerId);
+            }
+        }
+
+        for (MessageQueue messageQueue : allMessageQueue) {
+            String consumerId = messageQueueBalance.get(messageQueue.toString());
+            if (this.consumerId.equals(consumerId)) {
+                Boolean valid = messageQueueTable.get(messageQueue);
+                if (valid == null || !valid) {
+                    messageQueueTable.put(messageQueue, true);
+                    pullRequestQueue.add(messageQueue);
+                }
+            } else {
+                messageQueueTable.remove(messageQueue);
+            }
+        }
+    }
+
+    private List<ConsumerData> findConsumersByGroup(String group) {
+        RemotingCommand request = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.QUERY_CONSUMERS_BY_GROUP, CommonCodec.encode(group));
+        RemotingCommand response = remotingClient.invokeSync(getRouterAddress(), request, rpcTimeoutMills);
+        return CommonCodec.decodeAsList(response.getBody(), ConsumerData.class);
     }
 
     private void registerBrokerTable(List<BrokerData> brokerDataList) {
@@ -270,5 +347,33 @@ public class DefaultConsumer extends Client implements Consumer {
             });
         }
 
+    }
+
+    class ConsumerLoadBalance extends ServiceThread {
+
+        @Override
+        public String getServiceName() {
+            return this.getClass().getSimpleName();
+        }
+
+        @Override
+        public void run() {
+            while (!stop) {
+                try {
+                    waitForRunning(1000);
+                    doLoadBalance();
+                } catch (Throwable ex) {
+                    log.error(ex.getMessage(), ex);
+                }
+            }
+        }
+
+        public void doLoadBalance() {
+            for (String topic : topics) {
+                TopicPublishInfo topicPublishInfo = brokerInstance.getTopicPublishInfoTable().get(topic);
+                List<MessageQueue> messageQueueList = topicPublishInfo.getMessageQueueList();
+                loadBalanceImpl(messageQueueList, topic, group);
+            }
+        }
     }
 }

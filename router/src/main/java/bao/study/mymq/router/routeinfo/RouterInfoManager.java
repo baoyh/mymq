@@ -6,6 +6,7 @@ import bao.study.mymq.common.protocol.TopicPublishInfo;
 import bao.study.mymq.common.protocol.body.RegisterBrokerBody;
 import bao.study.mymq.common.protocol.broker.BrokerData;
 import bao.study.mymq.common.protocol.broker.Heartbeat;
+import bao.study.mymq.common.protocol.client.ConsumerData;
 import bao.study.mymq.common.protocol.message.MessageQueue;
 import bao.study.mymq.common.utils.CommonCodec;
 import bao.study.mymq.remoting.code.ResponseCode;
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -31,6 +33,8 @@ public class RouterInfoManager {
     private final Map<BrokerDataIndex, Integer /* index in brokerDataList */> registered = new ConcurrentHashMap<>();
 
     private final Map<String /* brokerName */, BrokerData> brokerTable = new ConcurrentHashMap<>();
+
+    private final Map<String /* group */, CopyOnWriteArrayList<ConsumerData>> consumerTable = new ConcurrentHashMap<>();
 
     private final Map<String /* brokerName */, ConcurrentHashMap<Long /* brokerId */, Long /* lastHeartbeatTime */>> aliveBrokerTable = new ConcurrentHashMap<>();
 
@@ -139,6 +143,27 @@ public class RouterInfoManager {
         BrokerData brokerData = new BrokerData(null, brokerName);
         brokers.forEach((k, v) -> brokerData.getAddressMap().put(k, brokerTable.get(brokerName).getAddressMap().get(k)));
         return RemotingCommandFactory.createResponseRemotingCommand(ResponseCode.SUCCESS, CommonCodec.encode(brokerData));
+    }
+
+    public RemotingCommand registerConsumer(RemotingCommand msg) {
+        ConsumerData consumerData = CommonCodec.decode(msg.getBody(), ConsumerData.class);
+        CopyOnWriteArrayList<ConsumerData> consumerList = consumerTable.getOrDefault(consumerData.getGroup(), new CopyOnWriteArrayList<>());
+        boolean exist = false;
+        for (ConsumerData consumer : consumerList) {
+            if (consumer.getConsumerId().equals(consumerData.getConsumerId())) {
+                exist = true;
+                break;
+            }
+        }
+        if (!exist) {
+            consumerList.add(consumerData);
+            consumerTable.put(consumerData.getGroup(), consumerList);
+        }
+        return RemotingCommandFactory.createResponseRemotingCommand(ResponseCode.SUCCESS, null);
+    }
+
+    public RemotingCommand queryConsumersByGroup(RemotingCommand msg) {
+        return RemotingCommandFactory.createResponseRemotingCommand(ResponseCode.SUCCESS, CommonCodec.encode(consumerTable.get(CommonCodec.decode(msg.getBody(), String.class))));
     }
 
     private class AliveBrokerManager extends ServiceThread {

@@ -27,10 +27,15 @@ public class RouterRequestProcessor implements NettyRequestProcessor {
                 return handleHeartbeat(msg);
             case RequestCode.QUERY_ALIVE_BROKERS:
                 return queryAliveBrokers(msg);
+            case RequestCode.REGISTER_CONSUMER:
+                return registerConsumer(msg);
+            case RequestCode.QUERY_CONSUMERS_BY_GROUP:
+                return queryConsumersByGroup(msg);
             default:
                 return null;
         }
     }
+
 
     private RemotingCommand registerBroker(RemotingCommand msg) {
         return routerInfoManager.registerBroker(msg);
@@ -46,6 +51,14 @@ public class RouterRequestProcessor implements NettyRequestProcessor {
 
     private RemotingCommand queryAliveBrokers(RemotingCommand msg) {
         return routerInfoManager.queryAliveBrokers(msg);
+    }
+
+    private RemotingCommand registerConsumer(RemotingCommand msg) {
+        return routerInfoManager.registerConsumer(msg);
+    }
+
+    private RemotingCommand queryConsumersByGroup(RemotingCommand msg) {
+        return routerInfoManager.queryConsumersByGroup(msg);
     }
 
     public void start() {

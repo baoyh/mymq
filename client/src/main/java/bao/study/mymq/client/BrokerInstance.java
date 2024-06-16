@@ -30,4 +30,8 @@ public class BrokerInstance {
         topicPublishInfoTable.put(topic, topicPublishInfo);
         return topicPublishInfo;
     }
+
+    public Map<String, TopicPublishInfo> getTopicPublishInfoTable() {
+        return topicPublishInfoTable;
+    }
 }
