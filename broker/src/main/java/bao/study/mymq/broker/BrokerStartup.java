@@ -1,13 +1,5 @@
 package bao.study.mymq.broker;
 
-import bao.study.mymq.broker.config.ConsumeQueueConfig;
-import bao.study.mymq.broker.config.MessageStoreConfig;
-import bao.study.mymq.broker.manager.CommitLogManager;
-import bao.study.mymq.broker.manager.ConsumeQueueManager;
-import bao.study.mymq.broker.manager.ConsumeQueueIndexManager;
-import bao.study.mymq.broker.raft.Config;
-import bao.study.mymq.broker.raft.RaftServer;
-import bao.study.mymq.broker.store.RaftCommitLog;
 import bao.study.mymq.common.Constant;
 import bao.study.mymq.common.protocol.body.RegisterBrokerBody;
 import bao.study.mymq.common.utils.CommonCodec;
@@ -94,21 +86,11 @@ public class BrokerStartup {
     }
 
     private static void initialize() {
-        ConsumeQueueIndexManager consumeQueueIndexManager = new ConsumeQueueIndexManager(brokerProperties);
-        ConsumeQueueManager consumeQueueManager = new ConsumeQueueManager(new ConsumeQueueConfig(), brokerProperties);
-
-        RaftServer raftServer = new RaftServer(new Config(), new HashMap<>(), getSelfId(), remotingClient, remotingServer);
-        CommitLogManager commitLogManager = new CommitLogManager(new RaftCommitLog(new MessageStoreConfig(), raftServer), brokerProperties);
-        brokerController = new BrokerController(remotingClient, remotingServer, brokerProperties, consumeQueueIndexManager, consumeQueueManager, commitLogManager, raftServer);
-
+        brokerController = new BrokerController(remotingClient, remotingServer, brokerProperties);
         brokerController.initialize();
         brokerController.start();
 
         registerRequestProcessor();
-    }
-
-    private static String getSelfId() {
-        return brokerProperties.getBrokerName() + Constant.RAFT_ID_SEPARATOR + brokerProperties.getBrokerId();
     }
 
     public static void shutdown() {

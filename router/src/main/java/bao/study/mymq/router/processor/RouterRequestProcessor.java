@@ -31,11 +31,12 @@ public class RouterRequestProcessor implements NettyRequestProcessor {
                 return registerConsumer(msg);
             case RequestCode.QUERY_CONSUMERS_BY_GROUP:
                 return queryConsumersByGroup(msg);
+            case RequestCode.REGISTER_MASTER:
+                return registerMaster(msg);
             default:
                 return null;
         }
     }
-
 
     private RemotingCommand registerBroker(RemotingCommand msg) {
         return routerInfoManager.registerBroker(msg);
@@ -59,6 +60,10 @@ public class RouterRequestProcessor implements NettyRequestProcessor {
 
     private RemotingCommand queryConsumersByGroup(RemotingCommand msg) {
         return routerInfoManager.queryConsumersByGroup(msg);
+    }
+
+    private RemotingCommand registerMaster(RemotingCommand msg) {
+        return routerInfoManager.registerMaster(msg);
     }
 
     public void start() {

@@ -3,6 +3,7 @@ package bao.study.mymq.broker.service;
 import bao.study.mymq.broker.BrokerController;
 import bao.study.mymq.broker.BrokerProperties;
 import bao.study.mymq.broker.config.BrokerConfig;
+import bao.study.mymq.common.Constant;
 import bao.study.mymq.common.ServiceThread;
 import bao.study.mymq.common.protocol.broker.BrokerData;
 import bao.study.mymq.common.protocol.broker.Heartbeat;
@@ -73,7 +74,7 @@ public class HeartbeatService extends ServiceThread {
     private void updateBrokerData(BrokerData brokerData) {
         addressMap.putAll(brokerData.getAddressMap());
         if (callback != null) {
-            callback.onHeartbeatSuccess(addressMap);
+            callback.onHeartbeatSuccess(addressMap, brokerData.getBrokerName() + Constant.RAFT_ID_SEPARATOR + brokerData.getMasterId());
         }
     }
 
@@ -83,6 +84,6 @@ public class HeartbeatService extends ServiceThread {
 
     public interface HeartbeatServiceCallback {
 
-        void onHeartbeatSuccess(Map<Long, String> addressMap);
+        void onHeartbeatSuccess(Map<Long, String> addressMap, String leaderId);
     }
 }

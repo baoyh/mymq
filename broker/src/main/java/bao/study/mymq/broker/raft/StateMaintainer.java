@@ -24,12 +24,19 @@ public class StateMaintainer extends ServiceThread {
 
     private final MemberState memberState;
 
+    private AppearLeaderCallback appearLeaderCallback;
+
     /**
      * 上一次收到心跳的时间戳
      */
     private volatile long lastHeartBeatTime = -1L;
 
     private volatile long nextTimeToRequestVote = -1L;
+
+    public StateMaintainer(MemberState memberState, AppearLeaderCallback appearLeaderCallback) {
+        this(memberState);
+        this.appearLeaderCallback = appearLeaderCallback;
+    }
 
     public StateMaintainer(MemberState memberState) {
         this.memberState = memberState;
@@ -87,6 +94,9 @@ public class StateMaintainer extends ServiceThread {
         if (voteResult == PASSED) {
             memberState.setRole(Role.LEADER);
             memberState.setLeaderId(memberState.getSelfId());
+            if (appearLeaderCallback != null) {
+                appearLeaderCallback.onLeaderAppear();
+            }
             return;
         }
         nextTimeToRequestVote = getNextTimeToRequestVote();
@@ -159,5 +169,11 @@ public class StateMaintainer extends ServiceThread {
                 ", lastHeartBeatTime=" + lastHeartBeatTime +
                 ", nextTimeToRequestVote=" + nextTimeToRequestVote +
                 '}';
+    }
+
+    public interface AppearLeaderCallback {
+
+        void onLeaderAppear();
+
     }
 }

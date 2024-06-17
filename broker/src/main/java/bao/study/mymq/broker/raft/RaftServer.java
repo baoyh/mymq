@@ -4,7 +4,6 @@ import bao.study.mymq.broker.raft.protocol.NettyClientProtocol;
 import bao.study.mymq.broker.raft.protocol.NettyServerProtocol;
 import bao.study.mymq.broker.raft.store.RaftFileStore;
 import bao.study.mymq.broker.raft.store.RaftStore;
-import bao.study.mymq.common.Constant;
 import bao.study.mymq.remoting.RemotingClient;
 import bao.study.mymq.remoting.RemotingServer;
 import bao.study.mymq.remoting.code.RequestCode;
@@ -39,6 +38,8 @@ public class RaftServer {
 
     private EntryProcessor entryProcessor;
 
+    private StateMaintainer.AppearLeaderCallback appearLeaderCallback;
+
     public RaftServer(Config config, RemotingClient remotingClient, RemotingServer remotingServer) {
         this.config = config;
         this.remotingClient = remotingClient;
@@ -49,9 +50,20 @@ public class RaftServer {
         this.entryProcessor = new EntryProcessor(memberState, new NettyClientProtocol(remotingClient, memberState), raftStore);
     }
 
-    public RaftServer(Config config, Map<String, String> nodes, String selfId, RemotingClient remotingClient, RemotingServer remotingServer) {
-        this(config, remotingClient, remotingServer);
-        updateNodes(nodes, selfId);
+    public RaftServer(Config config, RemotingClient remotingClient, RemotingServer remotingServer, StateMaintainer.AppearLeaderCallback appearLeaderCallback) {
+        this.config = config;
+        this.remotingClient = remotingClient;
+        this.remotingServer = remotingServer;
+
+        this.memberState = createMemberState();
+        this.raftStore = new RaftFileStore(config);
+        this.entryProcessor = new EntryProcessor(memberState, new NettyClientProtocol(remotingClient, memberState), raftStore);
+        this.appearLeaderCallback = appearLeaderCallback;
+    }
+
+    public RaftServer(Config config, Map<String, String> nodes, String selfId, RemotingClient remotingClient, RemotingServer remotingServer, StateMaintainer.AppearLeaderCallback appearLeaderCallback) {
+        this(config, remotingClient, remotingServer, appearLeaderCallback);
+        updateNodes(nodes, selfId, null);
     }
 
     public void startup() {
@@ -71,7 +83,7 @@ public class RaftServer {
         }
     }
 
-    public void updateNodes(Map<String, String> nodes, String selfId) {
+    public void updateNodes(Map<String, String> nodes, String selfId, String leaderId) {
         Map<String, String> raftNodes = memberState.getNodes();
         raftNodes.clear();
         raftNodes.putAll(nodes);
@@ -81,9 +93,11 @@ public class RaftServer {
 
         memberState.setSelfId(selfId);
         memberState.getConfig().setSelfId(selfId);
-        String[] info = selfId.split(Constant.RAFT_ID_SEPARATOR);
-        if (Long.parseLong(info[info.length - 1]) == Constant.MASTER_ID) {
+        if (selfId.equals(leaderId)) {
             memberState.setRole(Role.LEADER);
+            if (appearLeaderCallback != null) {
+                appearLeaderCallback.onLeaderAppear();
+            }
         } else {
             memberState.setRole(Role.FOLLOWER);
         }
@@ -94,7 +108,7 @@ public class RaftServer {
     private void startStateMaintainer() {
         synchronized (lock) {
             if (stateMaintainer == null) {
-                stateMaintainer = new StateMaintainer(memberState);
+                stateMaintainer = new StateMaintainer(memberState, appearLeaderCallback);
                 NettyClientProtocol clientProtocol = new NettyClientProtocol(remotingClient, memberState);
                 LeaderElector leaderElector = new LeaderElector(stateMaintainer, clientProtocol);
                 HeartbeatProcessor heartbeatProcessor = new HeartbeatProcessor(stateMaintainer, clientProtocol);

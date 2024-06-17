@@ -25,6 +25,8 @@ public abstract class RequestCode {
 
     public static final int FLUSH_SYNC = 203;
 
+    public static final int REGISTER_MASTER = 204;
+
 
     /**
      * client

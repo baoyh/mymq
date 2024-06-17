@@ -1,6 +1,8 @@
 package bao.study.mymq.broker;
 
 
+import bao.study.mymq.broker.config.ConsumeQueueConfig;
+import bao.study.mymq.broker.config.MessageStoreConfig;
 import bao.study.mymq.broker.longpolling.PullRequestHoldService;
 import bao.study.mymq.broker.manager.CommitLogManager;
 import bao.study.mymq.broker.manager.ConsumeQueueIndexManager;
@@ -8,10 +10,13 @@ import bao.study.mymq.broker.manager.ConsumeQueueManager;
 import bao.study.mymq.broker.processor.FlushSyncProcessor;
 import bao.study.mymq.broker.processor.PullMessageProcessor;
 import bao.study.mymq.broker.processor.SendMessageProcessor;
+import bao.study.mymq.broker.raft.Config;
 import bao.study.mymq.broker.raft.RaftServer;
 import bao.study.mymq.broker.service.FlushSyncService;
 import bao.study.mymq.broker.service.HeartbeatService;
+import bao.study.mymq.broker.service.MasterManagerService;
 import bao.study.mymq.broker.store.CommitLog;
+import bao.study.mymq.broker.store.RaftCommitLog;
 import bao.study.mymq.common.Constant;
 import bao.study.mymq.remoting.RemotingClient;
 import bao.study.mymq.remoting.RemotingServer;
@@ -47,28 +52,32 @@ public class BrokerController {
 
     private final HeartbeatService heartbeatService;
 
+    private final MasterManagerService masterManagerService;
+
     private final FlushSyncService flushSyncService;
 
     private final RaftServer raftServer;
 
-    public BrokerController(RemotingClient remotingClient, RemotingServer remotingServer, BrokerProperties brokerProperties, ConsumeQueueIndexManager consumeQueueIndexManager,
-                            ConsumeQueueManager consumeQueueManager, CommitLogManager commitLogManager, RaftServer raftServer) {
+    public BrokerController(RemotingClient remotingClient, RemotingServer remotingServer, BrokerProperties brokerProperties) {
         this.remotingClient = remotingClient;
         this.remotingServer = remotingServer;
         this.brokerProperties = brokerProperties;
-        this.consumeQueueIndexManager = consumeQueueIndexManager;
-        this.consumeQueueManager = consumeQueueManager;
-        this.commitLogManager = commitLogManager;
+
+        this.consumeQueueIndexManager = new ConsumeQueueIndexManager(brokerProperties);
+        this.consumeQueueManager = new ConsumeQueueManager(new ConsumeQueueConfig(), brokerProperties);
 
         this.pullMessageProcessor = new PullMessageProcessor(this);
         this.pullRequestHoldService = new PullRequestHoldService(this);
         this.sendMessageProcessor = new SendMessageProcessor(this);
-        this.raftServer = raftServer;
+        this.masterManagerService = new MasterManagerService(this);
 
-        this.heartbeatService = new HeartbeatService(this, addressMap -> {
+        this.raftServer = new RaftServer(new Config(), new HashMap<>(), getSelfId(), remotingClient, remotingServer, masterManagerService::registerMaster);
+        this.commitLogManager = new CommitLogManager(new RaftCommitLog(new MessageStoreConfig(), raftServer), brokerProperties);
+
+        this.heartbeatService = new HeartbeatService(this, (addressMap, leaderId) -> {
             Map<String, String> nodes = new HashMap<>();
             addressMap.forEach((k, v) -> nodes.put(brokerProperties.getBrokerName() + Constant.RAFT_ID_SEPARATOR + k, v));
-            raftServer.updateNodes(nodes, brokerProperties.getBrokerName() + Constant.RAFT_ID_SEPARATOR + brokerProperties.getBrokerId());
+            raftServer.updateNodes(nodes, brokerProperties.getBrokerName() + Constant.RAFT_ID_SEPARATOR + brokerProperties.getBrokerId(), leaderId);
         });
         this.flushSyncService = new FlushSyncService(this);
         this.flushSyncProcessor = new FlushSyncProcessor(this);
@@ -141,6 +150,10 @@ public class BrokerController {
 
     public FlushSyncProcessor getFlushSyncProcessor() {
         return flushSyncProcessor;
+    }
+
+    private String getSelfId() {
+        return brokerProperties.getBrokerName() + Constant.RAFT_ID_SEPARATOR + brokerProperties.getBrokerId();
     }
 
 }

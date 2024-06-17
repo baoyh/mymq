@@ -6,6 +6,7 @@ import bao.study.mymq.common.protocol.TopicPublishInfo;
 import bao.study.mymq.common.protocol.body.RegisterBrokerBody;
 import bao.study.mymq.common.protocol.broker.BrokerData;
 import bao.study.mymq.common.protocol.broker.Heartbeat;
+import bao.study.mymq.common.protocol.broker.RegisterMaster;
 import bao.study.mymq.common.protocol.client.ConsumerData;
 import bao.study.mymq.common.protocol.message.MessageQueue;
 import bao.study.mymq.common.utils.CommonCodec;
@@ -164,6 +165,14 @@ public class RouterInfoManager {
 
     public RemotingCommand queryConsumersByGroup(RemotingCommand msg) {
         return RemotingCommandFactory.createResponseRemotingCommand(ResponseCode.SUCCESS, CommonCodec.encode(consumerTable.get(CommonCodec.decode(msg.getBody(), String.class))));
+    }
+
+    public RemotingCommand registerMaster(RemotingCommand msg) {
+        RegisterMaster registerMaster = CommonCodec.decode(msg.getBody(), RegisterMaster.class);
+        if (brokerTable.containsKey(registerMaster.getBrokerName())) {
+            brokerTable.get(registerMaster.getBrokerName()).setMasterId(registerMaster.getMasterId());
+        }
+        return RemotingCommandFactory.createResponseRemotingCommand(ResponseCode.SUCCESS, null);
     }
 
     private class AliveBrokerManager extends ServiceThread {

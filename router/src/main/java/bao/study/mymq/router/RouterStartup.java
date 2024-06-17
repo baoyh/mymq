@@ -30,7 +30,7 @@ public class RouterStartup {
     }
 
     private static void registerRequestProcessor(RemotingServer remotingServer, RouterRequestProcessor processor) {
-        remotingServer.registerRequestProcessor(processor, RequestCode.REGISTER_BROKER, RequestCode.GET_ROUTE_BY_TOPIC,
+        remotingServer.registerRequestProcessor(processor, RequestCode.REGISTER_BROKER, RequestCode.GET_ROUTE_BY_TOPIC, RequestCode.REGISTER_MASTER,
                 RequestCode.REGISTER_CONSUMER, RequestCode.QUERY_CONSUMERS_BY_GROUP, RequestCode.BROKER_HEARTBEAT, RequestCode.QUERY_ALIVE_BROKERS);
     }
 }

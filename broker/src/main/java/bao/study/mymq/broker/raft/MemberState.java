@@ -1,6 +1,5 @@
 package bao.study.mymq.broker.raft;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

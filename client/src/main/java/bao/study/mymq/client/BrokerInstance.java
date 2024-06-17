@@ -23,6 +23,10 @@ public class BrokerInstance {
             return topicPublishInfoTable.get(topic);
         }
 
+        return updateTopicPublishInfo(topic, client);
+    }
+
+    public TopicPublishInfo updateTopicPublishInfo(String topic, Client client) {
         RemotingCommand request = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.GET_ROUTE_BY_TOPIC, CommonCodec.encode(topic));
         RemotingCommand response = client.remotingClient.invokeSync(client.getRouterAddress(), request, 3000);
 

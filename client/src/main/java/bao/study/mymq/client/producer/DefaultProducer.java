@@ -3,7 +3,6 @@ package bao.study.mymq.client.producer;
 import bao.study.mymq.client.BrokerInstance;
 import bao.study.mymq.client.Client;
 import bao.study.mymq.client.ClientException;
-import bao.study.mymq.common.Constant;
 import bao.study.mymq.common.protocol.Message;
 import bao.study.mymq.common.protocol.MessageExt;
 import bao.study.mymq.common.protocol.TopicPublishInfo;
@@ -19,8 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * @author baoyh
@@ -32,10 +29,6 @@ public class DefaultProducer extends Client implements Producer {
 
     private final BrokerInstance brokerInstance = new BrokerInstance();
 
-    private final Set<DefaultProducer> producerSet = new CopyOnWriteArraySet<>();
-
-    private final Map<String /* brokerName */, String /* address */> brokerAddressTable = new ConcurrentHashMap<>();
-
     private final ThreadLocal<Map<String /* topic */, Integer /* count */>> sendWhichQueue = ThreadLocal.withInitial(HashMap::new);
 
     private long sendMessageTimeOut = 300 * 1000;
@@ -44,12 +37,10 @@ public class DefaultProducer extends Client implements Producer {
 
     @Override
     protected void doStart() {
-        producerSet.add(this);
     }
 
     @Override
     public void doShutdown() {
-        producerSet.remove(this);
     }
 
     @Override
@@ -81,7 +72,6 @@ public class DefaultProducer extends Client implements Producer {
             MessageQueue messageQueue = this.selectOneMessageQueue(topic, messageQueueList, lastFailedBrokerName);
 
             try {
-                log.info("selectOneMessageQueue [" + messageQueue.getQueueId() + "]");
                 MessageExt messageExt = createMessageExt(message, messageQueue);
                 RemotingCommand request = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.SEND_MESSAGE, CommonCodec.encode(messageExt));
 
@@ -117,6 +107,7 @@ public class DefaultProducer extends Client implements Producer {
             } catch (Exception e) {
                 log.error("Connect to broker " + messageQueue.getBrokerName() + " fail", e);
                 lastFailedBrokerName = messageQueue.getBrokerName();
+                topicPublishInfo = brokerInstance.updateTopicPublishInfo(topic, this);
             }
 
         }
@@ -167,14 +158,11 @@ public class DefaultProducer extends Client implements Producer {
     }
 
     private String findBrokerAddress(String brokerName, TopicPublishInfo topicPublishInfo) {
-        if (brokerAddressTable.containsKey(brokerName)) {
-            return brokerAddressTable.get(brokerName);
-        }
 
         List<BrokerData> brokerDataList = topicPublishInfo.getBrokerDataList();
         for (BrokerData brokerData : brokerDataList) {
             if (brokerData.getBrokerName().equals(brokerName)) {
-                return brokerData.getAddressMap().get(Constant.MASTER_ID);
+                return brokerData.getAddressMap().get(brokerData.getMasterId());
             }
         }
 
