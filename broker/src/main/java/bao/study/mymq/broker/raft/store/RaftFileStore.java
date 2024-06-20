@@ -158,7 +158,7 @@ public class RaftFileStore extends RaftStore {
 
     @Override
     public void updateCommittedIndex(long term, long committedIndex) {
-        logger.info("update CommittedIndex, term={}, committedIndex={}", term, committedIndex);
+        logger.debug("update CommittedIndex, term={}, committedIndex={}", term, committedIndex);
         this.committedIndex = committedIndex;
         this.endTerm = term;
         flushService.wakeup();

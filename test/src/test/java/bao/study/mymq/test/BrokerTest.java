@@ -210,4 +210,74 @@ public class BrokerTest {
         c.shutdown();
         router.shutdown();
     }
+
+    @Test
+    public void testMultiBrokerCluster() throws InterruptedException {
+        CommonUtil.clear();
+        RemotingServer router = CommonUtil.launchRouter(9875);
+
+        Map<String, Integer> topics = new HashMap<>();
+        topics.put("topic1", 4);
+
+        // master
+        BrokerProperties brokerProperties = new BrokerProperties("broker1", "cluster1", "localhost:9875", 10910, Constant.MASTER_ID);
+        BrokerController a = CommonUtil.launchBroker(brokerProperties, topics);
+
+        // slave1
+        BrokerProperties brokerProperties2 = new BrokerProperties("broker1", "cluster1", "localhost:9875", 10911, 1);
+        BrokerController b = CommonUtil.launchBroker(brokerProperties2, topics);
+
+        // slave2
+        BrokerProperties brokerProperties3 = new BrokerProperties("broker1", "cluster1", "localhost:9875", 10912, 2);
+        BrokerController c = CommonUtil.launchBroker(brokerProperties3, topics);
+
+        // master
+        BrokerProperties brokerProperties4 = new BrokerProperties("broker2", "cluster1", "localhost:9875", 10913, Constant.MASTER_ID);
+        BrokerController d = CommonUtil.launchBroker(brokerProperties4, topics);
+
+        // slave1
+        BrokerProperties brokerProperties5 = new BrokerProperties("broker2", "cluster1", "localhost:9875", 10914, 1);
+        BrokerController e = CommonUtil.launchBroker(brokerProperties5, topics);
+
+        // slave2
+        BrokerProperties brokerProperties6 = new BrokerProperties("broker2", "cluster1", "localhost:9875", 10915, 2);
+        BrokerController f = CommonUtil.launchBroker(brokerProperties6, topics);
+
+        // 等待 broker 启动成功
+        TimeUnit.SECONDS.sleep(4);
+
+        DefaultProducer producer = new DefaultProducer();
+        producer.setRouterAddress("localhost:9875");
+        producer.start();
+        for (int i = 0; i < 10; i++) {
+            SendResult result = producer.send(new Message("topic1", ("hello" + i).getBytes(StandardCharsets.UTF_8)));
+            Assertions.assertEquals(result.getSendStatus(), SendStatus.SEND_OK);
+            log.info("Success send message to broker {} ", result.getMessageQueue().getBrokerName());
+        }
+
+        AtomicInteger count = new AtomicInteger();
+        DefaultConsumer consumer = new DefaultConsumer();
+        consumer.setRouterAddress("localhost:9875");
+        consumer.subscribe("topic1");
+        consumer.setGroup("test");
+        consumer.registerMessageListener(messages -> {
+            messages.forEach(it -> {
+                log.info("Success consume message: " + it.toString());
+                count.getAndIncrement();
+            });
+            return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+        });
+        consumer.start();
+
+        // 等待消息消费成功发送通知给 broker
+        TimeUnit.SECONDS.sleep(1);
+        Assertions.assertEquals(count.get(), 10);
+
+        producer.shutdown();
+        consumer.shutdown();
+        a.shutdown();
+        b.shutdown();
+        c.shutdown();
+        router.shutdown();
+    }
 }

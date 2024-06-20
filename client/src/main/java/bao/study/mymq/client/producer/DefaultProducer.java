@@ -76,6 +76,7 @@ public class DefaultProducer extends Client implements Producer {
                 RemotingCommand request = RemotingCommandFactory.createRequestRemotingCommand(RequestCode.SEND_MESSAGE, CommonCodec.encode(messageExt));
 
                 String brokerAddress = findBrokerAddress(messageQueue.getBrokerName(), topicPublishInfo);
+                log.debug("Send message to broker {}", brokerAddress);
 
                 switch (remotingMode) {
                     case SYNC:
@@ -154,6 +155,7 @@ public class DefaultProducer extends Client implements Producer {
         Integer index = sendWhichQueue.get().get(topic);
         MessageQueue messageQueue = messageQueueList.get(index % messageQueueList.size());
         sendWhichQueue.get().put(topic, ++index);
+        log.debug("Select messageQueue: {}", messageQueue.getKey());
         return messageQueue;
     }
 
